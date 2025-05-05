@@ -1,0 +1,73 @@
+.tmdbid-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tmdbid-modal {
+  background: #232323;
+  color: #fff;
+  padding: 2rem 2.5rem 1.5rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+}
+.tmdbid-modal-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 0.7rem;
+  color: #ffb300;
+}
+.tmdbid-modal-msg {
+  margin-bottom: 1.2rem;
+}
+.tmdbid-modal-titulo {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0.3rem 0;
+  font-weight: 600;
+}
+.tmdbid-modal-tipo {
+  color: #90caf9;
+  font-weight: 400;
+}
+.tmdbid-modal-pregunta {
+  margin-top: 0.7rem;
+}
+.tmdbid-modal-btns {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+}
+.tmdbid-btn-confirm {
+  background: linear-gradient(90deg, #1976d2 60%, #1356a2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tmdbid-btn-confirm:hover {
+  background: linear-gradient(90deg, #1356a2 60%, #1976d2 100%);
+}
+.tmdbid-btn-cancel {
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tmdbid-btn-cancel:hover {
+  background: #2c2c2c;
+}

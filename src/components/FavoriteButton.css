@@ -1,0 +1,66 @@
+.fav-btn {
+  background: none;
+  border: none;
+  font-size: 2.1em;
+  cursor: pointer;
+  margin-left: 8px;
+  color: #e50914;
+  transition: transform 0.13s, filter 0.13s;
+  filter: drop-shadow(0 1px 4px #0007);
+}
+.fav-btn.fav span {
+  color: #e50914;
+  filter: drop-shadow(0 0 6px #e5091455);
+}
+.fav-btn span {
+  transition: color 0.13s, filter 0.13s;
+}
+.fav-btn:active {
+  transform: scale(0.92);
+}
+.fav-btn-mini {
+  background: none;
+  border: none;
+  font-size: 1.34em;
+  cursor: pointer;
+  margin: 0 4px;
+  color: #e50914;
+  transition: transform 0.13s, filter 0.13s;
+  filter: drop-shadow(0 1px 2px #0005);
+  vertical-align: middle;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+}
+.fav-btn-mini.fav span {
+  color: #e50914;
+  filter: drop-shadow(0 0 4px #e5091440);
+}
+.fav-btn-mini span {
+  transition: color 0.13s, filter 0.13s;
+}
+.fav-btn-mini:active {
+  transform: scale(0.92);
+}
+.detail-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 14px 0;
+  align-items: center;
+}
+.mini-action-btn {
+  background: none;
+  border: none;
+  font-size: 1.22em;
+  color: #bbb;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 50%;
+  transition: background 0.13s, color 0.13s, transform 0.13s;
+  outline: none;
+}
+.mini-action-btn:focus, .mini-action-btn:hover {
+  background: #222;
+  color: #e50914;
+  transform: scale(1.12);
+}
