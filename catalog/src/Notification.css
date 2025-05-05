@@ -1,0 +1,35 @@
+/* Notificaciones bonitas y centradas */
+.notification {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 80vw;
+  padding: 18px 36px;
+  border-radius: 12px;
+  font-size: 1.15em;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 4px 32px #000c, 0 1.5px 12px #0006;
+  color: #fff;
+  opacity: 0.98;
+  animation: notification-fadein 0.4s;
+}
+.notification-success {
+  background: linear-gradient(90deg, #25c481 60%, #1fa463 100%);
+  border: 2px solid #21b96b;
+}
+.notification-warning {
+  background: linear-gradient(90deg, #ffb347 60%, #ff9800 100%);
+  border: 2px solid #ff9800;
+}
+.notification-error {
+  background: linear-gradient(90deg, #e53935 60%, #b71c1c 100%);
+  border: 2px solid #e53935;
+}
+@keyframes notification-fadein {
+  from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+  to { opacity: 0.98; transform: translateX(-50%) translateY(0); }
+}

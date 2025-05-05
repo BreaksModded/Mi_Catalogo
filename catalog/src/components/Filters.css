@@ -1,0 +1,105 @@
+.filters-bar {
+  padding: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #232323;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2a2a2a;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+}
+
+.input-group label {
+  color: #999;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.input-group input {
+  width: 70px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #2d6da3;
+  box-shadow: 0 0 0 1px #2d6da3;
+}
+
+.input-group input::-webkit-outer-spin-button,
+.input-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-group input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.filters-bar select {
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+  font-size: 0.95em;
+}
+
+.filters-bar select:hover {
+  background: #333;
+  border-color: #666;
+}
+
+.filters-bar select:focus {
+  outline: none;
+  border-color: #2d6da3;
+  box-shadow: 0 0 0 1px #2d6da3;
+}
+
+.filter-btn {
+  background: #2a2a2a;
+  color: #999;
+  border: 1px solid #444;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95em;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-btn:hover {
+  background: linear-gradient(90deg, #1976d2 60%, #1356a2 100%);
+  color: #fff;
+  border: 1.5px solid #1356a2;
+  transform: translateY(-2px) scale(1.04);
+}
+.filter-btn.filter-btn-active {
+  background: linear-gradient(90deg, #1976d2 60%, #1356a2 100%);
+  color: #fff;
+  border: 2.2px solid #e50914;
+  box-shadow: 0 4px 18px rgba(229,9,20,0.18);
+  transform: translateY(-2px) scale(1.06);
+}

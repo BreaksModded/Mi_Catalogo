@@ -1,0 +1,70 @@
+.navbar {
+  background: #181818;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  height: 64px;
+  box-shadow: 0 2px 12px #000a;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.navbar-logo {
+  font-size: 2.1em;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.cinema-icon {
+  font-size: 1.2em;
+  margin-right: 10px;
+  transform: translateY(-1px);
+}
+.navbar-title {
+  font-size: 1.1em;
+  letter-spacing: 1px;
+}
+.navbar-links button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.1em;
+  margin: 0 10px;
+  cursor: pointer;
+  padding: 7px 10px;
+  border-radius: 6px;
+  transition: background 0.13s;
+}
+.navbar-links button:hover {
+  background: #e50914;
+}
+.navbar-search input {
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: none;
+  font-size: 1em;
+  background: #232323;
+  color: #fff;
+}
+.navbar-add-btn {
+  background: linear-gradient(90deg,#e50914 60%,#b0060f 100%);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  margin-left: 12px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.14s, box-shadow 0.13s, transform 0.13s;
+  box-shadow: 0 2px 8px #0004;
+}
+.navbar-add-btn:hover, .navbar-add-btn:focus {
+  background: #e50914;
+  color: #fff;
+  transform: scale(1.07);
+  box-shadow: 0 4px 16px #e5091440;
+}
