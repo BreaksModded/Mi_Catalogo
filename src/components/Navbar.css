@@ -68,3 +68,81 @@
   transform: scale(1.07);
   box-shadow: 0 4px 16px #e5091440;
 }
+.navbar-hamburger {
+  display: none;
+}
+/* --- Responsive Navbar for Mobile --- */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    padding: 0 10px;
+    position: relative;
+  }
+  .navbar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 10px;
+    position: relative;
+    padding-top: 14px;
+  }
+  .navbar-logo {
+    font-size: 1.4em;
+    margin-bottom: 0;
+    flex: 1;
+    z-index: 21;
+  }
+  .navbar-hamburger {
+    display: block;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2em;
+    cursor: pointer;
+    position: static;
+    margin-left: 12px;
+    z-index: 21;
+  }
+  .navbar-search {
+    width: 100%;
+    margin: 10px 0 0 0;
+    padding: 0 0 12px 0;
+    z-index: 10;
+  }
+
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background: #181818;
+    position: static;
+    z-index: 10;
+    border-top: 1px solid #232323;
+    box-shadow: 0 4px 16px #000a;
+    margin-bottom: 8px;
+  }
+  .navbar-links.open {
+    display: flex;
+  }
+  .navbar-links button {
+    margin: 12px 0 0 0;
+    width: 100%;
+    text-align: left;
+    font-size: 1.1em;
+    padding: 12px 18px;
+  }
+  .navbar-search {
+    width: 100%;
+    margin: 10px 0 0 0;
+    padding: 0 0 12px 0;
+  }
+  .navbar-search input {
+    width: 96%;
+    font-size: 1em;
+    padding: 7px 10px;
+  }
+}

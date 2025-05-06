@@ -8,6 +8,42 @@
   flex-wrap: wrap;
 }
 
+/* Responsive: barra de filtros adaptada a móvil */
+@media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 4px 12px 4px;
+    overflow-x: visible;
+  }
+  .filters-bar select,
+  .filters-bar button,
+  .filter-btn,
+  .input-group {
+    width: 100%;
+    min-width: 0;
+    font-size: 1em;
+    margin: 0 0 6px 0;
+  }
+  .input-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 10px;
+  }
+  .filter-btn,
+  .filters-bar button {
+    padding: 12px 0;
+    font-size: 1.07em;
+    border-radius: 7px;
+  }
+  .filters-bar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
 .input-group {
   display: flex;
   align-items: center;

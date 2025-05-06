@@ -4,8 +4,29 @@ import './Filters.css';
 
 function Filters({ tipos, generos, selectedTipo, selectedGenero, onTipo, onGenero, minYear, maxYear, onYear, minNota, maxNota, onNota, minNotaPersonal, onNotaPersonal, showFavs, showPendings, onShowFavs, onShowPendings, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, orderBy, onOrder }) {
   const [showTagsModal, setShowTagsModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(window.innerWidth > 768);
+
+  // Toggle filters on mobile
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) setShowFilters(true);
+      else setShowFilters(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="filters-bar">
+    <div>
+      <button
+        className="filters-toggle-btn"
+        onClick={() => setShowFilters(f => !f)}
+        style={{ display: window.innerWidth <= 768 ? 'block' : 'none', margin: '0 auto 12px auto', padding: '11px 0', width: '98%', fontSize: '1.13em', borderRadius: '7px', background: '#1976d2', color: '#fff', border: 'none', fontWeight: 600, letterSpacing: '0.5px' }}
+      >
+        {showFilters ? 'Ocultar filtros' : 'Filtros'}
+      </button>
+      <div className="filters-bar" style={{ display: showFilters ? 'flex' : 'none' }}>
+
       <select value={selectedTipo} onChange={e => onTipo(e.target.value)}>
         <option value="">Todos</option>
         {tipos.map(tipo => <option key={tipo} value={tipo}>{tipo.charAt(0).toUpperCase() + tipo.slice(1)}</option>)}
@@ -84,6 +105,7 @@ function Filters({ tipos, generos, selectedTipo, selectedGenero, onTipo, onGener
           onClose={() => setShowTagsModal(false)}
         />
       )}
+      </div>
     </div>
   );
 }
