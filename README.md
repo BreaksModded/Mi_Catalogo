@@ -1,65 +1,64 @@
-<<<<<<< HEAD
-# Catálogo de Películas y Series
+# 🎬 Mi Catálogo de Películas y Series
 
-Esta es la web de visualización tipo Netflix para tu colección personal. Permite ver todas las películas y series añadidas desde la app de gestión, con portadas grandes y ficha detallada al hacer clic en cada una.
+Proyecto web tipo **Netflix personal** para visualizar y gestionar tu colección de películas y series.
 
-## ¿Cómo se usa?
+**🔗 Frontend en vivo:** [https://mi-catalogo-oguv.vercel.app](https://mi-catalogo-oguv.vercel.app)  
+**🔗 API Backend en vivo:** [https://mi-catalogo-backend.onrender.com](https://mi-catalogo-backend.onrender.com)
 
-1. Instala las dependencias:
-   ```sh
-   npm install
-   ```
-2. Arranca el servidor de desarrollo:
-   ```sh
-   npm start
-   ```
-3. Accede a [http://localhost:3000](http://localhost:3000) para ver tu catálogo en modo galería.
-
-## Características
-- Vista tipo cuadrícula estilo Netflix.
-- Fichas detalladas con sinopsis, reparto, director, temporadas, etc.
-- Solo visualización (no edición).
-- Responsive para móvil y escritorio.
-
-> Recuerda: la gestión y alta de películas/series se realiza desde la otra web (`frontend`).
-=======
-# Home Cinema
-
-Proyecto web personal para gestionar tu colección de películas y series, similar a un "Netflix" privado.
-
-## Estructura del proyecto
-
-- `/backend`: API REST con FastAPI, base de datos SQLite.
-- `/frontend`: Aplicación React (por crear).
-
-## Cómo iniciar el backend
-
-1. Ve a la carpeta `backend`:
-   ```sh
-   cd backend
-   ```
-2. Activa el entorno virtual (Windows):
-   ```sh
-   venv\Scripts\activate
-   ```
-3. Instala las dependencias (si no lo hiciste):
-   ```sh
-   pip install -r requirements.txt
-   ```
-4. Ejecuta el servidor:
-   ```sh
-   uvicorn main:app --reload
-   ```
-
-## Endpoints principales
-- `/medias` (GET, POST): Listar y crear películas/series
-- `/medias/{media_id}` (GET, DELETE): Obtener y borrar por ID
+> Solo necesitas acceder al frontend. Las llamadas a la API ya están integradas en la web.
 
 ---
 
-## Próximos pasos
-- Crear el frontend con React
-- Mejorar la documentación
-- Añadir autenticación
-- Desplegar en la nube
->>>>>>> 973881fdebd00ae36d9c48d4711bafbf0f7c6d90
+## 🚀 Tecnologías utilizadas
+
+- **Frontend:** React + Vite
+- **Backend:** FastAPI + SQLite
+- **Despliegue:**
+  - Frontend en [Vercel](https://vercel.com)
+  - Backend en [Render](https://render.com)
+
+---
+
+## 📚 Características
+
+- Interfaz tipo galería estilo Netflix.
+- Fichas detalladas con sinopsis, reparto, director, temporadas, etc.
+- Responsive para escritorio y móvil.
+- Visualización de contenido (no edición desde la web pública).
+- Backend con API REST para gestionar los datos.
+
+---
+
+## 📦 Estructura del proyecto
+
+- `/frontend`: Aplicación React (visualización)
+- `/backend`: API REST con FastAPI (gestión)
+
+---
+
+## 💻 Desarrollo local (opcional)
+
+### Frontend
+
+1. Entra en la carpeta `frontend`.
+2. Instala las dependencias con `npm install`.
+3. Lanza el servidor con `npm run dev`.
+4. Accede a `http://localhost:3000` en el navegador.
+
+### Backend
+
+1. Entra en la carpeta `backend`.
+2. Crea y activa un entorno virtual.
+3. Instala las dependencias con `pip install -r requirements.txt`.
+4. Lanza el servidor con `uvicorn main:app --reload`.
+5. La API estará disponible en `http://localhost:8000`.
+
+---
+
+## 📌 Notas finales
+
+- Este proyecto está dividido en dos servicios independientes pero conectados.
+- El backend expone endpoints para consultar, agregar y eliminar películas/series.
+- El frontend consume automáticamente estos endpoints.
+
+¡Disfruta de tu propio Netflix casero! 🍿
