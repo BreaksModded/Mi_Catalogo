@@ -41,7 +41,7 @@ export default function AddMediaForm({ onAdded }) {
 
   useEffect(() => {
     // Cargar etiquetas al montar el componente
-    fetch('http://localhost:8000/tags')
+    fetch(BACKEND_URL + '/tags')
       .then(res => res.json())
       .then(data => setTags(data))
       .catch(err => console.error('Error cargando etiquetas:', err));
