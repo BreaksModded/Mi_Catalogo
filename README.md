@@ -61,4 +61,6 @@ Proyecto web tipo **Netflix personal** para visualizar y gestionar tu colección
 - El backend expone endpoints para consultar, agregar y eliminar películas/series.
 - El frontend consume automáticamente estos endpoints.
 
-¡Disfruta de tu propio Netflix casero! 🍿
+¡Disfruta de tu propio Catalogo casero! 🍿
+
+**NOTA: Esta web no te permite reproducir películas ni series, solo muestra la lista de películas y series con información sobre ellas y una puntuación de TMDb y personal.** 
