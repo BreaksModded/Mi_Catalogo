@@ -4,8 +4,9 @@ import { useNotification } from '../context/NotificationContext';
 import TagsModal from './TagsModal';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
 
-const API_URL = 'http://localhost:8000/medias';
-const TMDB_URL = 'http://localhost:8000/tmdb';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = BACKEND_URL + '/medias';
+const TMDB_URL = BACKEND_URL + '/tmdb';
 
 export default function AddMediaForm({ onAdded }) {
   const { showNotification } = useNotification();
@@ -255,7 +256,7 @@ export default function AddMediaForm({ onAdded }) {
 
   const handleCreateTag = async (nombre) => {
     try {
-      const res = await fetch('http://localhost:8000/tags', {
+      const res = await fetch(BACKEND_URL + '/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre })
@@ -272,7 +273,7 @@ export default function AddMediaForm({ onAdded }) {
 
   const handleDeleteTag = async (tagId) => {
     try {
-      const res = await fetch(`http://localhost:8000/tags/${tagId}`, {
+      const res = await fetch(`${BACKEND_URL}/tags/${tagId}`, {
         method: 'DELETE'
       });
       if (res.ok) {

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import './ListaDetalleModal.css';
 import DetailModal from './DetailModal';
 
-const API_SEARCH = 'http://localhost:8000/search?q='; // Busca por título, actor o director
-const API_ADD = 'http://localhost:8000/listas';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API_SEARCH = BACKEND_URL + '/search?q='; // Busca por título, actor o director
+const API_ADD = BACKEND_URL + '/listas';
 
 export default function ListaDetalleModal({ lista, onClose }) {
   const [search, setSearch] = useState('');
@@ -115,7 +116,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
                   } else {
                     // Si faltan datos, pedirlos al backend por id
                     try {
-                      const res = await fetch(`http://localhost:8000/medias/${media.id}`);
+                      const res = await fetch(`${BACKEND_URL}/medias/${media.id}`);
                       if (res.ok) {
                         const fullMedia = await res.json();
                         setDetalleMedia(fullMedia);

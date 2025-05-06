@@ -141,7 +141,8 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
 }
 
 
-const TMDB_URL = 'http://localhost:8000/tmdb';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const TMDB_URL = BACKEND_URL + '/tmdb';
 
 function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePending, tags, onAddTag, onRemoveTag, onUpdate }) {
   const [tmdbDetails, setTmdbDetails] = useState(null);
@@ -397,7 +398,7 @@ function PersonalNotes({ media, onUpdate, onClose }) {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/media/${media.id}`, {
+      const response = await fetch(`${BACKEND_URL}/media/${media.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

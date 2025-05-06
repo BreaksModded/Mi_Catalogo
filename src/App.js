@@ -8,7 +8,8 @@ import ListasView from './components/ListasView';
 import './App.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
 
-const API_URL = 'http://localhost:8000/medias';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = BACKEND_URL + '/medias';
 
 function getAllGenres(medias) {
   const set = new Set();
@@ -55,10 +56,10 @@ function App() {
     const fetchAllData = async () => {
       try {
         const [mediasRes, favRes, pendRes, tagsRes] = await Promise.all([
-          fetch(API_URL),
-          fetch('http://localhost:8000/favoritos'),
-          fetch('http://localhost:8000/pendientes'),
-          fetch('http://localhost:8000/tags')
+          fetch(BACKEND_URL + '/medias'),
+          fetch(BACKEND_URL + '/favoritos'),
+          fetch(BACKEND_URL + '/pendientes'),
+          fetch(BACKEND_URL + '/tags')
         ]);
         
         const [medias, favs, pends, tags] = await Promise.all([
@@ -292,7 +293,7 @@ function App() {
 
   const handleCreateTag = async (nombre) => {
     try {
-      const res = await fetch("http://localhost:8000/tags", {
+      const res = await fetch(BACKEND_URL + '/tags', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre })
@@ -308,7 +309,7 @@ function App() {
 
   const handleDeleteTag = async (tagId) => {
     try {
-      const res = await fetch(`http://localhost:8000/tags/${tagId}`, { method: "DELETE" });
+      const res = await fetch(`${BACKEND_URL}/tags/${tagId}`, { method: "DELETE" });
       if (res.ok) {
         setTags(tags => tags.filter(t => t.id !== tagId));
         setSelectedTags(selected => selected.filter(id => id !== String(tagId)));
@@ -384,7 +385,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
       
       // Obtener puntuación IMDB si existe ID
       if (media.imdb_id) {
-        const imdbResponse = await fetch(`http://localhost:8000/imdb_rating/${media.imdb_id}`);
+        const imdbResponse = await fetch(`${BACKEND_URL}/imdb_rating/${media.imdb_id}`);
         const {imdb_rating} = await imdbResponse.json();
         return {...media, imdb_rating};
       }
