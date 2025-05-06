@@ -2,10 +2,7 @@
   "name": "catalog",
   "version": "1.0.0",
   "private": true,
-<<<<<<< HEAD
-=======
   "homepage": ".",
->>>>>>> fb5799c5cdb12eb3500ee151559a097a528d8d45
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
