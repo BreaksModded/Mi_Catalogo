@@ -183,7 +183,8 @@ function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePendi
         .finally(() => setLoading(false));
     }
 
-    fetch('http://localhost:8000/listas')
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+fetch(BACKEND_URL + '/listas')
       .then(res => res.json())
       .then(data => {
         setListas(data);
@@ -194,7 +195,8 @@ function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePendi
   }, [media]);
 
   const refreshListas = () => {
-    fetch('http://localhost:8000/listas')
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+fetch(BACKEND_URL + '/listas')
       .then(res => res.json())
       .then(data => {
         setListas(data);

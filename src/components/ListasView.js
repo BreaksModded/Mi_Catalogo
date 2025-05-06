@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import './ListasView.css';
 import ListaDetalleModal from './ListaDetalleModal';
 
-const API_URL = 'http://localhost:8000/listas';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+const API_URL = BACKEND_URL + '/listas';
 
 const ListaIcon = () => (
   <span style={{fontSize:'2.5em',color:'#2d6da3',marginRight:12,verticalAlign:'middle'}}>📚</span>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './ListasModal.css';
 
-const API_URL = 'http://localhost:8000/listas';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+const API_URL = BACKEND_URL + '/listas';
 
 export default function ListasModal({ mediaId, listas, listasDeMedia, onClose, onListasChange }) {
   const [allListas, setAllListas] = useState(listas || []);
