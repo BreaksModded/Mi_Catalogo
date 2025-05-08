@@ -5,6 +5,7 @@ import Filters from './components/Filters';
 import DetailModal from './components/DetailModal';
 import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
+import DatabaseSleepNotice from './components/DatabaseSleepNotice';
 import './App.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
 
@@ -49,10 +50,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [recientes, setRecientes] = useState([]);
   const [orderBy, setOrderBy] = useState(''); // Por defecto vacío, el usuario elige
+  const [showDbSleep, setShowDbSleep] = useState(false);
 
 
   useEffect(() => {
-    
+    let timer = setTimeout(() => setShowDbSleep(true), 5000); // 5 segundos
     const fetchAllData = async () => {
       try {
         const [mediasRes, favRes, pendRes, tagsRes] = await Promise.all([
@@ -73,7 +75,7 @@ function App() {
         setFavorites(favs.map(m => m.id));
         setPendings(pends.map(m => m.id));
         setTags(tags);
-        
+        setShowDbSleep(false); // Oculta el mensaje cuando termina de cargar
       } catch (error) {
         console.error('Error loading data:', error);
         showNotification('Error cargando datos', 'error');
@@ -81,6 +83,7 @@ function App() {
     };
     
     fetchAllData();
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -431,7 +434,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             orderBy={orderBy}
             onOrder={setOrderBy}
           />
-
+          <DatabaseSleepNotice visible={showDbSleep} />
           {selected && (
             <div className="modal">
               <div className="modal-content">

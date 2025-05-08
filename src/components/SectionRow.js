@@ -70,6 +70,12 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
                   className="section-row-poster"
                   loading="lazy"
                 />
+                {item.favorito && (
+                  <span className="favorite-badge">Favorita</span>
+                )}
+                {item.pendiente && (
+                  <span className="pending-badge">Pendiente</span>
+                )}
                 {item.nota_imdb !== undefined && item.nota_imdb !== null && item.nota_imdb !== '' && (
                   <div className="nota-imdb-badge-card">
                     <span className="nota-imdb-num-card">{parseFloat(item.nota_imdb).toFixed(1)}</span>

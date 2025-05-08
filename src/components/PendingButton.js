@@ -1,4 +1,5 @@
 import React from 'react';
+import { MdBookmark, MdBookmarkBorder } from 'react-icons/md';
 import './PendingButton.css';
 
 function PendingButton({ isPending, onToggle }) {
@@ -9,8 +10,13 @@ function PendingButton({ isPending, onToggle }) {
       title={isPending ? 'Quitar de pendientes' : 'Añadir a pendientes'}
       tabIndex={0}
       type="button"
+      style={{ background: 'none', border: 'none', cursor: 'pointer', outline: 'none', padding: 0 }}
     >
-      <span role="img" aria-label="pendientes">{isPending ? '🕒' : '🕓'}</span>
+      {isPending ? (
+        <MdBookmark size={28} color="#00e2c7" />
+      ) : (
+        <MdBookmarkBorder size={28} color="#00e2c7" />
+      )}
     </button>
   );
 }
