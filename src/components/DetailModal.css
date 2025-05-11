@@ -1,11 +1,20 @@
+.detail-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1099;
+}
 .detail-modal-bg {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.82);
-  z-index: 1000;
+  background: rgba(24,24,24,0.35); /* sutil oscurecido además del blur */
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px); /* para Safari */
+  transition: backdrop-filter 0.25s, background 0.25s;
 }
 .detail-modal {
   background: #232323;

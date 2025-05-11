@@ -8,6 +8,7 @@ import ListasView from './components/ListasView';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
 import './App.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
+import cacheFetch from './components/cacheFetch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API_URL = BACKEND_URL + '/medias';
@@ -25,6 +26,8 @@ function App() {
   const [filteredItems, setFilteredItems] = useState([]); 
   const [section, setSection] = useState("inicio");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [selected, setSelected] = useState(null);
   const [favorites, setFavorites] = useState([]); 
   const [pendings, setPendings] = useState([]); 
@@ -53,38 +56,231 @@ function App() {
   const [showDbSleep, setShowDbSleep] = useState(false);
 
 
+  // Paginación para la sección principal
+  const PAGE_SIZE = 36;
+  // Principal
+  const [mainOffset, setMainOffset] = useState(0);
+  const [mainHasMore, setMainHasMore] = useState(true);
+  const [mainLoadingMore, setMainLoadingMore] = useState(false);
+  // Películas
+  const [pelisOffset, setPelisOffset] = useState(0);
+  const [pelisHasMore, setPelisHasMore] = useState(true);
+  const [pelisLoadingMore, setPelisLoadingMore] = useState(false);
+  const [pelis, setPelis] = useState([]);
+  // Series
+  const [seriesOffset, setSeriesOffset] = useState(0);
+  const [seriesHasMore, setSeriesHasMore] = useState(true);
+  const [seriesLoadingMore, setSeriesLoadingMore] = useState(false);
+  const [seriesList, setSeriesList] = useState([]);
+
+  // Actualizar paginación cuando cambian los filtros
   useEffect(() => {
+    if (section === 'peliculas') {
+      setPelis([]);
+      setPelisOffset(0);
+      setPelisHasMore(true);
+      setPelisLoadingMore(false);
+      fetchPelis(0, true);
+    }
+    if (section === 'series') {
+      setSeriesList([]);
+      setSeriesOffset(0);
+      setSeriesHasMore(true);
+      setSeriesLoadingMore(false);
+      fetchSeries(0, true);
+    }
+    // eslint-disable-next-line
+  }, [genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+
+  // Nuevo efecto para filtrar favoritos/pendientes/tags usando el backend
+  useEffect(() => {
+    // Si hay filtros activos, nunca mostrar el aviso de base de datos dormida
+    if (showFavs || showPendings || selectedTags.length > 0) {
+      setShowDbSleep(false);
+      let controller = new AbortController();
+      const fetchFiltered = async () => {
+        setLoading(true);
+        try {
+          const params = new URLSearchParams();
+          params.append('skip', 0);
+          params.append('limit', PAGE_SIZE);
+          if (showFavs) params.append('favorito', 'true');
+          if (showPendings) params.append('pendiente', 'true');
+          if (selectedTags.length === 1) params.append('tag_id', selectedTags[0]);
+          // Si estamos en sección películas o series y hay filtro activo, forzar tipo
+          if ((showFavs || showPendings || selectedTags.length > 0) && (section === 'peliculas' || section === 'series')) {
+            params.append('tipo', section === 'peliculas' ? 'película' : 'serie');
+          } else if (tipo) {
+            params.append('tipo', tipo);
+          }
+          if (genero) params.append('genero', genero);
+          if (minYear) params.append('min_year', minYear);
+          if (maxYear) params.append('max_year', maxYear);
+          if (minNota) params.append('min_nota', minNota);
+          if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+          if (orderBy) params.append('order_by', orderBy);
+          const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`, { signal: controller.signal });
+          const data = await res.json();
+          setMedias(data);
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            showNotification('Error filtrando datos', 'error');
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchFiltered();
+      return () => controller.abort();
+    }
+    // Si no hay filtros, mostrar el aviso solo si la carga tarda más de 5 segundos
+    setShowDbSleep(false); // Oculta el aviso antes de cargar
     let timer = setTimeout(() => setShowDbSleep(true), 5000); // 5 segundos
     const fetchAllData = async () => {
       try {
-        const [mediasRes, favRes, pendRes, tagsRes] = await Promise.all([
-          fetch(BACKEND_URL + '/medias'),
-          fetch(BACKEND_URL + '/favoritos'),
-          fetch(BACKEND_URL + '/pendientes'),
-          fetch(BACKEND_URL + '/tags')
-        ]);
-        
+        // Carga inicial limitada
         const [medias, favs, pends, tags] = await Promise.all([
-          mediasRes.json(),
-          favRes.json(),
-          pendRes.json(),
-          tagsRes.json()
+          cacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`),
+          cacheFetch(BACKEND_URL + '/favoritos'),
+          cacheFetch(BACKEND_URL + '/pendientes'),
+          cacheFetch(BACKEND_URL + '/tags')
         ]);
-        
         setMedias(medias);
         setFavorites(favs.map(m => m.id));
         setPendings(pends.map(m => m.id));
         setTags(tags);
         setShowDbSleep(false); // Oculta el mensaje cuando termina de cargar
+        clearTimeout(timer); // Cancela el timeout si la carga termina antes
       } catch (error) {
         console.error('Error loading data:', error);
         showNotification('Error cargando datos', 'error');
+        clearTimeout(timer); // Cancela el timeout también si hay error
       }
     };
-    
     fetchAllData();
     return () => clearTimeout(timer);
-  }, []);
+  }, [showFavs, showPendings, selectedTags, tipo, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+
+  // Sincronizar showFavs y showPendings con section
+  useEffect(() => {
+    if (section === 'favoritos') {
+      setShowFavs(true);
+      setShowPendings(false);
+    } else if (section === 'pendientes') {
+      setShowFavs(false);
+      setShowPendings(true);
+    } else {
+      setShowFavs(false);
+      setShowPendings(false);
+    }
+  }, [section]);
+
+  // Función para cargar más en la página principal
+  const handleLoadMoreMain = async () => {
+    setMainLoadingMore(true);
+    const res = await fetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`);
+    const data = await res.json();
+    setMedias(prev => [...prev, ...data]);
+    setMainOffset(prev => prev + PAGE_SIZE);
+    setMainHasMore(data.length === PAGE_SIZE);
+    setMainLoadingMore(false);
+  };
+
+  // Paginación para películas con filtros
+  useEffect(() => {
+    if (section === 'peliculas') {
+      setPelis([]);
+      setPelisOffset(0);
+      setPelisHasMore(true);
+      setPelisLoadingMore(false);
+      fetchPelis(0, true);
+    }
+    // eslint-disable-next-line
+  }, [section, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+
+  const fetchPelis = async (offset, reset = false) => {
+    setPelisLoadingMore(true);
+    // Construir query string con filtros
+    const params = new URLSearchParams();
+    params.append('skip', offset);
+    params.append('limit', PAGE_SIZE);
+    params.append('tipo', 'película');
+    if (genero) params.append('genero', genero);
+    if (minYear) params.append('min_year', minYear);
+    if (maxYear) params.append('max_year', maxYear);
+    if (minNota) params.append('min_nota', minNota);
+    if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+    if (orderBy) params.append('order_by', orderBy);
+    const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+    const data = await res.json();
+    setPelis(prev => reset || offset === 0 ? data : [...prev, ...data]);
+    setPelisOffset(offset + PAGE_SIZE);
+    setPelisHasMore(data.length === PAGE_SIZE);
+    setPelisLoadingMore(false);
+  };
+
+  const handleLoadMorePelis = () => {
+    fetchPelis(pelisOffset);
+  };
+
+  // Paginación para series con filtros
+  useEffect(() => {
+    if (section === 'series') {
+      setSeriesList([]);
+      setSeriesOffset(0);
+      setSeriesHasMore(true);
+      setSeriesLoadingMore(false);
+      fetchSeries(0, true);
+    }
+    // eslint-disable-next-line
+  }, [section, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+
+  const fetchSeries = async (offset, reset = false) => {
+    setSeriesLoadingMore(true);
+    // Construir query string con filtros
+    const params = new URLSearchParams();
+    params.append('skip', offset);
+    params.append('limit', PAGE_SIZE);
+    params.append('tipo', 'serie');
+    if (genero) params.append('genero', genero);
+    if (minYear) params.append('min_year', minYear);
+    if (maxYear) params.append('max_year', maxYear);
+    if (minNota) params.append('min_nota', minNota);
+    if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+    if (orderBy) params.append('order_by', orderBy);
+    const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+    const data = await res.json();
+    setSeriesList(prev => reset || offset === 0 ? data : [...prev, ...data]);
+    setSeriesOffset(offset + PAGE_SIZE);
+    setSeriesHasMore(data.length === PAGE_SIZE);
+    setSeriesLoadingMore(false);
+  };
+
+  const handleLoadMoreSeries = () => {
+    fetchSeries(seriesOffset);
+  };
+
+  // Búsqueda directa a la base de datos
+  useEffect(() => {
+    let abort = false;
+    const fetchSearch = async () => {
+      if (searchQuery.length > 0) {
+        setIsSearching(true);
+        try {
+          const res = await fetch(`${BACKEND_URL}/search?q=${encodeURIComponent(searchQuery)}`);
+          const data = await res.json();
+          if (!abort) setSearchResults(data);
+        } catch (e) {
+          if (!abort) setSearchResults([]);
+        }
+        setIsSearching(false);
+      } else {
+        setSearchResults([]);
+      }
+    };
+    fetchSearch();
+    return () => { abort = true; };
+  }, [searchQuery, BACKEND_URL]);
 
   useEffect(() => {
     let results = [...medias];
@@ -101,8 +297,9 @@ function App() {
     // Filtrado por sección
     if (section === 'peliculas') results = results.filter(m => m.tipo === 'película');
     if (section === 'series') results = results.filter(m => m.tipo === 'serie');
-    if (section === 'favoritos') results = results.filter(m => favorites.includes(m.id));
-    if (section === 'pendientes') results = results.filter(m => pendings.includes(m.id));
+    // El filtrado por favoritos, pendientes y tags ahora se hace en el backend
+    // if (section === 'favoritos') results = results.filter(m => favorites.includes(m.id));
+    // if (section === 'pendientes') results = results.filter(m => pendings.includes(m.id));
     // ¡Sin límite! Se muestran todas las películas y series en sus respectivas secciones.
     
     // Normalización para búsqueda
@@ -134,8 +331,9 @@ function App() {
     if (minYear) results = results.filter(m => m.anio >= minYear);
     if (maxYear) results = results.filter(m => m.anio <= maxYear);
     if (minNota) results = results.filter(m => m.nota_imdb >= minNota);
-    if (showFavs) results = results.filter(m => favorites.includes(m.id));
-    if (showPendings) results = results.filter(m => pendings.includes(m.id));
+    // El filtrado por favoritos y pendientes ahora se hace en el backend
+    // if (showFavs) results = results.filter(m => favorites.includes(m.id));
+    // if (showPendings) results = results.filter(m => pendings.includes(m.id));
 
     // Ordenar según orderBy
     if (orderBy === 'nota_personal') {
@@ -153,20 +351,21 @@ function App() {
     }
 
 
-    if (selectedTags.length > 0) {
-      results = results.filter(m => 
-        Array.isArray(m.tags) && 
-        selectedTags.every(tid => 
-          m.tags.some(tag => String(tag.id) === String(tid))
-        )
-      );
-    }
+    // El filtrado por tags ahora se hace en el backend (solo 1 tag soportada por ahora)
+    // if (selectedTags.length > 0) {
+    //   results = results.filter(m => 
+    //     Array.isArray(m.tags) && 
+    //     selectedTags.every(tid => 
+    //       m.tags.some(tag => String(tag.id) === String(tid))
+    //     )
+    //   );
+    // }
     // Filtro por nota personal
     if (minNotaPersonal) {
       results = results.filter(m => m.nota_personal && Number(m.nota_personal) >= Number(minNotaPersonal));
     }
     setFilteredItems(results);
-  }, [medias, section, searchQuery, genero, minYear, maxYear, minNota, minNotaPersonal, favorites, pendings, showFavs, showPendings, selectedTags, notaPersonal, orderBy]);
+  }, [medias, section, genero, minYear, maxYear, minNota, minNotaPersonal, favorites, pendings, showFavs, showPendings, selectedTags, notaPersonal, orderBy]);
 
   useEffect(() => {
     const tendencias = [...filteredItems].sort((a, b) => b.nota_imdb - a.nota_imdb);
@@ -236,26 +435,7 @@ function App() {
 
   // Handlers (handleToggleFavorite, handleTogglePending, handleDeleteMedia, etc.)
   // Necesitan actualizar `medias` Y `sectionItems` si el elemento modificado está en la sección paginada actual
-  const handleToggleFavorite = async (id) => {
-    const mediaIndex = medias.findIndex(m => m.id === id);
-    const currentMedia = mediaIndex !== -1 ? medias[mediaIndex] : null;
-    if (!currentMedia) return;
-
-    const nuevo = !currentMedia.favorito;
-    try {
-      const res = await fetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { method: "PATCH" });
-      if (!res.ok) throw new Error("Error al actualizar favorito");
-      const updatedMedia = await res.json();
-
-      // Actualizar estado `medias`
-      setMedias(prevMedias => prevMedias.map(m => m.id === id ? updatedMedia : m));
-      // Actualizar lista de IDs de favoritos
-      setFavorites(favs => nuevo ? [...favs, id] : favs.filter(f => f !== id));
-    } catch (err) {
-      console.error("Error:", err);
-      // Revertir visualmente si falla (opcional)
-    }
-  };
+  // Handler para favoritos: tras actualizar, recarga la lista de favoritos y refresca si es necesario
 
   const handleTogglePending = async (id) => {
     const mediaIndex = medias.findIndex(m => m.id === id);
@@ -292,6 +472,35 @@ function App() {
   // ... (Resto de handlers: handleTagChange, handleCreateTag, handleDeleteTag, handleAddTag, handleRemoveTag, handleUpdateNota)
   // Estos también podrían necesitar actualizar sectionItems si modifican un item visible en la sección paginada
   // Por simplicidad, por ahora solo actualizan `medias` y `tags`. Se puede refinar si es necesario.
+
+  // Handler para favoritos: tras actualizar, recarga la lista de favoritos y refresca si es necesario
+  // Handler para favoritos: tras actualizar, recarga la lista de favoritos y refresca si es necesario
+const handleToggleFavorite = async (id) => {
+    const mediaIndex = medias.findIndex(m => m.id === id);
+    const currentMedia = mediaIndex !== -1 ? medias[mediaIndex] : null;
+    if (!currentMedia) return;
+    const nuevo = !currentMedia.favorito;
+    try {
+      const res = await fetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { method: "PATCH" });
+      if (!res.ok) throw new Error("Error al actualizar favorito");
+      const updatedMedia = await res.json();
+      setMedias(prevMedias => prevMedias.map(m => m.id === id ? updatedMedia : m));
+      // Recargar lista de favoritos
+      const favs = await cacheFetch(BACKEND_URL + '/favoritos');
+      setFavorites(favs.map(m => m.id));
+      // Si hay filtro de favoritos activo, recargar lista filtrada
+      if (showFavs) {
+        // Forzar recarga de filtro
+        setShowFavs(false);
+        setTimeout(() => setShowFavs(true), 0);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+// --- Eliminar cualquier declaración previa/duplicada de handleToggleFavorite ---
+
+
   const handleTagChange = (tagIds) => setSelectedTags(tagIds);
 
   const handleCreateTag = async (nombre) => {
@@ -468,7 +677,17 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
               onUpdateNota={handleUpdateNota}
             />
           )}
-          {section === "inicio" && (
+          {isSearching && (
+             <div style={{ textAlign: 'center', margin: '2rem 0', color: '#00e2c7' }}>Buscando...</div>
+           )}
+           {searchQuery && !isSearching && (
+             <SectionRow 
+               title={`Resultados de "${searchQuery}"`}
+               items={searchResults}
+               onSelect={setSelected}
+             />
+           )}
+           {!searchQuery && section === "inicio" && (
             <>
               {filteredItems.length > 0 && (
                 <SectionRow 
@@ -487,22 +706,107 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
               )}
             </>
           )}
-          {section !== "inicio" && (
-            <SectionRow 
-              title={section === 'favoritos' ? 'Favoritos' : 
-                     section === 'pendientes' ? 'Pendientes' : 
-                     section.charAt(0).toUpperCase() + section.slice(1)}
-              items={filteredItems}
-              onSelect={setSelected}
-            />
-          )}
-          {/* Renderizado anterior para secciones no paginadas (si fuera necesario, pero ahora todas las principales son paginadas o inicio) */}
-          {/* {section !== "inicio" && !isPaginatedSection && ( ... )} */}
-        </>
-      )}
-    </>
-  );
-}
+           {!searchQuery && section === "peliculas" && (
+  <>
+    <SectionRow 
+      title="Películas"
+      items={(showFavs || showPendings || selectedTags.length > 0) ? medias : pelis}
+      onSelect={setSelected}
+    />
+    {!(showFavs || showPendings || selectedTags.length > 0) && pelis.length > 0 && pelisHasMore && (
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+        <button
+          className="btn-cargar-mas"
+          onClick={handleLoadMorePelis}
+          disabled={pelisLoadingMore}
+          style={{
+            background: '#00e2c7',
+            color: '#181818',
+            fontWeight: 'bold',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 32px',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+          }}
+        >
+          {pelisLoadingMore ? 'Cargando...' : 'Cargar más'}
+        </button>
+      </div>
+    )}
+  </>
+)}
+           {!searchQuery && section === "series" && (
+  <>
+    <SectionRow 
+      title="Series"
+      items={(showFavs || showPendings || selectedTags.length > 0) ? medias : seriesList}
+      onSelect={setSelected}
+    />
+    {!(showFavs || showPendings || selectedTags.length > 0) && seriesList.length > 0 && seriesHasMore && (
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+        <button
+          className="btn-cargar-mas"
+          onClick={handleLoadMoreSeries}
+          disabled={seriesLoadingMore}
+          style={{
+            background: '#00e2c7',
+            color: '#181818',
+            fontWeight: 'bold',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 32px',
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+          }}
+        >
+          {seriesLoadingMore ? 'Cargando...' : 'Cargar más'}
+        </button>
+      </div>
+    )}
+  </>
+)}
+           {!searchQuery && section !== "inicio" && section !== "peliculas" && section !== "series" && (
+             <SectionRow 
+               title={section === 'favoritos' ? 'Favoritos' : 
+                      section === 'pendientes' ? 'Pendientes' : 
+                      section.charAt(0).toUpperCase() + section.slice(1)}
+               items={filteredItems}
+               onSelect={setSelected}
+             />
+           )}
+           {/* Renderizado anterior para secciones no paginadas (si fuera necesario, pero ahora todas las principales son paginadas o inicio) */}
+           {/* {section !== "inicio" && !isPaginatedSection && ( ... )} */}
+           {/* Botón Cargar más para la página principal */}
+           {!searchQuery && section === "inicio" && mainHasMore && filteredItems.length > 0 && (
+             <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+               <button
+                 className="btn-cargar-mas"
+                 onClick={handleLoadMoreMain}
+                 disabled={mainLoadingMore}
+                 style={{
+                   background: '#00e2c7',
+                   color: '#181818',
+                   fontWeight: 'bold',
+                   border: 'none',
+                   borderRadius: '8px',
+                   padding: '12px 32px',
+                   fontSize: '1.1rem',
+                   cursor: 'pointer',
+                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                 }}
+               >
+                 {mainLoadingMore ? 'Cargando...' : 'Cargar más'}
+               </button>
+             </div>
+           )}
+         </>
+       )}
+     </>
+   );
+ }
 
 function AppWrapper() {
   return (
