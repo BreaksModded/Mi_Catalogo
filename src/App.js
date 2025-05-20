@@ -959,19 +959,18 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             </div>
           )}
           {selected && (
-            <DetailModal
-              media={selected}
-              onClose={() => setSelected(null)}
-              onDelete={handleDeleteMedia}
-              onToggleFavorite={handleToggleFavorite}
-              onTogglePending={handleTogglePending}
-              tags={tags}
-              onAddTag={handleAddTag}
-              onRemoveTag={handleRemoveTag}
-              onCreateTag={handleCreateTag}
-              onUpdateNota={handleUpdateNota}
-            />
-          )}
+  <DetailModal
+    media={selected}
+    onClose={() => setSelected(null)}
+    onDelete={handleDeleteMedia}
+    onToggleFavorite={handleToggleFavorite}
+    onTogglePending={handleTogglePending}
+    tags={tags}
+    onAddTag={handleAddTag}
+    onRemoveTag={handleRemoveTag}
+    onUpdate={setSelected} // Pass setSelected as onUpdate
+  />
+)}
           {/* Los mensajes de filtrado y búsqueda ahora se muestran con el spinner */}
            {/* Mensaje de búsqueda */}
            {searchQuery && isSearching && (

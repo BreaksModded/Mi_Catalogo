@@ -8,6 +8,12 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Estado para peor valoradas
+  const [peorPelicula, setPeorPelicula] = useState(null);
+  const [peorSerie, setPeorSerie] = useState(null);
+  const [loadingPeor, setLoadingPeor] = useState(true);
+  const [errorPeor, setErrorPeor] = useState(null);
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   // Definir fetchCounts fuera de useEffect y con useCallback
@@ -40,6 +46,28 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
   useEffect(() => {
     if (BACKEND_URL) {
       fetchCounts();
+      // Fetch peor valoradas
+      const fetchPeores = async () => {
+        setLoadingPeor(true);
+        setErrorPeor(null);
+        try {
+          const [resPeorPeli, resPeorSerie] = await Promise.all([
+            fetch(`${BACKEND_URL}/medias/peor_pelicula`),
+            fetch(`${BACKEND_URL}/medias/peor_serie`)
+          ]);
+          let peli = null;
+          let serie = null;
+          if (resPeorPeli.ok) peli = await resPeorPeli.json();
+          if (resPeorSerie.ok) serie = await resPeorSerie.json();
+          setPeorPelicula(peli);
+          setPeorSerie(serie);
+        } catch (err) {
+          setErrorPeor('No se pudieron cargar las peor valoradas');
+        } finally {
+          setLoadingPeor(false);
+        }
+      };
+      fetchPeores();
     } else {
       setError('La URL del backend no está configurada.');
       setLoading(false);
@@ -258,11 +286,12 @@ useEffect(() => {
         </div>
       </section>
 
+      {/* Top 5 */}
       <section className="resumen-section top-lists-section">
         <h2>Top 5</h2>
         <div className="top-lists-grid">
           <div className="top-list">
-            <h3>🏆 Películas</h3>
+            <h3>🎬 Películas</h3>
             {topPeliculasBD.length > 0 ? (
               <ol>
                 {topPeliculasBD.map(m => (
@@ -286,6 +315,39 @@ useEffect(() => {
             ) : <p className="no-data-message">No hay series valoradas.</p>}
           </div>
         </div>
+      </section>
+
+      {/* Peor valoradas - DISEÑO MEJORADO */}
+      <section className="resumen-section peor-valoradas-section">
+        <h2>Peor valoradas</h2>
+        {loadingPeor ? (
+          <div className="loading-spinner" style={{margin:'1rem auto'}}></div>
+        ) : errorPeor ? (
+          <div className="error-message">{errorPeor}</div>
+        ) : (
+          <div className="peor-valoradas-grid">
+            {/* Tarjeta Peor Película */}
+            <div className="peor-card" style={{background:'#ffeaea'}}>
+              <div className="peor-icon" style={{fontSize:'2.5rem', color:'#e74c3c'}}>🎬</div>
+              <div className="peor-titulo">
+                {peorPelicula ? peorPelicula.titulo : <span className="no-data-message">No hay películas valoradas.</span>}
+              </div>
+              <div className="peor-nota-badge" style={{background:'#e74c3c', color:'#fff'}}>
+                {peorPelicula && peorPelicula.nota_personal !== null ? peorPelicula.nota_personal : '-'}
+              </div>
+            </div>
+            {/* Tarjeta Peor Serie */}
+            <div className="peor-card" style={{background:'#eaf7ff'}}>
+              <div className="peor-icon" style={{fontSize:'2.5rem', color:'#2980b9'}}>📺</div>
+              <div className="peor-titulo">
+                {peorSerie ? peorSerie.titulo : <span className="no-data-message">No hay series valoradas.</span>}
+              </div>
+              <div className="peor-nota-badge" style={{background:'#2980b9', color:'#fff'}}>
+                {peorSerie && peorSerie.nota_personal !== null ? peorSerie.nota_personal : '-'}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Top Actores y Directores */}
