@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './DetailModal.css';
+import './DetailModal.similares.css';
 import FavoriteButton from './FavoriteButton';
 import PendingButton from './PendingButton';
 import ListasModal from './ListasModal';
@@ -11,28 +12,28 @@ function getPlatformHome(providerName) {
   if (!providerName) return null;
   const name = providerName.trim().toLowerCase();
   switch (name) {
-    case 'netflix': return 'https://www.netflix.com/';
-    case 'amazon prime video':
-    case 'prime video': return 'https://www.primevideo.com/';
-    case 'disney plus':
-    case 'disney+': return 'https://www.disneyplus.com/';
-    case 'apple tv plus':
-    case 'apple tv+': return 'https://tv.apple.com/';
+    case 'netflix': return 'https://www.netflix.com/es/';
+    case 'amazon prime video': return 'https://www.primevideo.com/es/';
+    case 'prime video': return 'https://www.primevideo.com/es/';
+    case 'disney plus': return 'https://www.disneyplus.com/es/';
+    case 'disney+': return 'https://www.disneyplus.com/es/';
+    case 'apple tv plus': return 'https://tv.apple.com/es/';
+    case 'apple tv+': return 'https://tv.apple.com/es/';
     case 'hbo max': return 'https://play.hbomax.com/';
     case 'filmin': return 'https://www.filmin.es/';
     case 'movistar plus': return 'https://ver.movistarplus.es/';
     case 'rakuten tv': return 'https://rakuten.tv/es/';
     case 'google play movies': return 'https://play.google.com/store/movies';
     case 'microsoft store': return 'https://www.microsoft.com/es-es/store/movies-and-tv';
-    case 'atresplayer':
+    case 'atresplayer': return 'https://www.atresplayer.com/es/';
     case 'atres player': return 'https://www.atresplayer.com/';
     case 'rtve play': return 'https://www.rtve.es/play/';
-    case 'flixolé':
+    case 'flixolé': return 'https://flixole.com/es/';
     case 'flixole': return 'https://flixole.com/';
     case 'vodafone tv': return 'https://vodafone.tv/';
     case 'orange tv': return 'https://orangetv.orange.es/';
     case 'skyshowtime': return 'https://www.skyshowtime.com/es/';
-    case 'youtube':
+    case 'youtube': return 'https://www.youtube.com/';
     case 'youtube movies': return 'https://www.youtube.com/movies';
     case 'tivify': return 'https://www.tivify.tv/';
     case 'pluto tv': return 'https://pluto.tv/';
@@ -145,6 +146,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
 function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePending, tags, onAddTag, onRemoveTag, onUpdate }) {
+  // --- Similares ---
+  const [similares, setSimilares] = useState([]);
+  const [loadingSimilares, setLoadingSimilares] = useState(false);
+  const [errorSimilares, setErrorSimilares] = useState('');
+  const carouselRef = useRef(null);
+const isDraggingRef = useRef(false);
+const startXRef = useRef(0);
+const scrollLeftRef = useRef(0);
+
   const [tmdbDetails, setTmdbDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -194,6 +204,21 @@ fetch(BACKEND_URL + '/listas')
       });
   }, [media]);
 
+useEffect(() => {
+  if (!media || !media.id) {
+    setSimilares([]);
+    return;
+  }
+  setLoadingSimilares(true);
+  setErrorSimilares('');
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+  fetch(`${BACKEND_URL}/medias/${media.id}/similares`)
+    .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail || 'Error'); }))
+    .then(data => setSimilares(Array.isArray(data) ? data : []))
+    .catch(() => setErrorSimilares('No se pudieron cargar similares.'))
+    .finally(() => setLoadingSimilares(false));
+}, [media]);
+
   const refreshListas = () => {
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 fetch(BACKEND_URL + '/listas')
@@ -207,6 +232,9 @@ fetch(BACKEND_URL + '/listas')
   };
 
   if (!media) return null;
+
+  // LOG DE DEPURACIÓN PARA SIMILARES
+  console.log('Similares:', similares, 'Loading:', loadingSimilares, 'Error:', errorSimilares);
 
   const safeTags = Array.isArray(tags) ? tags : [];
   const availableTags = safeTags.filter(t => !localTags.some(lt => lt.id === t.id));
@@ -312,6 +340,57 @@ fetch(BACKEND_URL + '/listas')
                   </div>
                 )}
               </div>
+              
+              <div className="similares-block">
+                <h3>Similares</h3>
+                {loadingSimilares && (
+                  <div className="similares-cargando">
+                    <div className="similares-spinner"></div>
+                    <div style={{marginTop: 10, fontWeight: 500, color: '#1976d2'}}>Buscando coincidencias en la base de datos…</div>
+                  </div>
+                )}
+                {errorSimilares && (
+                  <div className="similares-error">{errorSimilares}</div>
+                )}
+                {!loadingSimilares && similares.length === 0 && !errorSimilares && (
+                  <div className="similares-vacio">No se han encontrado títulos similares.</div>
+                )}
+                {!loadingSimilares && similares.length > 0 && (
+                  <div
+                    className="similares-carousel"
+                    ref={carouselRef}
+                    onMouseDown={e => {
+                      isDraggingRef.current = true;
+                      startXRef.current = e.pageX - (carouselRef.current?.offsetLeft || 0);
+                      scrollLeftRef.current = carouselRef.current?.scrollLeft || 0;
+                    }}
+                    onMouseMove={e => {
+                      if (!isDraggingRef.current) return;
+                      e.preventDefault();
+                      const x = e.pageX - (carouselRef.current?.offsetLeft || 0);
+                      const walk = x - startXRef.current;
+                      if (carouselRef.current) carouselRef.current.scrollLeft = scrollLeftRef.current - walk;
+                    }}
+                    onMouseUp={() => { isDraggingRef.current = false; }}
+                    onMouseLeave={() => { isDraggingRef.current = false; }}
+                  >
+                    {similares.map(item => (
+                      <div className="similares-item" key={item.id}>
+                        <img
+                          src={item.imagen}
+                          alt={item.titulo}
+                          className="similares-img"
+                          onClick={() => {
+                            isDraggingRef.current = false;
+                            onUpdate(item);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="detail-modal-info">
@@ -397,6 +476,7 @@ function PersonalNotes({ media, onUpdate, onClose }) {
   const [editMode, setEditMode] = useState(false);
   const [note, setNote] = useState(media.anotacion_personal || '');
   const [tempNote, setTempNote] = useState(note);
+  const [error, setError] = useState('');
 
   const handleSave = async () => {
     try {

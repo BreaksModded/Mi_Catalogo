@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './ListaDetalleModal.css';
 import DetailModal from './DetailModal';
+import SectionRow from './SectionRow';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API_SEARCH = BACKEND_URL + '/search?q='; // Busca por título, actor o director
@@ -14,6 +15,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
   const [adding, setAdding] = useState(false);
   const [detalleMedia, setDetalleMedia] = useState(null);
   const [medias, setMedias] = useState(lista.medias || []);
+  const [pageSize, setPageSize] = useState(0);
 
   // Búsqueda reactiva con debounce y resultados por título, actor o director
   React.useEffect(() => {
@@ -103,40 +105,34 @@ export default function ListaDetalleModal({ lista, onClose }) {
               ))}
             </div>
           )}
-          {/* Grid de carátulas de la lista */}
-          <div className="lista-detalle-grid">
-            {medias.length === 0 ? (
-              <div className="lista-detalle-vacio">Esta lista está vacía.</div>
-            ) : (
-              medias.map(media => (
-                <div key={media.id} style={{textAlign: 'center', cursor: 'pointer'}} onClick={async () => {
-                  // Si el objeto media ya tiene todos los datos, abrir directamente
-                  if (media.sinopsis && media.director && media.genero && media.anio) {
-                    setDetalleMedia(media);
-                  } else {
-                    // Si faltan datos, pedirlos al backend por id
-                    try {
-                      const res = await fetch(`${BACKEND_URL}/medias/${media.id}`);
-                      if (res.ok) {
-                        const fullMedia = await res.json();
-                        setDetalleMedia(fullMedia);
-                      } else {
-                        setDetalleMedia(media); // fallback
-                      }
-                    } catch {
-                      setDetalleMedia(media); // fallback
-                    }
-                  }
-                }}>
-                  <img src={media.imagen} alt={media.titulo} className="lista-detalle-cover"/>
-                  <div style={{color: '#fff', fontSize: '1em', marginTop: 4}}>{media.titulo}</div>
-                </div>
-              ))
-            )}
+          {/* Grid de carátulas de la lista usando SectionRow para filas completas */}
+          <div style={{marginTop: 24}}>
+            <SectionRow
+              title={null}
+              items={pageSize > 0 ? medias.slice(0, pageSize) : medias}
+              onSelect={media => {
+                // Lógica de abrir detalle igual que antes
+                if (media.sinopsis && media.director && media.genero && media.anio) {
+                  setDetalleMedia(media);
+                } else {
+                  fetch(`${BACKEND_URL}/medias/${media.id}`)
+                    .then(res => res.ok ? res.json() : media)
+                    .then(fullMedia => setDetalleMedia(fullMedia))
+                    .catch(() => setDetalleMedia(media));
+                }
+              }}
+              carousel={false}
+              onPageSizeChange={size => setPageSize(size)}
+            />
+            {medias.length === 0 && <div className="lista-detalle-vacio">Esta lista está vacía.</div>}
           </div>
           {detalleMedia && (
             <div className="detail-modal-from-list">
-              <DetailModal media={detalleMedia} onClose={() => setDetalleMedia(null)} />
+              <DetailModal
+                media={detalleMedia}
+                onClose={() => setDetalleMedia(null)}
+                onUpdate={setDetalleMedia}
+              />
             </div>
           )}
         </div>

@@ -89,16 +89,23 @@
 }
 
 .filters-bar select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background: #2a2a2a;
   color: #fff;
   border: 1px solid #444;
-  padding: 8px 16px;
+  padding: 8px 2em 8px 12px; /* padding-right reducido */
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 140px;
+  min-width: 125px;
   font-size: 0.95em;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.7em center;
 }
+
 
 .filters-bar select:hover {
   background: #333;
@@ -139,3 +146,33 @@
   box-shadow: 0 4px 18px rgba(229,9,20,0.18);
   transform: translateY(-2px) scale(1.06);
 }
+
+/* --- Estilos específicos para react-select --- */
+.react-select__menu {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+.react-select__control {
+  background: #2a2a2a !important;
+  border-color: #444 !important;
+  color: #fff !important;
+  min-width: 140px;
+}
+.react-select__option {
+  background: #232323 !important;
+  color: #fff !important;
+}
+.react-select__option--is-focused {
+  background: #1976d2 !important;
+}
+.react-select__multi-value {
+  background: #1976d2 !important;
+  color: #fff !important;
+}
+.react-select__multi-value__label {
+  color: #fff !important;
+}
+.react-select__placeholder {
+  color: #aaa !important;
+}
+/* --- Fin estilos react-select --- */

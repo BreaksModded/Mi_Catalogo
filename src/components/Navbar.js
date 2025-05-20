@@ -27,6 +27,7 @@ function Navbar({ onSection, onSearch, searchValue }) {
       <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
         <button onClick={() => handleNav('peliculas')}>Películas</button>
         <button onClick={() => handleNav('series')}>Series</button>
+        <button onClick={() => handleNav('resumen')}>Resumen</button>
         <button onClick={() => handleNav('favoritos')}>Favoritos</button>
         <button onClick={() => handleNav('pendientes')}>Pendientes</button>
         <button onClick={() => handleNav('listas')}>Listas</button>

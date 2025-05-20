@@ -31,4 +31,8 @@ button {
 
 input, textarea {
   font-family: inherit;
-} 
+}
+
+select:focus {
+  outline: 2px solid #00e2c7;
+}

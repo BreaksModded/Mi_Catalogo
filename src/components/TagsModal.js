@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './TagsModal.css';
 
-function TagsModal({ tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, onClose }) {
+function TagsModal({ open, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, onClose }) {
   const [newTagName, setNewTagName] = useState('');
   const [error, setError] = useState('');
   const [deleteMode, setDeleteMode] = useState(false);
@@ -28,6 +28,8 @@ function TagsModal({ tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, 
       handleCreateTag();
     }
   };
+
+  if (!open) return null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>

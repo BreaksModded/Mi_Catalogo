@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import TagsModal from './TagsModal';
+import SelectGenero from './SelectGenero';
 import './Filters.css';
 
-function Filters({ tipos, generos, selectedTipo, selectedGenero, onTipo, onGenero, minYear, maxYear, onYear, minNota, maxNota, onNota, minNotaPersonal, onNotaPersonal, showFavs, showPendings, onShowFavs, onShowPendings, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, orderBy, onOrder }) {
+function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGeneros, minYear, maxYear, onYear, minNota, maxNota, onNota, minNotaPersonal, onNotaPersonal, showFavs, showPendings, onShowFavs, onShowPendings, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, orderBy, onOrder }) {
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [showFilters, setShowFilters] = useState(window.innerWidth > 768);
 
@@ -31,10 +32,7 @@ function Filters({ tipos, generos, selectedTipo, selectedGenero, onTipo, onGener
         <option value="">Todos</option>
         {tipos.map(tipo => <option key={tipo} value={tipo}>{tipo.charAt(0).toUpperCase() + tipo.slice(1)}</option>)}
       </select>
-      <select value={selectedGenero} onChange={e => onGenero(e.target.value)}>
-        <option value="">Todos los géneros</option>
-        {generos.map(g => <option key={g} value={g}>{g}</option>)}
-      </select>
+      <SelectGenero generos={generos} selectedGeneros={selectedGeneros} onChange={onGeneros} />
       <div className="input-group">
         <label>Año:</label>
         <input 

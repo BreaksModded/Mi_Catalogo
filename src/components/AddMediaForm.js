@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import './AddMediaForm.css';
 import { useNotification } from '../context/NotificationContext';
 import TagsModal from './TagsModal';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
+import RelatedMedia from './RelatedMedia';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API_URL = BACKEND_URL + '/medias';
@@ -395,6 +397,53 @@ export default function AddMediaForm({ onAdded }) {
                 )}
               </div>
               <button type="submit" className="addmedia-submit-btn">Añadir</button>
+              {form.tmdb_id && tmdbDetails && (
+                <RelatedMedia 
+                  tmdbId={form.tmdb_id.toString()} 
+                  mediaType={tmdbDetails.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie')}
+                  onSelectMedia={async (item) => {
+                    // Busca detalles completos igual que handleTmdbSelect
+                    setLoadingTmdb(true);
+                    setTmdbError('');
+                    setTmdbOptions([]);
+                    setTmdbDetails(null);
+                    try {
+                      const url = `${TMDB_URL}?id=${encodeURIComponent(item.id)}&media_type=${encodeURIComponent(item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}`;
+                      const res = await fetch(url);
+                      if (!res.ok) {
+                        const err = await res.json();
+                        setTmdbError(err.detail || 'No encontrado');
+                        setLoadingTmdb(false);
+                        return;
+                      }
+                      const data = await res.json();
+                      const formToSet = {
+                        titulo: data.titulo || '',
+                        titulo_ingles: data.titulo_original || data.original_title || '',
+                        anio: data.anio || '',
+                        genero: data.genero || '',
+                        sinopsis: data.sinopsis || '',
+                        director: data.director || '',
+                        elenco: data.elenco || '',
+                        imagen: data.imagen || '',
+                        estado: data.estado || '',
+                        tipo: data.tipo || '',
+                        temporadas: data.temporadas || '',
+                        episodios: data.episodios || '',
+                        nota_personal: '',
+                        nota_imdb: data.nota_tmdb || '',
+                        tmdb_id: item.id || '',
+                      };
+                      setForm(formToSet);
+                      setTmdbDetails(data);
+                      setTmdbError('');
+                    } catch (err) {
+                      setTmdbError('Error de conexión');
+                    }
+                    setLoadingTmdb(false);
+                  }}
+                />
+              )}
             </>
           )}
         </form>

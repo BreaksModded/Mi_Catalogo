@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import SectionRow from './components/SectionRow';
+import Resumen from './components/Resumen';
 import Filters from './components/Filters';
 import DetailModal from './components/DetailModal';
 import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
 import './App.css';
+import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
 import cacheFetch from './components/cacheFetch';
 
@@ -34,7 +36,7 @@ function App() {
   const [showFavs, setShowFavs] = useState(false);
   const [showPendings, setShowPendings] = useState(false);
   const [tipo, setTipo] = useState("");
-  const [genero, setGenero] = useState("");
+  const [selectedGeneros, setSelectedGeneros] = useState([]);
   const [minYear, setMinYear] = useState("");
   const [maxYear, setMaxYear] = useState("");
   const [minNota, setMinNota] = useState("");
@@ -51,6 +53,9 @@ function App() {
   const [favoritos, setFavoritos] = useState([]); 
   const [pendientes, setPendientes] = useState([]); 
   const [loading, setLoading] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [noResultsMessage, setNoResultsMessage] = useState('');
+  const [showNoResults, setShowNoResults] = useState(false);
   const [recientes, setRecientes] = useState([]);
   const [orderBy, setOrderBy] = useState(''); // Por defecto vacío, el usuario elige
   const [showDbSleep, setShowDbSleep] = useState(false);
@@ -73,24 +78,65 @@ function App() {
   const [seriesLoadingMore, setSeriesLoadingMore] = useState(false);
   const [seriesList, setSeriesList] = useState([]);
 
-  // Actualizar paginación cuando cambian los filtros
+  // Actualizar paginación cuando cambian los filtros y la sección
   useEffect(() => {
+    // Solo mostrar el indicador de filtrado si hay filtros activos
+    const hayFiltrosActivos = 
+      (selectedGeneros && selectedGeneros.length > 0) || 
+      minYear || 
+      maxYear || 
+      minNota || 
+      minNotaPersonal || 
+      orderBy;
+    
+    // Establecer el estado de filtrado basado en si hay filtros activos
+    setIsFiltering(hayFiltrosActivos);
+
+    // Ocultar el mensaje de no resultados cuando se cambian los filtros
+    setShowNoResults(false);
+    
+    // Solo mostrar el mensaje de "Aplicando filtros..." si hay filtros activos
+    // y no cuando solo cambia la sección
+    if (hayFiltrosActivos) {
+      // Mostrar mensaje de 'Aplicando filtros...' mientras se carga
+      setNoResultsMessage('Aplicando filtros...');
+      setShowNoResults(true);
+      setIsSearching(true); // Indicar que se está realizando una búsqueda
+    }
+    
     if (section === 'peliculas') {
       setPelis([]);
       setPelisOffset(0);
       setPelisHasMore(true);
       setPelisLoadingMore(false);
-      fetchPelis(0, true);
+      fetchPelis(0, true).finally(() => {
+        setIsFiltering(false);
+        // Solo ocultar el mensaje si no hay filtros activos o si la búsqueda ha terminado
+        if (!hayFiltrosActivos) {
+          setShowNoResults(false);
+          setIsSearching(false);
+        }
+      });
     }
-    if (section === 'series') {
+    else if (section === 'series') {
       setSeriesList([]);
       setSeriesOffset(0);
       setSeriesHasMore(true);
       setSeriesLoadingMore(false);
-      fetchSeries(0, true);
+      fetchSeries(0, true).finally(() => {
+        setIsFiltering(false);
+        // Solo ocultar el mensaje si no hay filtros activos o si la búsqueda ha terminado
+        if (!hayFiltrosActivos) {
+          setShowNoResults(false);
+          setIsSearching(false);
+        }
+      });
     }
-    // eslint-disable-next-line
-  }, [genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+    else {
+      setIsFiltering(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
 
   // Nuevo efecto para filtrar favoritos/pendientes/tags usando el backend
   useEffect(() => {
@@ -113,7 +159,7 @@ function App() {
           } else if (tipo) {
             params.append('tipo', tipo);
           }
-          if (genero) params.append('genero', genero);
+          if (selectedGeneros && selectedGeneros.length > 0) params.append('genero', selectedGeneros.join(','));
           if (minYear) params.append('min_year', minYear);
           if (maxYear) params.append('max_year', maxYear);
           if (minNota) params.append('min_nota', minNota);
@@ -141,8 +187,8 @@ function App() {
         // Carga inicial limitada
         const [medias, favs, pends, tags] = await Promise.all([
           cacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`),
-          cacheFetch(BACKEND_URL + '/favoritos'),
-          cacheFetch(BACKEND_URL + '/pendientes'),
+          cacheFetch(`${BACKEND_URL}/medias?favorito=true`),
+          cacheFetch(`${BACKEND_URL}/medias?pendiente=true`),
           cacheFetch(BACKEND_URL + '/tags')
         ]);
         setMedias(medias);
@@ -159,7 +205,7 @@ function App() {
     };
     fetchAllData();
     return () => clearTimeout(timer);
-  }, [showFavs, showPendings, selectedTags, tipo, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+  }, [showFavs, showPendings, selectedTags, tipo, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
 
   // Sincronizar showFavs y showPendings con section
   useEffect(() => {
@@ -180,43 +226,159 @@ function App() {
     setMainLoadingMore(true);
     const res = await fetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`);
     const data = await res.json();
-    setMedias(prev => [...prev, ...data]);
+    
+    // Filtrar duplicados antes de concatenar
+    setMedias(prev => {
+      // Obtener los IDs de los elementos actuales
+      const existingIds = new Set(prev.map(item => item.id));
+      // Filtrar los nuevos elementos para eliminar duplicados
+      const uniqueNewItems = data.filter(item => !existingIds.has(item.id));
+      
+      // Mostrar notificación si no hay más resultados nuevos
+      if (uniqueNewItems.length === 0) {
+        showNotification('No hay más contenido para cargar', 'info');
+      }
+      
+      // Concatenar sin duplicados
+      return [...prev, ...uniqueNewItems];
+    });
+    
     setMainOffset(prev => prev + PAGE_SIZE);
     setMainHasMore(data.length === PAGE_SIZE);
     setMainLoadingMore(false);
   };
 
   // Paginación para películas con filtros
-  useEffect(() => {
-    if (section === 'peliculas') {
-      setPelis([]);
-      setPelisOffset(0);
-      setPelisHasMore(true);
-      setPelisLoadingMore(false);
-      fetchPelis(0, true);
-    }
-    // eslint-disable-next-line
-  }, [section, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+  // ESTE BLOQUE useEffect SE ELIMINA (originalmente alrededor de la línea 211)
+  // useEffect(() => {
+  //   if (section === 'peliculas') {
+  //     setPelis([]);
+  //     setPelisOffset(0);
+  //     setPelisHasMore(true);
+  //     setPelisLoadingMore(false);
+  //     fetchPelis(0, true);
+  //   }
+  //   // eslint-disable-next-line
+  // }, [section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
 
   const fetchPelis = async (offset, reset = false) => {
+    if (pelisLoadingMore && !reset) return;
+    
     setPelisLoadingMore(true);
-    // Construir query string con filtros
-    const params = new URLSearchParams();
-    params.append('skip', offset);
-    params.append('limit', PAGE_SIZE);
-    params.append('tipo', 'película');
-    if (genero) params.append('genero', genero);
-    if (minYear) params.append('min_year', minYear);
-    if (maxYear) params.append('max_year', maxYear);
-    if (minNota) params.append('min_nota', minNota);
-    if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
-    if (orderBy) params.append('order_by', orderBy);
-    const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
-    const data = await res.json();
-    setPelis(prev => reset || offset === 0 ? data : [...prev, ...data]);
-    setPelisOffset(offset + PAGE_SIZE);
-    setPelisHasMore(data.length === PAGE_SIZE);
-    setPelisLoadingMore(false);
+    // Indicar que estamos buscando
+    setIsSearching(true);
+    // Mostrar mensaje de 'Aplicando filtros...' mientras se procesa
+    if (offset === 0) {
+      setNoResultsMessage('Aplicando filtros...');
+      setShowNoResults(true);
+    }
+    
+    try {
+      // Construir query string con filtros
+      const params = new URLSearchParams();
+      params.append('skip', offset);
+      params.append('limit', PAGE_SIZE);
+      params.append('tipo', 'película');
+      
+      // Mejora en el manejo de géneros seleccionados
+      if (selectedGeneros && selectedGeneros.length > 0) {
+        // Enviamos los géneros como un parámetro separado por comas
+        params.append('genero', selectedGeneros.join(','));
+      }
+      
+      if (minYear) params.append('min_year', minYear);
+      if (maxYear) params.append('max_year', maxYear);
+      if (minNota) params.append('min_nota', minNota);
+      if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+      if (orderBy) params.append('order_by', orderBy);
+      
+      console.log('Fetching películas con parámetros:', params.toString());
+      
+      const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+      let data = await res.json();
+      console.log(`Recibidas ${data.length} películas del backend`);
+      
+      // Solo aplicamos filtrado adicional en el cliente si hay múltiples géneros seleccionados
+      // y queremos que coincidan TODOS los géneros (comportamiento AND en lugar de OR)
+      if (selectedGeneros && selectedGeneros.length > 1) {
+        // Mantener el mensaje de "Aplicando filtros..." mientras se realiza el filtrado en el cliente
+        setNoResultsMessage('Aplicando filtros...');
+        setShowNoResults(true);
+        
+        console.log('Aplicando filtrado adicional para múltiples géneros');
+        const dataFiltrada = data.filter(pelicula => {
+          if (!pelicula.genero) return false;
+          
+          // Normalizar los géneros de la película (eliminar espacios, convertir a minúsculas)
+          const generosArray = pelicula.genero.split(',').map(g => g.trim().toLowerCase());
+          
+          // Normalizar los géneros seleccionados
+          const generosSeleccionados = selectedGeneros.map(g => g.trim().toLowerCase());
+          
+          // Verificar si todos los géneros seleccionados están presentes
+          const coinciden = generosSeleccionados.every(genero => 
+            generosArray.some(g => g === genero || g.includes(genero) || genero.includes(g))
+          );
+          
+          // Mostrar solo las películas que coinciden con todos los géneros
+          if (coinciden) {
+            console.log('COINCIDE - Película:', pelicula.titulo, 'Géneros:', generosArray);
+          }
+          
+          return coinciden;
+        });
+        
+        console.log('Películas filtradas:', dataFiltrada.length);
+        data = dataFiltrada; // Asignar los resultados filtrados a data
+      }
+      
+      // Verificar si hay resultados DESPUÉS de todo el procesamiento
+      console.log('Verificando resultados finales, cantidad:', data.length, 'offset:', offset);
+      
+      // Pequeña pausa para asegurar que la UI se actualice correctamente
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (data.length === 0 && offset === 0) {
+        // Solo establecer las películas y el estado de 'has more'
+        setPelis([]);
+        setPelisHasMore(false);
+        setNoResultsMessage('No se encontraron películas con los filtros seleccionados');
+        setShowNoResults(true);
+      } else {
+        // Si hay resultados, establecer el estado de filtrado
+        setIsFiltering(false);
+        setShowNoResults(false);
+        
+        setPelis(prev => {
+          if (reset || offset === 0) {
+            return data;
+          } else {
+            // Obtener los IDs de los elementos actuales
+            const existingIds = new Set(prev.map(item => item.id));
+            // Filtrar los nuevos elementos para eliminar duplicados
+            const uniqueNewItems = data.filter(item => !existingIds.has(item.id));
+            
+            // Mostrar notificación si no hay más resultados nuevos
+            if (uniqueNewItems.length === 0) {
+              showNotification('No hay más películas para cargar', 'info');
+            }
+            
+            // Concatenar sin duplicados
+            return [...prev, ...uniqueNewItems];
+          }
+        });
+      }
+      
+      setPelisOffset(offset + data.length);
+      setPelisHasMore(data.length === PAGE_SIZE);
+    } catch (error) {
+      console.error('Error al cargar películas:', error);
+      setNoResultsMessage('Error al cargar películas');
+      setShowNoResults(true);
+    } finally {
+      setPelisLoadingMore(false);
+      setIsSearching(false);
+    }
   };
 
   const handleLoadMorePelis = () => {
@@ -224,36 +386,99 @@ function App() {
   };
 
   // Paginación para series con filtros
-  useEffect(() => {
-    if (section === 'series') {
-      setSeriesList([]);
-      setSeriesOffset(0);
-      setSeriesHasMore(true);
-      setSeriesLoadingMore(false);
-      fetchSeries(0, true);
-    }
-    // eslint-disable-next-line
-  }, [section, genero, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+  // ESTE BLOQUE useEffect SE ELIMINA (originalmente alrededor de la línea 308)
+  // useEffect(() => {
+  //   if (section === 'series') {
+  //     setSeriesList([]);
+  //     setSeriesOffset(0);
+  //     setSeriesHasMore(true);
+  //     setSeriesLoadingMore(false);
+  //     fetchSeries(0, true);
+  //   }
+  //   // eslint-disable-next-line
+  // }, [section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
 
   const fetchSeries = async (offset, reset = false) => {
+    if (seriesLoadingMore && !reset) return;
+    
     setSeriesLoadingMore(true);
-    // Construir query string con filtros
-    const params = new URLSearchParams();
-    params.append('skip', offset);
-    params.append('limit', PAGE_SIZE);
-    params.append('tipo', 'serie');
-    if (genero) params.append('genero', genero);
-    if (minYear) params.append('min_year', minYear);
-    if (maxYear) params.append('max_year', maxYear);
-    if (minNota) params.append('min_nota', minNota);
-    if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
-    if (orderBy) params.append('order_by', orderBy);
-    const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
-    const data = await res.json();
-    setSeriesList(prev => reset || offset === 0 ? data : [...prev, ...data]);
-    setSeriesOffset(offset + PAGE_SIZE);
-    setSeriesHasMore(data.length === PAGE_SIZE);
-    setSeriesLoadingMore(false);
+    setIsSearching(true);
+    if (offset === 0) {
+      setNoResultsMessage('Aplicando filtros...');
+      setShowNoResults(true);
+    }
+    
+    try {
+      const params = new URLSearchParams();
+      params.append('skip', offset);
+      params.append('limit', PAGE_SIZE);
+      params.append('tipo', 'serie');
+      
+      // Enviamos los géneros al backend, pero solo pedimos que coincida con AL MENOS UNO
+      if (selectedGeneros && selectedGeneros.length > 0) {
+        params.append('genero', selectedGeneros.join(','));
+      }
+      
+      if (minYear) params.append('min_year', minYear);
+      if (maxYear) params.append('max_year', maxYear);
+      if (minNota) params.append('min_nota', minNota);
+      if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+      if (orderBy) params.append('order_by', orderBy);
+      
+      console.log('Fetching series con parámetros:', params.toString());
+      
+      const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+      let data = await res.json();
+      console.log(`Recibidas ${data.length} series del backend`);
+      
+      // Filtrado adicional para múltiples géneros (comportamiento AND)
+      if (selectedGeneros && selectedGeneros.length > 1) {
+        // Mantener el mensaje de "Aplicando filtros..." mientras se realiza el filtrado en el cliente
+        setNoResultsMessage('Aplicando filtros...');
+        setShowNoResults(true);
+        
+        console.log('Aplicando filtrado adicional para múltiples géneros (modo AND)');
+        const dataFiltrada = data.filter(serie => {
+          if (!serie.genero) return false;
+          
+          const generosArray = serie.genero.split(',').map(g => g.trim().toLowerCase());
+          
+          return selectedGeneros.every(genero => {
+            const generoLower = genero.toLowerCase();
+            return generosArray.some(g => g === generoLower);
+          });
+        });
+        
+        console.log(`Filtrado AND: De ${data.length} series, quedan ${dataFiltrada.length}`);
+        data = dataFiltrada;
+      }
+      
+      // Pequeña pausa para asegurar que la UI se actualice correctamente
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (data.length === 0 && offset === 0) {
+        setSeriesList([]);
+        setSeriesHasMore(false);
+        setNoResultsMessage('No se encontraron series con todos los géneros seleccionados');
+        setShowNoResults(true);
+      } else {
+        if (reset || offset === 0) {
+          setSeriesList(data);
+        } else {
+          setSeriesList(prev => [...prev, ...data]);
+        }
+        setSeriesHasMore(data.length === PAGE_SIZE);
+        setSeriesOffset(offset + data.length);
+        setShowNoResults(false);
+      }
+    } catch (error) {
+      console.error('Error al cargar series:', error);
+      setNoResultsMessage('Error al cargar series');
+      setShowNoResults(true);
+    } finally {
+      setSeriesLoadingMore(false);
+      setIsSearching(false);
+    }
   };
 
   const handleLoadMoreSeries = () => {
@@ -273,9 +498,13 @@ function App() {
         } catch (e) {
           if (!abort) setSearchResults([]);
         }
-        setIsSearching(false);
+        // Ocultar el mensaje de búsqueda después de un breve retraso
+        setTimeout(() => {
+          if (!abort) setIsSearching(false);
+        }, 800); // Retraso para asegurar visibilidad del mensaje
       } else {
         setSearchResults([]);
+        setIsSearching(false);
       }
     };
     fetchSearch();
@@ -327,7 +556,12 @@ function App() {
     }
     
     // Filtros adicionales
-    if (genero) results = results.filter(m => m.genero?.split(',').map(g => g.trim()).includes(genero));
+    if (selectedGeneros && selectedGeneros.length > 0) {
+  results = results.filter(m => {
+    const mediaGeneros = m.genero?.split(',').map(g => g.trim()) || [];
+    return selectedGeneros.every(g => mediaGeneros.includes(g));
+  });
+}
     if (minYear) results = results.filter(m => m.anio >= minYear);
     if (maxYear) results = results.filter(m => m.anio <= maxYear);
     if (minNota) results = results.filter(m => m.nota_imdb >= minNota);
@@ -365,7 +599,7 @@ function App() {
       results = results.filter(m => m.nota_personal && Number(m.nota_personal) >= Number(minNotaPersonal));
     }
     setFilteredItems(results);
-  }, [medias, section, genero, minYear, maxYear, minNota, minNotaPersonal, favorites, pendings, showFavs, showPendings, selectedTags, notaPersonal, orderBy]);
+  }, [medias, section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, favorites, pendings, showFavs, showPendings, selectedTags, notaPersonal, orderBy]);
 
   useEffect(() => {
     const tendencias = [...filteredItems].sort((a, b) => b.nota_imdb - a.nota_imdb);
@@ -413,7 +647,7 @@ function App() {
   useEffect(() => {
     // Resetear filtros al cambiar de sección
     setSearchQuery('');
-    setGenero('');
+    setSelectedGeneros([]);
     setMinYear('');
     setMaxYear('');
     setMinNota('');
@@ -610,20 +844,24 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
 
   return (
     <>
-      <Navbar onSection={setSection} onSearch={setSearchQuery} searchValue={searchQuery} />
-      {section === "add" ? (
+      <Navbar 
+        onSection={(section) => { setSection(section); setSearchQuery(''); }} 
+        onSearch={setSearchQuery} 
+        searchValue={searchQuery} 
+      />
+      {section === 'add' ? (
         <AddMediaForm onAdded={handleMediaAdded} />
-      ) : section === "listas" ? (
-        <ListasView />
+      ) : section === 'resumen' ? (
+        <Resumen medias={medias} pendientes={pendientes} />
       ) : (
         <>
           <Filters
             tipos={tipos}
             generos={getAllGenres(medias)}
             selectedTipo={tipo}
-            selectedGenero={genero}
+            selectedGeneros={selectedGeneros}
             onTipo={setTipo}
-            onGenero={setGenero}
+            onGeneros={setSelectedGeneros}
             minYear={minYear}
             maxYear={maxYear}
             onYear={(min, max) => { setMinYear(min); setMaxYear(max); }}
@@ -644,6 +882,50 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             onOrder={setOrderBy}
           />
           <DatabaseSleepNotice visible={showDbSleep} />
+          {/* Mensaje permanente de no resultados o carga */}
+          {showNoResults && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                margin: '3rem 0',
+                fontSize: '1.25rem',
+                background: 'rgba(0,0,0,0.40)',
+                borderRadius: '18px',
+                padding: '2.5rem 1.5rem',
+                boxShadow: '0 2px 18px 0 #0004',
+                maxWidth: 420,
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                border: '2px solid #00e2c7'
+              }}
+            >
+              {noResultsMessage === 'Aplicando filtros...' ? (
+                <>
+                  <div className="loader" style={{ marginBottom: '1rem', width: '40px', height: '40px' }}></div>
+                  <div>
+                    <b>{noResultsMessage}</b>
+                  </div>
+                  <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
+                    Buscando contenido que coincida con tus filtros...
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: '3rem', marginBottom: '0.6rem' }}>🔍</span>
+                  <div>
+                    <b>{noResultsMessage}</b>
+                  </div>
+                  <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
+                    Prueba a cambiar o eliminar algunos filtros para ver más resultados.
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {selected && (
             <div className="modal">
               <div className="modal-content">
@@ -677,16 +959,74 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
               onUpdateNota={handleUpdateNota}
             />
           )}
-          {isSearching && (
-             <div style={{ textAlign: 'center', margin: '2rem 0', color: '#00e2c7' }}>Buscando...</div>
+          {/* Los mensajes de filtrado y búsqueda ahora se muestran con el spinner */}
+           {/* Mensaje de búsqueda */}
+           {searchQuery && isSearching && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                margin: '3rem 0',
+                fontSize: '1.25rem',
+                background: 'rgba(0,0,0,0.40)',
+                padding: '2rem',
+                borderRadius: '12px',
+                width: '90%',
+                maxWidth: '500px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                border: '2px solid #00e2c7'
+              }}
+            >
+              <div className="loader" style={{ marginBottom: '1rem', width: '40px', height: '40px' }}></div>
+              <div>
+                <b>Realizando búsqueda...</b>
+              </div>
+              <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
+                Buscando contenido que coincida con "{searchQuery}"...
+              </div>
+            </div>
            )}
            {searchQuery && !isSearching && (
-             <SectionRow 
-               title={`Resultados de "${searchQuery}"`}
-               items={searchResults}
-               onSelect={setSelected}
-             />
-           )}
+              searchResults.length > 0 ? (
+                <SectionRow 
+                  title={`Resultados de "${searchQuery}"`}
+                  items={searchResults}
+                  onSelect={setSelected}
+                />
+              ) : (
+                <div
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    margin: '3rem 0',
+    fontSize: '1.25rem',
+    background: 'rgba(0,0,0,0.40)',
+    borderRadius: '18px',
+    padding: '2.5rem 1.5rem',
+    boxShadow: '0 2px 18px 0 #0004',
+    maxWidth: 420,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    border: '2px solid #00e2c7'
+  }}
+>
+  <span style={{ fontSize: '3rem', marginBottom: '0.6rem' }}>🔍</span>
+  <div>
+    <b>No se han encontrado resultados</b>
+  </div>
+  <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
+    No hay películas ni series que coincidan con <span style={{ color: '#00e2c7', fontWeight: 700 }}>&quot;{searchQuery}&quot;</span>.
+  </div>
+</div>
+              )
+            )}
            {!searchQuery && section === "inicio" && (
             <>
               {filteredItems.length > 0 && (
