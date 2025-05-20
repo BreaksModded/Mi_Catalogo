@@ -24,9 +24,20 @@ function getAllGenres(medias) {
 function App() {
   
   const { showNotification } = useNotification();
+
   const [medias, setMedias] = useState([]); 
   const [filteredItems, setFilteredItems] = useState([]); 
-  const [section, setSection] = useState("inicio");
+  const [section, setSection] = useState(() => {
+    // Intenta leer la sección guardada en localStorage
+    const saved = localStorage.getItem('catalogo_section');
+    return saved || "inicio";
+  });
+
+  // Guardar la sección actual en localStorage cada vez que cambie
+  React.useEffect(() => {
+    localStorage.setItem('catalogo_section', section);
+  }, [section]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -853,6 +864,8 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
         <AddMediaForm onAdded={handleMediaAdded} />
       ) : section === 'resumen' ? (
         <Resumen medias={medias} pendientes={pendientes} />
+      ) : section === 'listas' ? (
+        <ListasView />
       ) : (
         <>
           <Filters

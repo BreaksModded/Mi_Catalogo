@@ -111,10 +111,7 @@ export default function AddMediaForm({ onAdded }) {
         setResultMsg(tipoTexto + ' añadida con éxito');
         showNotification(tipoTexto + ' añadida con éxito', 'success');
         onAdded && onAdded(nuevoMedia); // Pasar el nuevo medio a onAdded
-        setForm({
-          titulo: '', anio: '', genero: '', sinopsis: '', director: '', elenco: '', imagen: '', estado: '', tipo: '', temporadas: '', episodios: '', nota_personal: '', tmdb_id: ''
-        });
-        setSelectedTags([]);
+        // No limpiar el formulario ni los tags para mantener colección y recomendaciones visibles
       } else {
         const err = await response.json();
         let custom = null;
@@ -146,10 +143,7 @@ export default function AddMediaForm({ onAdded }) {
         setResultMsg(tipoTexto + ' añadida con éxito');
         showNotification(tipoTexto + ' añadida con éxito', 'success');
         onAdded && onAdded(nuevoMedia);
-        setForm({
-          titulo: '', anio: '', genero: '', sinopsis: '', director: '', elenco: '', imagen: '', estado: '', tipo: '', temporadas: '', episodios: '', nota_personal: '', tmdb_id: ''
-        });
-        setSelectedTags([]);
+        // No limpiar el formulario ni los tags para mantener colección y recomendaciones visibles
         return;
       } else {
         setSubmitStatus({type: 'error', msg: 'Error al forzar el guardado'});
@@ -185,7 +179,7 @@ export default function AddMediaForm({ onAdded }) {
     setLoadingTmdb(true);
     setTmdbError('');
     setTmdbOptions([]);
-    setTmdbDetails(null);
+    // setTmdbDetails(null);
     try {
       const tipoPreferido = form.tipo?.toLowerCase() === 'serie' ? 'serie' : (form.tipo?.toLowerCase() === 'película' ? 'película' : '');
       const url = tipoPreferido ? `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&tipo_preferido=${encodeURIComponent(tipoPreferido)}&listar=true` : `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&listar=true`;
@@ -215,7 +209,7 @@ export default function AddMediaForm({ onAdded }) {
     setLoadingTmdb(true);
     setTmdbError('');
     setTmdbOptions([]);
-    setTmdbDetails(null);
+    // setTmdbDetails(null);
     try {
       const url = `${TMDB_URL}?id=${encodeURIComponent(opcion.id)}&media_type=${encodeURIComponent(opcion.media_type)}`;
       const res = await fetch(url);
@@ -406,7 +400,6 @@ export default function AddMediaForm({ onAdded }) {
                     setLoadingTmdb(true);
                     setTmdbError('');
                     setTmdbOptions([]);
-                    setTmdbDetails(null);
                     try {
                       const url = `${TMDB_URL}?id=${encodeURIComponent(item.id)}&media_type=${encodeURIComponent(item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}`;
                       const res = await fetch(url);
