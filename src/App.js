@@ -7,6 +7,7 @@ import DetailModal from './components/DetailModal';
 import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
+import HomeSections from './components/HomeSections';
 import './App.css';
 import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
@@ -1041,21 +1042,8 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             )}
            {!searchQuery && section === "inicio" && (
             <>
-              {filteredItems.length > 0 && (
-                <SectionRow 
-                  title="Añadidas recientemente"
-                  items={[...filteredItems]
-                    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
-                    .slice(0, 20)}
-                  carousel={true}
-                  onSelect={setSelected}
-                />
-              )}
-              {tendencias.length > 0 && <SectionRow title="Tendencias" items={tendencias.slice(0, 30)} carousel={true} onSelect={setSelected} />}
-              {favoritasInicio.length > 0 && <SectionRow title="Tus favoritas" items={favoritasInicio.slice(0, 30)} carousel={true} onSelect={setSelected} />}
-              {porGeneroInicio.map((grupo, i) => 
-                grupo.items.length > 0 && <SectionRow key={i} title={grupo.genero} items={grupo.items.slice(0, 30)} carousel={true} onSelect={setSelected} />
-              )}
+              {/* Las secciones especiales ahora se generan en HomeSections */}
+              <HomeSections medias={medias} />
             </>
           )}
            {!searchQuery && section === "peliculas" && (
@@ -1131,29 +1119,6 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
            )}
            {/* Renderizado anterior para secciones no paginadas (si fuera necesario, pero ahora todas las principales son paginadas o inicio) */}
            {/* {section !== "inicio" && !isPaginatedSection && ( ... )} */}
-           {/* Botón Cargar más para la página principal */}
-           {!searchQuery && section === "inicio" && mainHasMore && filteredItems.length > 0 && (
-             <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
-               <button
-                 className="btn-cargar-mas"
-                 onClick={handleLoadMoreMain}
-                 disabled={mainLoadingMore}
-                 style={{
-                   background: '#00e2c7',
-                   color: '#181818',
-                   fontWeight: 'bold',
-                   border: 'none',
-                   borderRadius: '8px',
-                   padding: '12px 32px',
-                   fontSize: '1.1rem',
-                   cursor: 'pointer',
-                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                 }}
-               >
-                 {mainLoadingMore ? 'Cargando...' : 'Cargar más'}
-               </button>
-             </div>
-           )}
          </>
        )}
      </>
