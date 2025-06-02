@@ -93,16 +93,15 @@ function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGene
       >
         Tags ({selectedTags.length})
       </button>
-      {showTagsModal && (
-        <TagsModal
-          tags={tags}
-          selectedTags={selectedTags}
-          onTagChange={onTagChange}
-          onCreateTag={onCreateTag}
-          onDeleteTag={onDeleteTag}
-          onClose={() => setShowTagsModal(false)}
-        />
-      )}
+      <TagsModal
+        open={showTagsModal}
+        tags={tags}
+        selectedTags={selectedTags}
+        onTagChange={onTagChange}
+        onCreateTag={onCreateTag}
+        onDeleteTag={onDeleteTag}
+        onClose={() => setShowTagsModal(false)}
+      />
       </div>
     </div>
   );

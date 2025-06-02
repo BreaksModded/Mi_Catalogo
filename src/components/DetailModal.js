@@ -300,7 +300,7 @@ fetch(BACKEND_URL + '/listas')
 
               <div className="media-tags-block">
                 <div className="media-tags-header">
-                  <strong>Etiquetas</strong>
+                  <strong>Tags</strong>
                   <button 
                     className={`tags-toggle-btn ${selectingTags ? 'active' : ''}`}
                     onClick={() => { setSelectingTags(!selectingTags); setSelectedTags([]); }}

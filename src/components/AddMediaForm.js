@@ -375,7 +375,7 @@ export default function AddMediaForm({ onAdded }) {
                   className="addmedia-tags-btn"
                   onClick={() => setShowTagsModal(true)}
                 >
-                  Gestionar Etiquetas
+                  Gestionar Tags
                 </button>
                 {selectedTags.length > 0 && (
                   <div className="selected-tags">
@@ -441,16 +441,15 @@ export default function AddMediaForm({ onAdded }) {
           )}
         </form>
       </div>
-      {showTagsModal && (
-        <TagsModal
-          tags={tags}
-          selectedTags={selectedTags}
-          onTagChange={handleTagChange}
-          onCreateTag={handleCreateTag}
-          onDeleteTag={handleDeleteTag}
-          onClose={() => setShowTagsModal(false)}
-        />
-      )}
+      <TagsModal
+        open={showTagsModal}
+        tags={tags}
+        selectedTags={selectedTags}
+        onTagChange={handleTagChange}
+        onCreateTag={handleCreateTag}
+        onDeleteTag={handleDeleteTag}
+        onClose={() => setShowTagsModal(false)}
+      />
     </div>
     </>
   );
