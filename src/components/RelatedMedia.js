@@ -16,7 +16,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
       setError('');
 
       try {
-        console.log('Buscando relacionados para tmdbId:', tmdbId, 'mediaType:', mediaType);
+        
         // Limpiar el estado anterior
         setRelatedMedia([]);
 
@@ -74,7 +74,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
           });
         }
         setRelatedMedia(groups);
-        console.log('Respuesta de recomendaciones:', recommendationsData);
+        
       } catch (err) {
         console.error('Error fetching related media:', err);
         setError('No se pudieron cargar los títulos relacionados');

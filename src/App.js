@@ -204,7 +204,7 @@ function App() {
           cacheFetch(BACKEND_URL + '/tags')
         ]);
         setMedias(medias);
-console.log("[App.js] Medias cargadas desde el backend:", medias);
+
         setFavorites(favs.map(m => m.id));
         setPendings(pends.map(m => m.id));
         setTags(tags);
@@ -305,11 +305,11 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
       if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
       if (orderBy) params.append('order_by', orderBy);
       
-      console.log('Fetching películas con parámetros:', params.toString());
+      
       
       const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
       let data = await res.json();
-      console.log(`Recibidas ${data.length} películas del backend`);
+      
       
       // Solo aplicamos filtrado adicional en el cliente si hay múltiples géneros seleccionados
       // y queremos que coincidan TODOS los géneros (comportamiento AND en lugar de OR)
@@ -318,7 +318,7 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
         setNoResultsMessage('Aplicando filtros...');
         setShowNoResults(true);
         
-        console.log('Aplicando filtrado adicional para múltiples géneros');
+        
         const dataFiltrada = data.filter(pelicula => {
           if (!pelicula.genero) return false;
           
@@ -335,18 +335,18 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
           
           // Mostrar solo las películas que coinciden con todos los géneros
           if (coinciden) {
-            console.log('COINCIDE - Película:', pelicula.titulo, 'Géneros:', generosArray);
+            
           }
           
           return coinciden;
         });
         
-        console.log('Películas filtradas:', dataFiltrada.length);
+        
         data = dataFiltrada; // Asignar los resultados filtrados a data
       }
       
       // Verificar si hay resultados DESPUÉS de todo el procesamiento
-      console.log('Verificando resultados finales, cantidad:', data.length, 'offset:', offset);
+      
       
       // Pequeña pausa para asegurar que la UI se actualice correctamente
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -438,11 +438,11 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
       if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
       if (orderBy) params.append('order_by', orderBy);
       
-      console.log('Fetching series con parámetros:', params.toString());
+      
       
       const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
       let data = await res.json();
-      console.log(`Recibidas ${data.length} series del backend`);
+      
       
       // Filtrado adicional para múltiples géneros (comportamiento AND)
       if (selectedGeneros && selectedGeneros.length > 1) {
@@ -450,7 +450,7 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
         setNoResultsMessage('Aplicando filtros...');
         setShowNoResults(true);
         
-        console.log('Aplicando filtrado adicional para múltiples géneros (modo AND)');
+        
         const dataFiltrada = data.filter(serie => {
           if (!serie.genero) return false;
           
@@ -462,7 +462,7 @@ console.log("[App.js] Medias cargadas desde el backend:", medias);
           });
         });
         
-        console.log(`Filtrado AND: De ${data.length} series, quedan ${dataFiltrada.length}`);
+        
         data = dataFiltrada;
       }
       

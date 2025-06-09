@@ -234,7 +234,7 @@ fetch(BACKEND_URL + '/listas')
   if (!media) return null;
 
   // LOG DE DEPURACIÓN PARA SIMILARES
-  console.log('Similares:', similares, 'Loading:', loadingSimilares, 'Error:', errorSimilares);
+  
 
   const safeTags = Array.isArray(tags) ? tags : [];
   const availableTags = safeTags.filter(t => !localTags.some(lt => lt.id === t.id));

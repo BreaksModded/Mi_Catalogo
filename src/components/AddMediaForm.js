@@ -221,8 +221,8 @@ export default function AddMediaForm({ onAdded }) {
       }
       const data = await res.json();
 
-      console.log('[AddMediaForm] Opción seleccionada:', opcion);
-      console.log('[AddMediaForm] Respuesta completa de la API:', data);
+      
+      
       const formToSet = {
         titulo: data.titulo || '',
         titulo_ingles: data.titulo_original || data.original_title || '',
@@ -240,7 +240,7 @@ export default function AddMediaForm({ onAdded }) {
         nota_imdb: data.nota_tmdb || '', // mapeo TMDb -> IMDb
         tmdb_id: opcion.id || '',
       };
-      console.log('[AddMediaForm] Formulario tras seleccionar TMDb:', formToSet);
+      
       setForm(formToSet);
       setTmdbDetails(data);
       setTmdbError('');
