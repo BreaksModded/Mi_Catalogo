@@ -204,6 +204,7 @@ function App() {
           cacheFetch(BACKEND_URL + '/tags')
         ]);
         setMedias(medias);
+console.log("[App.js] Medias cargadas desde el backend:", medias);
         setFavorites(favs.map(m => m.id));
         setPendings(pends.map(m => m.id));
         setTags(tags);

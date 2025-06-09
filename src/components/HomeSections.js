@@ -43,9 +43,65 @@ function rotateArray(arr, shift) {
 
 // HomeSections ahora recibe 'medias' como prop
 export default function HomeSections({ medias }) {
-  const [sectionData, setSectionData] = useState({});
-  const [loading, setLoading] = useState({});
-  const [errores, setErrores] = useState({});
+  // Estado para medias extra por género
+  const [extraMediasPorGenero, setExtraMediasPorGenero] = useState({});
+  // Agrupación de medias por género individual
+  const mediasPorGenero = useMemo(() => {
+    const agrupado = {};
+    if (!medias || !medias.length) return agrupado;
+    medias.forEach(media => {
+      if (!media.genero) return;
+      // Divide por coma y quita espacios
+      media.genero.split(',').map(g => g.trim()).forEach(genero => {
+        if (!agrupado[genero]) agrupado[genero] = [];
+        agrupado[genero].push(media);
+      });
+    });
+    return agrupado;
+  }, [medias]);
+
+  // Efecto para cargar más títulos si faltan en cada género
+  useEffect(() => {
+    SECTIONS.forEach(section => {
+      if (!section.genero) return;
+      const base = mediasPorGenero[section.genero] || [];
+      const extra = extraMediasPorGenero[section.genero]?.items || [];
+      const total = base.length + extra.length;
+      if (
+        base.length > 0 &&
+        total < ITEMS_PER_ROW &&
+        !(extraMediasPorGenero[section.genero]?.loading) &&
+        !(extraMediasPorGenero[section.genero]?.allLoaded)
+      ) {
+        setExtraMediasPorGenero(prev => ({
+          ...prev,
+          [section.genero]: { loading: true, items: extra, allLoaded: false }
+        }));
+        fetch(`${BACKEND_URL}/medias?genero=${encodeURIComponent(section.genero)}&skip=${total}&limit=${ITEMS_PER_ROW - total}`)
+          .then(res => res.json())
+          .then(nuevos => setExtraMediasPorGenero(prev => ({
+            ...prev,
+            [section.genero]: {
+              loading: false,
+              items: [...extra, ...nuevos],
+              allLoaded: nuevos.length === 0
+            }
+          })))
+          .catch(() => setExtraMediasPorGenero(prev => ({
+            ...prev,
+            [section.genero]: { loading: false, items: extra, allLoaded: true }
+          })));
+      }
+    });
+    // eslint-disable-next-line
+  }, [mediasPorGenero, BACKEND_URL]);
+
+  // Combina medias locales y extra para cada sección
+  function getItemsForSection(genero) {
+    const base = mediasPorGenero[genero] || [];
+    const extra = extraMediasPorGenero[genero]?.items || [];
+    return [...base, ...extra].slice(0, ITEMS_PER_ROW);
+  }
 
   // Rotar SECTIONS según el día del año
   const today = new Date();
@@ -54,35 +110,6 @@ export default function HomeSections({ medias }) {
   const INITIAL_SECTIONS = 6;
   const ITEMS_PER_ROW = 20;
   const [visibleCount, setVisibleCount] = useState(INITIAL_SECTIONS);
-
-  // Evita múltiples fetch simultáneos de la misma sección
-  const fetchingRef = useRef({});
-
-  useEffect(() => {
-    const toLoad = rotatedSections.slice(0, visibleCount).find(section =>
-      !sectionData[section.genero] && !errores[section.genero] && !fetchingRef.current[section.genero]
-    );
-    if (!toLoad) return;
-    fetchingRef.current[toLoad.genero] = true;
-    setLoading(prev => ({ ...prev, [toLoad.genero]: true }));
-    fetch(`${BACKEND_URL}/medias?genero=${encodeURIComponent(toLoad.genero)}&limit=${ITEMS_PER_ROW}&order_by=random`)
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        setSectionData(prev => ({ ...prev, [toLoad.genero]: data }));
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-        setErrores(prev => ({ ...prev, [toLoad.genero]: true }));
-        setLoading(prev => ({ ...prev, [toLoad.genero]: false }));
-      })
-      .finally(() => {
-        setLoading(prev => ({ ...prev, [toLoad.genero]: false }));
-        fetchingRef.current[toLoad.genero] = false;
-      });
-  }, [visibleCount, rotatedSections, sectionData, errores]);
 
   const [selectedMedia, setSelectedMedia] = useState(null);
 
@@ -96,7 +123,7 @@ export default function HomeSections({ medias }) {
 
   return (
     <>
-      {rotatedSections.slice(0, visibleCount).map(section => {
+      {rotatedSections.map(section => {
         // Secciones especiales: tendencias y recientes
         if (section.especial === 'tendencias') {
           // Tendencias: combinación de favorita, nota y reciente
@@ -144,17 +171,19 @@ export default function HomeSections({ medias }) {
           );
         }
         // Secciones normales por género
-        return (
-          <SectionRow
-            key={section.genero}
-            title={section.title}
-            items={sectionData[section.genero] || []}
-            carousel={true}
-            loading={loading[section.genero]}
-            error={errores[section.genero]}
-            onSelect={handleSelect}
-          />
-        );
+        if (section.genero) {
+          return (
+            <SectionRow
+              key={section.genero}
+              title={section.title}
+              items={getItemsForSection(section.genero)}
+              carousel={true}
+              loading={false}
+              error={false}
+              onSelect={handleSelect}
+            />
+          );
+        }
       })}
       {selectedMedia && (
         <DetailModal

@@ -33,3 +33,37 @@
   from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
   to { opacity: 0.98; transform: translateX(-50%) translateY(0); }
 }
+
+/* INFO notification: visually distinct, blue, with icon */
+.notification-info {
+  background: linear-gradient(90deg, #2196f3 60%, #1565c0 100%);
+  border: 2.5px solid #42a5f5;
+  color: #fff;
+  box-shadow: 0 6px 32px #1565c099, 0 2px 12px #1565c066;
+  position: relative;
+  padding-left: 56px; /* space for icon */
+  letter-spacing: 0.02em;
+}
+.notification-info::before {
+  content: '\2139'; /* Unicode info icon ℹ */
+  font-size: 2.1em;
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbdefb;
+  filter: drop-shadow(0 1px 0 #1565c0);
+  font-family: 'Segoe UI Symbol', 'Arial', sans-serif;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* Improve accessibility and visibility for all notifications */
+.notification {
+  outline: 3px solid transparent;
+  transition: box-shadow 0.2s, outline 0.2s;
+}
+.notification:focus, .notification:active, .notification:hover {
+  outline: 3px solid #fff8;
+  box-shadow: 0 8px 36px #000e, 0 2px 18px #0009;
+}

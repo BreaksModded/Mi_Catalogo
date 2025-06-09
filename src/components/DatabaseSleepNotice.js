@@ -10,7 +10,7 @@ export default function DatabaseSleepNotice({ visible }) {
       <div>
         <strong>Base de datos en modo reposo</strong>
         <div style={{ fontSize: 14 }}>
-          La base de datos en Render está en modo reposo (sleep). Este es un comportamiento normal en el plan gratuito. Puede tardar hasta 30-60 segundos en despertar la primera vez que se usa después de un periodo de inactividad.
+          La base de datos en Supabase está en modo reposo (sleep). Este es un comportamiento normal en el plan gratuito. Puede tardar hasta 30-60 segundos en despertar la primera vez que se usa después de un periodo de inactividad.
         </div>
       </div>
     </div>
