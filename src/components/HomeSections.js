@@ -189,6 +189,7 @@ export default function HomeSections({ medias }) {
         <DetailModal
           media={selectedMedia}
           onClose={handleCloseModal}
+          onUpdate={setSelectedMedia}
         />
       )}
     </>
