@@ -11,6 +11,38 @@ const API_URL = BACKEND_URL + '/medias';
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
 export default function AddMediaForm({ onAdded }) {
+  // ...
+  // Chequeo de existencia en catálogo
+  async function checkExistenceInCatalog(tmdb_id, tipo) {
+    setExistStatus(null);
+    setExistMsg('');
+    try {
+      const url = `${API_URL}?tmdb_id=${encodeURIComponent(tmdb_id)}&tipo=${encodeURIComponent(tipo)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Error al comprobar existencia');
+      const data = await res.json();
+      // Se espera que el backend devuelva un array de medias
+      if (Array.isArray(data) && data.length > 0) {
+        setExistStatus({ exists: true, tipo });
+        setExistMsg(
+          tipo.toLowerCase().includes('serie')
+            ? 'Esta serie ya existe en tu catálogo'
+            : 'Esta película ya existe en tu catálogo'
+        );
+      } else {
+        setExistStatus({ exists: false, tipo });
+        setExistMsg(
+          tipo.toLowerCase().includes('serie')
+            ? 'Esta serie no existe en tu catálogo'
+            : 'Esta película no existe en tu catálogo'
+        );
+      }
+    } catch (err) {
+      setExistStatus(null);
+      setExistMsg('No se pudo comprobar la existencia');
+    }
+  }
+
   const { showNotification } = useNotification();
   const [form, setForm] = useState({
     titulo: '',
@@ -29,6 +61,21 @@ export default function AddMediaForm({ onAdded }) {
     tmdb_id: ''
   });
   const [resultMsg, setResultMsg] = useState('');
+const [existStatus, setExistStatus] = useState(null); // { exists: bool, tipo: 'película'|'serie' }
+const [existMsg, setExistMsg] = useState('');
+
+  // Actualizar aviso de existencia cuando cambian los campos relevantes
+  useEffect(() => {
+    // Solo chequear si hay datos válidos
+    if (form.tmdb_id && form.tipo) {
+      checkExistenceInCatalog(form.tmdb_id, form.tipo);
+    } else {
+      setExistStatus(null);
+      setExistMsg('');
+    }
+    // Limpiar aviso si cambia la selección
+    // eslint-disable-next-line
+  }, [form.tmdb_id, form.tipo]);
   const [searchTitle, setSearchTitle] = useState('');
   const [loadingTmdb, setLoadingTmdb] = useState(false);
   const [tmdbError, setTmdbError] = useState('');
@@ -115,9 +162,33 @@ export default function AddMediaForm({ onAdded }) {
       } else {
         const err = await response.json();
         let custom = null;
-        try {
-          custom = typeof err.detail === 'string' && err.detail.startsWith('{') ? JSON.parse(err.detail.replace(/'/g,'"')) : err.detail;
-        } catch {}
+        // Si err.detail es un string que parece un objeto, parsea y extrae el mensaje limpio
+        if (typeof err.detail === 'string' && err.detail.trim().startsWith('{')) {
+          try {
+            custom = JSON.parse(err.detail.replace(/'/g, '"'));
+            if (custom && custom.custom_type === 'tmdb_id_exists') {
+              let msg = '';
+              if (typeof custom.message === 'string') {
+                msg = custom.message;
+              } else {
+                const nombre = custom.titulo || 'este título';
+                const tipo = custom.tipo || '';
+                msg = `Ya tienes "${nombre}"${tipo ? ` (${tipo})` : ''} en tu catálogo.`;
+              }
+              setResultMsg(msg);
+              showNotification(msg, 'error');
+              return;
+            } else {
+              setResultMsg('Error inesperado.');
+              showNotification('Error inesperado.', 'error');
+              return;
+            }
+          } catch {
+            setResultMsg('Ya existe una entrada con este TMDb ID en tu catálogo.');
+            showNotification('Ya existe una entrada con este TMDb ID en tu catálogo.', 'error');
+            return;
+          }
+        }
         // Manejo de errores de validación de FastAPI (array de objetos)
         if (Array.isArray(err.detail)) {
           const msg = err.detail.map(e => e.msg).join('\n');
@@ -125,40 +196,26 @@ export default function AddMediaForm({ onAdded }) {
           showNotification(msg, 'error');
           return;
         }
-        if (custom && custom.custom_type === 'tmdb_id_exists') {
-  setTmdbConflict({
-    open: true,
-    titulo: custom.titulo,
-    tipo: custom.tipo,
-    onConfirm: async () => {
-      setTmdbConflict(conf => ({ ...conf, open: false }));
-      const response2 = await fetch(API_URL + '?forzar=true', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (response2.ok) {
-        const nuevoMedia = await response2.json();
-        const tipoTexto = (form.tipo && form.tipo.toLowerCase().includes('serie')) ? 'Serie' : 'Película';
-        setResultMsg(tipoTexto + ' añadida con éxito');
-        showNotification(tipoTexto + ' añadida con éxito', 'success');
-        onAdded && onAdded(nuevoMedia);
-        // No limpiar el formulario ni los tags para mantener colección y recomendaciones visibles
-        return;
-      } else {
-        setSubmitStatus({type: 'error', msg: 'Error al forzar el guardado'});
-        showNotification('Error al forzar el guardado', 'error');
-        return;
-      }
-    },
-    onCancel: () => {
-      setTmdbConflict(conf => ({ ...conf, open: false }));
-      setSubmitStatus({type: 'warn', msg: custom.message});
-      showNotification(custom.message, 'warning');
-    }
-  });
-  return;
-}
+        // Si err.detail es un objeto (no string ni array), muestra solo el campo message si existe
+        if (typeof err.detail === 'object' && err.detail !== null && !Array.isArray(err.detail)) {
+          if (err.detail.custom_type === 'tmdb_id_exists') {
+            let msg = '';
+            if (typeof err.detail.message === 'string') {
+              msg = err.detail.message;
+            } else {
+              const nombre = err.detail.titulo || 'este título';
+              const tipo = err.detail.tipo || '';
+              msg = `Ya tienes "${nombre}"${tipo ? ` (${tipo})` : ''} en tu catálogo.`;
+            }
+            setResultMsg(msg);
+            showNotification(msg, 'error');
+            return;
+          } else if (err.detail.message) {
+            setResultMsg(err.detail.message);
+            showNotification(err.detail.message, 'error');
+            return;
+          }
+        }
         if (Array.isArray(err.detail)) {
           const msg = err.detail.map(e => e.msg).join('\n');
           setSubmitStatus({type: 'error', msg});
@@ -206,6 +263,10 @@ export default function AddMediaForm({ onAdded }) {
   };
 
   const handleTmdbSelect = async (opcion) => {
+  setExistStatus(null);
+  setExistMsg('');
+  // Limpiar aviso al seleccionar una nueva opción
+
     setLoadingTmdb(true);
     setTmdbError('');
     setTmdbOptions([]);
@@ -240,10 +301,15 @@ export default function AddMediaForm({ onAdded }) {
         nota_imdb: data.nota_tmdb || '', // mapeo TMDb -> IMDb
         tmdb_id: opcion.id || '',
       };
-      
+      // Limpiar tags seleccionados al cambiar de película/serie
+      setSelectedTags([]);
       setForm(formToSet);
       setTmdbDetails(data);
       setTmdbError('');
+      // Chequear existencia en catálogo
+      if (opcion.id && data.tipo) {
+        checkExistenceInCatalog(opcion.id, data.tipo);
+      }
     } catch (err) {
       setTmdbError('Error de conexión');
     }
@@ -287,7 +353,14 @@ export default function AddMediaForm({ onAdded }) {
   };
 
   return (
-    <>
+    <div className="addmedia-container addmedia-visual">
+      {/* Aviso de existencia en catálogo */}
+      {existMsg && (
+        <div className={`addmedia-exist-floating ${existStatus?.exists ? 'addmedia-exist-warning' : 'addmedia-exist-success'}`}>
+          {existMsg}
+        </div>
+      )}
+
       <TmdbIdConflictModal
         open={tmdbConflict.open}
         titulo={tmdbConflict.titulo}
@@ -295,7 +368,7 @@ export default function AddMediaForm({ onAdded }) {
         onConfirm={tmdbConflict.onConfirm}
         onCancel={tmdbConflict.onCancel}
       />
-      <div className="addmedia-container addmedia-visual">
+
       <h2 className="addmedia-title">Añadir Película o Serie</h2>
       <div className="addmedia-content">
         <form onSubmit={handleSubmit} className="addmedia-form">
@@ -318,9 +391,7 @@ export default function AddMediaForm({ onAdded }) {
             </button>
           </div>
 
-          <div className="addmedia-fields">
-
-          </div>
+          <div className="addmedia-fields"></div>
           {tmdbError && <div className="addmedia-error">{tmdbError}</div>}
           {tmdbOptions.length > 0 && (
             <div className="add-tmdb-options">
@@ -396,7 +467,6 @@ export default function AddMediaForm({ onAdded }) {
                   tmdbId={form.tmdb_id.toString()} 
                   mediaType={tmdbDetails.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie')}
                   onSelectMedia={async (item) => {
-                    // Busca detalles completos igual que handleTmdbSelect
                     setLoadingTmdb(true);
                     setTmdbError('');
                     setTmdbOptions([]);
@@ -427,6 +497,8 @@ export default function AddMediaForm({ onAdded }) {
                         nota_imdb: data.nota_tmdb || '',
                         tmdb_id: item.id || '',
                       };
+                      // Limpiar tags seleccionados al seleccionar desde RelatedMedia
+                      setSelectedTags([]);
                       setForm(formToSet);
                       setTmdbDetails(data);
                       setTmdbError('');
@@ -451,6 +523,5 @@ export default function AddMediaForm({ onAdded }) {
         onClose={() => setShowTagsModal(false)}
       />
     </div>
-    </>
   );
 }
