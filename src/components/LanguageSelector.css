@@ -1,0 +1,129 @@
+.language-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.language-selector-button {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 4px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.585rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 29px;
+  justify-content: center;
+}
+
+.language-selector-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.language-selector-button:active {
+  transform: translateY(0);
+}
+
+.language-flag {
+  font-size: 0.78rem;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Emoji", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+}
+
+.language-arrow {
+  font-size: 0.39rem;
+  transition: transform 0.2s ease;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.language-arrow.open {
+  transform: rotate(180deg);
+}
+
+.language-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  margin-top: 3px;
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+  min-width: 33px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 5px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.585rem;
+  transition: background-color 0.2s ease;
+}
+
+.language-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.language-option.active {
+  background: rgba(0, 226, 199, 0.2);
+  color: #00e2c7;
+}
+
+.language-option .language-flag {
+  font-size: 0.845rem;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Emoji", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .language-selector-button {
+    padding: 3px 4px;
+    font-size: 0.52rem;
+    min-width: 23px;
+  }
+  
+  .language-dropdown {
+    min-width: 26px;
+  }
+  
+  .language-option {
+    padding: 5px;
+    font-size: 0.553rem;
+  }
+  
+  .language-option .language-flag {
+    font-size: 0.715rem;
+  }
+}

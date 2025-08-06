@@ -11,6 +11,8 @@ import HomeSections from './components/HomeSections';
 import './App.css';
 import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { useTranslatedMediaList } from './hooks/useTranslatedContent';
 import cacheFetch from './components/cacheFetch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -25,6 +27,7 @@ function getAllGenres(medias) {
 function App() {
   
   const { showNotification } = useNotification();
+  const { t } = useLanguage();
 
   const [medias, setMedias] = useState([]); 
   const [filteredItems, setFilteredItems] = useState([]); 
@@ -111,7 +114,7 @@ function App() {
     // y no cuando solo cambia la sección
     if (hayFiltrosActivos) {
       // Mostrar mensaje de 'Aplicando filtros...' mientras se carga
-      setNoResultsMessage('Aplicando filtros...');
+      setNoResultsMessage(t('messages.applyingFilters'));
       setShowNoResults(true);
       setIsSearching(true); // Indicar que se está realizando una búsqueda
     }
@@ -182,7 +185,7 @@ function App() {
           setMedias(data);
         } catch (err) {
           if (err.name !== 'AbortError') {
-            showNotification('Error filtrando datos', 'error');
+            showNotification(t('messages.errorFiltering', 'Error filtrando datos'), 'error');
           }
         } finally {
           setLoading(false);
@@ -212,13 +215,19 @@ function App() {
         clearTimeout(timer); // Cancela el timeout si la carga termina antes
       } catch (error) {
         console.error('Error loading data:', error);
-        showNotification('Error cargando datos', 'error');
+        showNotification(t('messages.error'), 'error');
         clearTimeout(timer); // Cancela el timeout también si hay error
       }
     };
     fetchAllData();
     return () => clearTimeout(timer);
   }, [showFavs, showPendings, selectedTags, tipo, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+
+  // Hooks para traducir las diferentes listas de medios
+  const translatedMedias = useTranslatedMediaList(medias, 'all');
+  const translatedPelis = useTranslatedMediaList(pelis, 'all');
+  const translatedSeries = useTranslatedMediaList(seriesList, 'all');
+  const translatedSearchResults = useTranslatedMediaList(searchResults, 'all');
 
   // Sincronizar showFavs y showPendings con section
   useEffect(() => {
@@ -249,7 +258,7 @@ function App() {
       
       // Mostrar notificación si no hay más resultados nuevos
       if (uniqueNewItems.length === 0) {
-        showNotification('No hay más contenido para cargar', 'info');
+        showNotification(t('messages.noMoreContent'), 'info');
       }
       
       // Concatenar sin duplicados
@@ -282,7 +291,7 @@ function App() {
     setIsSearching(true);
     // Mostrar mensaje de 'Aplicando filtros...' mientras se procesa
     if (offset === 0) {
-      setNoResultsMessage('Aplicando filtros...');
+      setNoResultsMessage(t('messages.applyingFilters', 'Aplicando filtros...'));
       setShowNoResults(true);
     }
     
@@ -315,7 +324,7 @@ function App() {
       // y queremos que coincidan TODOS los géneros (comportamiento AND en lugar de OR)
       if (selectedGeneros && selectedGeneros.length > 1) {
         // Mantener el mensaje de "Aplicando filtros..." mientras se realiza el filtrado en el cliente
-        setNoResultsMessage('Aplicando filtros...');
+        setNoResultsMessage(t('messages.applyingFilters', 'Aplicando filtros...'));
         setShowNoResults(true);
         
         
@@ -355,7 +364,7 @@ function App() {
         // Solo establecer las películas y el estado de 'has more'
         setPelis([]);
         setPelisHasMore(false);
-        setNoResultsMessage('No se encontraron películas con los filtros seleccionados');
+        setNoResultsMessage(t('messages.noMoviesFound', 'No se encontraron películas con los filtros seleccionados'));
         setShowNoResults(true);
       } else {
         // Si hay resultados, establecer el estado de filtrado
@@ -373,7 +382,7 @@ function App() {
             
             // Mostrar notificación si no hay más resultados nuevos
             if (uniqueNewItems.length === 0) {
-              showNotification('No hay más películas para cargar', 'info');
+              showNotification(t('messages.noMoreMovies', 'No hay más películas para cargar'), 'info');
             }
             
             // Concatenar sin duplicados
@@ -386,7 +395,7 @@ function App() {
       setPelisHasMore(data.length === PAGE_SIZE);
     } catch (error) {
       console.error('Error al cargar películas:', error);
-      setNoResultsMessage('Error al cargar películas');
+      setNoResultsMessage(t('messages.errorLoadingMovies', 'Error al cargar películas'));
       setShowNoResults(true);
     } finally {
       setPelisLoadingMore(false);
@@ -417,7 +426,7 @@ function App() {
     setSeriesLoadingMore(true);
     setIsSearching(true);
     if (offset === 0) {
-      setNoResultsMessage('Aplicando filtros...');
+      setNoResultsMessage(t('messages.applyingFilters', 'Aplicando filtros...'));
       setShowNoResults(true);
     }
     
@@ -447,7 +456,7 @@ function App() {
       // Filtrado adicional para múltiples géneros (comportamiento AND)
       if (selectedGeneros && selectedGeneros.length > 1) {
         // Mantener el mensaje de "Aplicando filtros..." mientras se realiza el filtrado en el cliente
-        setNoResultsMessage('Aplicando filtros...');
+        setNoResultsMessage(t('messages.applyingFilters', 'Aplicando filtros...'));
         setShowNoResults(true);
         
         
@@ -472,7 +481,7 @@ function App() {
       if (data.length === 0 && offset === 0) {
         setSeriesList([]);
         setSeriesHasMore(false);
-        setNoResultsMessage('No se encontraron series con todos los géneros seleccionados');
+        setNoResultsMessage(t('messages.noSeriesFound', 'No se encontraron series con todos los géneros seleccionados'));
         setShowNoResults(true);
       } else {
         if (reset || offset === 0) {
@@ -486,7 +495,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error al cargar series:', error);
-      setNoResultsMessage('Error al cargar series');
+      setNoResultsMessage(t('messages.errorLoadingSeries', 'Error al cargar series'));
       setShowNoResults(true);
     } finally {
       setSeriesLoadingMore(false);
@@ -710,9 +719,9 @@ function App() {
       if (!res.ok) throw new Error("No se pudo eliminar");
       setMedias(prevMedias => prevMedias.filter(m => m.id !== id));
       setSelected(null);
-      showNotification("Medio eliminado correctamente", "success");
+      showNotification(t('messages.mediaDeleted', 'Medio eliminado correctamente'), "success");
     } catch (err) {
-      showNotification("Error eliminando la película o serie", "error");
+      showNotification(t('messages.errorDeletingMedia', 'Error eliminando la película o serie'), "error");
     }
   };
 
@@ -830,10 +839,10 @@ const handleToggleFavorite = async (id) => {
       // Actualizar lista general añadiendo el nuevo al principio
       setMedias(prevMedias => [nuevoMedia, ...prevMedias]);
       const tipoTexto = (nuevoMedia.tipo && nuevoMedia.tipo.toLowerCase().includes('serie')) ? 'Serie' : (nuevoMedia.tipo && nuevoMedia.tipo.toLowerCase().includes('película')) ? 'Película' : 'Medio';
-showNotification(tipoTexto + ' añadida con éxito', "success");
+showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito'), "success");
     } else {
       console.error("Error: No se recibió el nuevo medio en onAdded para actualizar el estado.");
-      showNotification("Error al actualizar la interfaz tras añadir", "error");
+      showNotification(t('messages.errorUpdatingInterface', 'Error al actualizar la interfaz tras añadir'), "error");
     }
   };
 
@@ -918,14 +927,14 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
                 border: '2px solid #00e2c7'
               }}
             >
-              {noResultsMessage === 'Aplicando filtros...' ? (
+              {noResultsMessage === t('messages.applyingFilters', 'Aplicando filtros...') ? (
                 <>
                   <div className="loader" style={{ marginBottom: '1rem', width: '40px', height: '40px' }}></div>
                   <div>
                     <b>{noResultsMessage}</b>
                   </div>
                   <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
-                    Buscando contenido que coincida con tus filtros...
+                    {t('messages.searchingWithFilters', 'Buscando contenido que coincida con tus filtros...')}
                   </div>
                 </>
               ) : (
@@ -935,7 +944,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
                     <b>{noResultsMessage}</b>
                   </div>
                   <div style={{ marginTop: 8, opacity: 0.85, textAlign: 'center' }}>
-                    Prueba a cambiar o eliminar algunos filtros para ver más resultados.
+                    {t('messages.tryChangingFilters', 'Prueba a cambiar o eliminar algunos filtros para ver más resultados.')}
                   </div>
                 </>
               )}
@@ -1008,7 +1017,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
               searchResults.length > 0 ? (
                 <SectionRow 
                   title={`Resultados de "${searchQuery}"`}
-                  items={searchResults}
+                  items={translatedSearchResults.displayData || []}
                   onSelect={setSelected}
                 />
               ) : (
@@ -1050,8 +1059,8 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
            {!searchQuery && section === "peliculas" && (
   <>
     <SectionRow 
-      title="Películas"
-      items={(showFavs || showPendings || selectedTags.length > 0) ? medias : pelis}
+      title={t('sections.movies')}
+      items={(showFavs || showPendings || selectedTags.length > 0) ? (translatedMedias.displayData || []) : (translatedPelis.displayData || [])}
       onSelect={setSelected}
     />
     {!(showFavs || showPendings || selectedTags.length > 0) && pelis.length > 0 && pelisHasMore && (
@@ -1072,7 +1081,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}
         >
-          {pelisLoadingMore ? 'Cargando...' : 'Cargar más'}
+          {pelisLoadingMore ? t('actions.loading') : t('actions.loadMore')}
         </button>
       </div>
     )}
@@ -1081,8 +1090,8 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
            {!searchQuery && section === "series" && (
   <>
     <SectionRow 
-      title="Series"
-      items={(showFavs || showPendings || selectedTags.length > 0) ? medias : seriesList}
+      title={t('sections.series')}
+      items={(showFavs || showPendings || selectedTags.length > 0) ? (translatedMedias.displayData || []) : (translatedSeries.displayData || [])}
       onSelect={setSelected}
     />
     {!(showFavs || showPendings || selectedTags.length > 0) && seriesList.length > 0 && seriesHasMore && (
@@ -1103,7 +1112,7 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}
         >
-          {seriesLoadingMore ? 'Cargando...' : 'Cargar más'}
+          {seriesLoadingMore ? t('actions.loading') : t('actions.loadMore')}
         </button>
       </div>
     )}
@@ -1111,10 +1120,10 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
 )}
            {!searchQuery && section !== "inicio" && section !== "peliculas" && section !== "series" && (
              <SectionRow 
-               title={section === 'favoritos' ? 'Favoritos' : 
-                      section === 'pendientes' ? 'Pendientes' : 
+               title={section === 'favoritos' ? t('sections.favorites') : 
+                      section === 'pendientes' ? t('sections.pending') : 
                       section.charAt(0).toUpperCase() + section.slice(1)}
-               items={filteredItems}
+               items={translatedMedias.displayData || []}
                onSelect={setSelected}
              />
            )}
@@ -1128,9 +1137,11 @@ showNotification(tipoTexto + ' añadida con éxito', "success");
 
 function AppWrapper() {
   return (
-    <NotificationProvider>
-      <App />
-    </NotificationProvider>
+    <LanguageProvider>
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+    </LanguageProvider>
   );
 }
 

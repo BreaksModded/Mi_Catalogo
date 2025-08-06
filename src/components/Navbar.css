@@ -11,6 +11,13 @@
   top: 0;
   z-index: 10;
 }
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .navbar-logo {
   font-size: 2.1em;
   font-weight: bold;
@@ -71,78 +78,71 @@
 .navbar-hamburger {
   display: none;
 }
+
+.navbar-mobile-menu {
+  display: none;
+}
+
 /* --- Responsive Navbar for Mobile --- */
 @media (max-width: 768px) {
   .navbar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
     height: auto;
-    padding: 0 10px;
-    position: relative;
+    padding: 12px 16px;
   }
-  .navbar-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 10px;
-    position: relative;
-    padding-top: 14px;
+  
+  .navbar-links {
+    display: none !important;
   }
-  .navbar-logo {
-    font-size: 1.4em;
-    margin-bottom: 0;
-    flex: 1;
-    z-index: 21;
-  }
+  
   .navbar-hamburger {
     display: block;
     background: none;
     border: none;
     color: #fff;
-    font-size: 2em;
+    font-size: 1.5em;
     cursor: pointer;
-    position: static;
-    margin-left: 12px;
-    z-index: 21;
   }
-  .navbar-search {
-    width: 100%;
-    margin: 10px 0 0 0;
-    padding: 0 0 12px 0;
-    z-index: 10;
-  }
-
-  .navbar-links {
+  
+  .navbar-mobile-menu {
     display: none;
     flex-direction: column;
     width: 100%;
     background: #181818;
-    position: static;
-    z-index: 10;
-    border-top: 1px solid #232323;
-    box-shadow: 0 4px 16px #000a;
-    margin-bottom: 8px;
+    border-top: 1px solid #333;
+    margin-top: 12px;
   }
-  .navbar-links.open {
+  
+  .navbar-mobile-menu.open {
     display: flex;
   }
-  .navbar-links button {
-    margin: 12px 0 0 0;
-    width: 100%;
-    text-align: left;
+  
+  .navbar-mobile-menu button {
+    background: none;
+    border: none;
+    color: #fff;
     font-size: 1.1em;
-    padding: 12px 18px;
+    padding: 12px 0;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
   }
+  
+  .navbar-mobile-menu button:hover {
+    background: #333;
+  }
+  
+  .navbar-right {
+    gap: 8px;
+  }
+  
   .navbar-search {
+    order: 3;
     width: 100%;
-    margin: 10px 0 0 0;
-    padding: 0 0 12px 0;
+    margin-top: 12px;
   }
+  
   .navbar-search input {
-    width: 96%;
-    font-size: 1em;
-    padding: 7px 10px;
+    width: 100%;
   }
 }

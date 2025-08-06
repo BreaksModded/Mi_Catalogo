@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 import './Navbar.css';
 
 function Navbar({ onSection, onSearch, searchValue }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Cierra el menú al navegar
   const handleNav = (section) => {
@@ -12,34 +15,45 @@ function Navbar({ onSection, onSearch, searchValue }) {
 
   return (
     <nav className="navbar">
-      <div className="navbar-header">
-        <div className="navbar-logo" onClick={() => handleNav('inicio')}>
-          <span className="cinema-icon">🎬</span> <span className="navbar-title">Mi Catálogo</span>
+      <div className="navbar-logo" onClick={() => handleNav('inicio')}>
+        <span className="cinema-icon">🎬</span> <span className="navbar-title">{t('navbar.title')}</span>
+      </div>
+      <div className="navbar-links">
+        <button onClick={() => handleNav('peliculas')}>{t('navbar.movies')}</button>
+        <button onClick={() => handleNav('series')}>{t('navbar.series')}</button>
+        <button onClick={() => handleNav('resumen')}>{t('navbar.summary')}</button>
+        <button onClick={() => handleNav('favoritos')}>{t('navbar.favorites')}</button>
+        <button onClick={() => handleNav('pendientes')}>{t('navbar.pending')}</button>
+        <button onClick={() => handleNav('listas')}>{t('navbar.lists')}</button>
+        <button className="navbar-add-btn" onClick={() => handleNav('add')}>{t('navbar.add')}</button>
+      </div>
+      <div className="navbar-right">
+        <LanguageSelector />
+        <div className="navbar-search">
+          <input
+            type="text"
+            placeholder={t('navbar.search')}
+            value={searchValue}
+            onChange={e => onSearch(e.target.value)}
+          />
         </div>
         <button
           className="navbar-hamburger"
-          aria-label="Abrir menú"
+          aria-label={t('navbar.openMenu')}
           onClick={() => setMenuOpen((open) => !open)}
         >
           ☰
         </button>
       </div>
-      <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
-        <button onClick={() => handleNav('peliculas')}>Películas</button>
-        <button onClick={() => handleNav('series')}>Series</button>
-        <button onClick={() => handleNav('resumen')}>Resumen</button>
-        <button onClick={() => handleNav('favoritos')}>Favoritos</button>
-        <button onClick={() => handleNav('pendientes')}>Pendientes</button>
-        <button onClick={() => handleNav('listas')}>Listas</button>
-        <button className="navbar-add-btn" onClick={() => handleNav('add')}>+ Añadir</button>
-      </div>
-      <div className="navbar-search">
-        <input
-          type="text"
-          placeholder="Buscar..."
-          value={searchValue}
-          onChange={e => onSearch(e.target.value)}
-        />
+      {/* Menú móvil */}
+      <div className={`navbar-mobile-menu${menuOpen ? ' open' : ''}`}>
+        <button onClick={() => handleNav('peliculas')}>{t('navbar.movies')}</button>
+        <button onClick={() => handleNav('series')}>{t('navbar.series')}</button>
+        <button onClick={() => handleNav('resumen')}>{t('navbar.summary')}</button>
+        <button onClick={() => handleNav('favoritos')}>{t('navbar.favorites')}</button>
+        <button onClick={() => handleNav('pendientes')}>{t('navbar.pending')}</button>
+        <button onClick={() => handleNav('listas')}>{t('navbar.lists')}</button>
+        <button className="navbar-add-btn" onClick={() => handleNav('add')}>{t('navbar.add')}</button>
       </div>
     </nav>
   );

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './RelatedMedia.css';
+import { useLanguage } from '../context/LanguageContext';
 
 const TMDB_API_KEY = 'ffac9eb544563d4d36980ea638fca7ce';
 const TMDB_URL = `https://api.themoviedb.org/3`;
 
 function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
+  const { t, currentLanguage } = useLanguage();
   const [relatedMedia, setRelatedMedia] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,13 +26,14 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         let collectionIds = [];
 
         // Obtener información de la colección si existe
-        const collectionRes = await fetch(`${TMDB_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=es-ES`);
+        const languageCode = currentLanguage === 'en' ? 'en-US' : 'es-ES';
+        const collectionRes = await fetch(`${TMDB_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=${languageCode}`);
         const movieData = await collectionRes.json();
 
         // Si hay colección, obtener sus partes
         if (movieData.belongs_to_collection) {
           const collectionId = movieData.belongs_to_collection.id;
-          const collectionPartsRes = await fetch(`${TMDB_URL}/collection/${collectionId}?api_key=${TMDB_API_KEY}&language=es-ES`);
+          const collectionPartsRes = await fetch(`${TMDB_URL}/collection/${collectionId}?api_key=${TMDB_API_KEY}&language=${languageCode}`);
           const collectionPartsData = await collectionPartsRes.json();
 
           if (collectionPartsData.parts) {
@@ -56,9 +59,9 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         // Obtener recomendaciones según el tipo
         let recommendationsUrl = '';
         if (mediaType === 'tv') {
-          recommendationsUrl = `${TMDB_URL}/tv/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=es-ES&page=1`;
+          recommendationsUrl = `${TMDB_URL}/tv/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=${languageCode}&page=1`;
         } else {
-          recommendationsUrl = `${TMDB_URL}/movie/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=es-ES&page=1`;
+          recommendationsUrl = `${TMDB_URL}/movie/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=${languageCode}&page=1`;
         }
         const recommendationsRes = await fetch(recommendationsUrl);
         const recommendationsData = await recommendationsRes.json();
@@ -69,7 +72,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         if (filteredRecommendations.length > 0) {
           groups.push({
             type: 'recommendations',
-            title: 'Similares - Puede que también hayas visto',
+            title: t('addMedia.similarTitles', 'Similares - Puede que también hayas visto'),
             items: filteredRecommendations.slice(0, 10)
           });
         }
@@ -77,17 +80,17 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         
       } catch (err) {
         console.error('Error fetching related media:', err);
-        setError('No se pudieron cargar los títulos relacionados');
+        setError(t('messages.errorLoadingRelated', 'No se pudieron cargar los títulos relacionados'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchRelatedMedia();
-  }, [tmdbId, mediaType]);
+  }, [tmdbId, mediaType, currentLanguage]);
 
   if (loading) {
-    return <div className="related-media-loading">Buscando títulos relacionados...</div>;
+    return <div className="related-media-loading">{t('messages.searchingRelated', 'Buscando títulos relacionados...')}</div>;
   }
 
   if (error) {
@@ -105,13 +108,13 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
           <h3>{group.title}</h3>
           <div className="related-media-items">
             {group.items.map((item) => {
-              const title = item.title || item.name || 'Sin título';
+              const title = item.title || item.name || t('addMedia.noTitle', 'Sin título');
               const year = item.release_date || item.first_air_date
                 ? new Date(item.release_date || item.first_air_date).getFullYear()
-                : 'Año desconocido';
+                : t('addMedia.unknownYear', 'Año desconocido');
               const posterUrl = item.poster_path
                 ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
-                : 'https://via.placeholder.com/200x300?text=No+disponible';
+                : `https://via.placeholder.com/200x300?text=${encodeURIComponent(t('addMedia.notAvailable', 'No+disponible'))}`;
 
               return (
                 <div key={item.id} className="related-media-item" style={{cursor:'pointer'}} onClick={() => onSelectMedia && onSelectMedia(item)}>
@@ -120,7 +123,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
                     alt={title} 
                     className="related-media-poster"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/200x300?text=No+disponible';
+                      e.target.src = `https://via.placeholder.com/200x300?text=${encodeURIComponent(t('addMedia.notAvailable', 'No+disponible'))}`;
                     }}
                   />
                   <div className="related-media-info">

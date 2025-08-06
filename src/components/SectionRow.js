@@ -1,10 +1,22 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import './SectionRow.css';
 
 function SectionRow({ title, items, onSelect, carousel = false }) {
   const scrollContainerRef = useRef(null);
   const [showLeftButton, setShowLeftButton] = useState(false);
   const [showRightButton, setShowRightButton] = useState(true);
+  const { t } = useLanguage();
+
+  // Ensure items is always an array
+  const safeItems = Array.isArray(items) ? items : [];
+
+  // ✨ NUEVO: Usar contenido traducido automáticamente para la lista de items
+  const { translatedList, isTranslating } = useTranslatedMediaList(safeItems);
+  
+  // Usar translatedList en lugar de items directamente, con fallback seguro
+  const displayItems = Array.isArray(translatedList) ? translatedList : safeItems;
 
   // Only enable scroll logic if carousel is true
   useEffect(() => {
@@ -22,7 +34,7 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
       setShowRightButton(container.scrollWidth > container.clientWidth);
       return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, [items, carousel]);
+  }, [displayItems, carousel]); // Usar displayItems en lugar de items
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
@@ -35,7 +47,7 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
   };
 
 
-  if (!items.length) return null;
+  if (!displayItems || !displayItems.length) return null;
 
   return (
     <section className="section-row">
@@ -45,7 +57,7 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
           <button 
             className="scroll-button scroll-left" 
             onClick={() => scroll('left')}
-            aria-label="Desplazar a la izquierda"
+            aria-label="Scroll left"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" />
@@ -71,10 +83,10 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
                   loading="lazy"
                 />
                 {item.favorito && (
-                  <span className="favorite-badge">Favorita</span>
+                  <span className="favorite-badge">{t('detailModal.favorite')}</span>
                 )}
                 {item.pendiente && (
-                  <span className="pending-badge">Pendiente</span>
+                  <span className="pending-badge">{t('detailModal.pending')}</span>
                 )}
                 {item.nota_imdb !== undefined && item.nota_imdb !== null && item.nota_imdb !== '' && (
                   <div className="nota-imdb-badge-card">
@@ -99,7 +111,7 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
           <button 
             className="scroll-button scroll-right" 
             onClick={() => scroll('right')}
-            aria-label="Desplazar a la derecha"
+            aria-label="Scroll right"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" />

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './ListasView.css';
 import ListaDetalleModal from './ListaDetalleModal';
+import { useLanguage } from '../context/LanguageContext';
+import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_URL = BACKEND_URL + '/listas';
@@ -19,6 +21,7 @@ const EyeIcon = () => (
 );
 
 export default function ListasView() {
+  const { t } = useLanguage();
   const [listas, setListas] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [nombre, setNombre] = useState('');
@@ -27,6 +30,20 @@ export default function ListasView() {
   const [detalleLista, setDetalleLista] = useState(null);
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ open: false, lista: null });
+
+  // Obtener todas las medias de todas las listas para el hook de portadas dinámicas
+  const allMedias = React.useMemo(() => {
+    const medias = [];
+    listas.forEach(lista => {
+      if (lista.medias && Array.isArray(lista.medias)) {
+        medias.push(...lista.medias);
+      }
+    });
+    return medias;
+  }, [listas]);
+
+  // Hook para portadas dinámicas
+  const postersMap = useDynamicPosters(allMedias);
 
   const fetchListas = () => {
     setLoading(true);
@@ -45,7 +62,7 @@ export default function ListasView() {
     e.preventDefault();
     setError('');
     if (!nombre.trim()) {
-      setError('El nombre es obligatorio');
+      setError(t('lists.nameRequired', 'El nombre es obligatorio'));
       return;
     }
     try {
@@ -54,14 +71,14 @@ export default function ListasView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre, descripcion })
       });
-      if (!res.ok) throw new Error('Error al crear la lista');
+      if (!res.ok) throw new Error(t('lists.errorCreatingGeneric', 'Error al crear la lista'));
       const nueva = await res.json();
       setListas(listas => [...listas, nueva]);
       setNombre('');
       setDescripcion('');
       setShowForm(false);
     } catch {
-      setError('No se pudo crear la lista');
+      setError(t('lists.errorCreating', 'No se pudo crear la lista'));
     }
   };
 
@@ -71,7 +88,7 @@ export default function ListasView() {
       if (!res.ok) throw new Error();
       setListas(listas => listas.filter(l => l.id !== listaId));
     } catch {
-      alert('No se pudo eliminar la lista');
+      alert(t('lists.errorDeleting', 'No se pudo eliminar la lista'));
     }
   };
 
@@ -85,12 +102,12 @@ export default function ListasView() {
   return (
     <div className="listas-view">
       <div className="listas-header">
-        <h2>Listas</h2>
+        <h2>{t('lists.title', 'Listas')}</h2>
         <div style={{display: 'flex', gap: '1rem'}}>
           <button className="crear-lista-btn" onClick={() => setShowForm(f => !f)}>
-            + Crear lista
+            {t('lists.createList', '+ Crear lista')}
           </button>
-          <button className="crear-lista-btn" onClick={fetchListas} disabled={loading} title="Recargar listas">
+          <button className="crear-lista-btn" onClick={fetchListas} disabled={loading} title={t('lists.reload', 'Recargar listas')}>
             &#x21bb;
           </button>
         </div>
@@ -101,35 +118,35 @@ export default function ListasView() {
             type="text"
             value={nombre}
             onChange={e => setNombre(e.target.value)}
-            placeholder="Nombre de la lista"
+            placeholder={t('lists.placeholder', 'Nombre de la lista')}
             required
           />
           <input
             type="text"
             value={descripcion}
             onChange={e => setDescripcion(e.target.value)}
-            placeholder="Descripción (opcional)"
+            placeholder={t('lists.descriptionPlaceholder', 'Descripción (opcional)')}
           />
-          <button type="submit">Crear</button>
+          <button type="submit">{t('lists.create', 'Crear')}</button>
           {error && <div className="crear-lista-error">{error}</div>}
         </form>
       )} 
       {listas.length === 0 && !loading && (
-        <div className="listas-vacio">No tienes ninguna lista creada todavía.</div>
+        <div className="listas-vacio">{t('lists.noLists', 'No tienes ninguna lista creada todavía.')}</div>
       )} 
       <div className="listas-galeria">
         {listas.filter(lista => lista && lista.nombre && Array.isArray(lista.medias)).map(lista => (
           <div key={lista.id} className="lista-card" style={{cursor: 'pointer', position: 'relative'}} onClick={() => setDetalleLista(lista)}>
             <div className="lista-covers">
               {lista.medias.slice(0, 6).map(media => (
-                <img key={media.id} src={media.imagen} alt={media.titulo} className="lista-cover" />
+                <img key={media.id} src={getDynamicPosterUrl(media, postersMap)} alt={media.titulo} className="lista-cover" />
               ))}
             </div>
             <div className="lista-nombre">{lista.nombre}</div>
             {lista.descripcion && <div className="lista-desc">{lista.descripcion}</div>}
             <button 
               className="mini-action-btn delete-btn" 
-              title="Eliminar lista" 
+              title={t('lists.deleteTitle', 'Eliminar lista')} 
               style={{position: 'absolute', top: 10, right: 10}} 
               onClick={e => { e.stopPropagation(); openDeleteModal(lista); }}
             >🗑️</button>
@@ -142,13 +159,13 @@ export default function ListasView() {
       {confirmDelete.open && (
         <div className="listas-modal-bg" style={{zIndex: 50}}>
           <div className="listas-modal" style={{maxWidth: 390, textAlign: 'center', padding: '2.1rem 2.1rem 1.6rem 2.1rem'}}>
-            <h3 style={{color: '#e50914', marginBottom: 18}}>¿Eliminar lista?</h3>
+            <h3 style={{color: '#e50914', marginBottom: 18}}>{t('lists.confirmDelete', '¿Eliminar lista?')}</h3>
             <div style={{color: '#fff', fontSize: '1.08em', marginBottom: 22}}>
-              ¿Seguro que quieres eliminar la lista <b>"{confirmDelete.lista?.nombre}"</b>?
+              {t('lists.confirmDeleteMessage', '¿Seguro que quieres eliminar la lista')} <b>"{confirmDelete.lista?.nombre}"</b>?
             </div>
             <div style={{display: 'flex', gap: 20, justifyContent: 'center', marginTop: 10}}>
-              <button onClick={closeDeleteModal} style={{background:'#232323', color:'#bbb', border:'none', borderRadius:6, padding:'10px 24px', fontWeight:600, fontSize:'1em', cursor:'pointer'}}>Cancelar</button>
-              <button onClick={confirmDeleteAction} style={{background:'#e50914', color:'#fff', border:'none', borderRadius:6, padding:'10px 24px', fontWeight:600, fontSize:'1em', cursor:'pointer'}}>Eliminar</button>
+              <button onClick={closeDeleteModal} style={{background:'#232323', color:'#bbb', border:'none', borderRadius:6, padding:'10px 24px', fontWeight:600, fontSize:'1em', cursor:'pointer'}}>{t('lists.cancelButton', 'Cancelar')}</button>
+              <button onClick={confirmDeleteAction} style={{background:'#e50914', color:'#fff', border:'none', borderRadius:6, padding:'10px 24px', fontWeight:600, fontSize:'1em', cursor:'pointer'}}>{t('lists.deleteButton', 'Eliminar')}</button>
             </div>
           </div>
         </div>

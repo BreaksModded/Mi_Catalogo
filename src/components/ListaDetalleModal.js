@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ListaDetalleModal.css';
+import { useLanguage } from '../context/LanguageContext';
+import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 import DetailModal from './DetailModal';
 import SectionRow from './SectionRow';
 
@@ -8,6 +10,7 @@ const API_SEARCH = BACKEND_URL + '/search?q='; // Busca por título, actor o dir
 const API_ADD = BACKEND_URL + '/listas';
 
 export default function ListaDetalleModal({ lista, onClose }) {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -16,6 +19,9 @@ export default function ListaDetalleModal({ lista, onClose }) {
   const [detalleMedia, setDetalleMedia] = useState(null);
   const [medias, setMedias] = useState(lista.medias || []);
   const [pageSize, setPageSize] = useState(0);
+
+  // Hook para portadas dinámicas
+  const postersMap = useDynamicPosters(medias);
 
   // Búsqueda reactiva con debounce y resultados por título, actor o director
   React.useEffect(() => {
@@ -29,19 +35,19 @@ export default function ListaDetalleModal({ lista, onClose }) {
     const handler = setTimeout(async () => {
       try {
         const res = await fetch(API_SEARCH + encodeURIComponent(search));
-        if (!res.ok) throw new Error('Error en la búsqueda');
+        if (!res.ok) throw new Error(t('lists.searchError', 'Error en la búsqueda'));
         let data = await res.json();
         // data[] puede tener un campo match_type: ["title", "actor", "director"]
         if (!Array.isArray(data) || data.length === 0) {
           setResults([]);
-          setError('No se encontraron resultados en tu catálogo');
+          setError(t('lists.noResultsInCatalog', 'No se encontraron resultados en tu catálogo'));
         } else {
           setResults(data);
           setError('');
         }
       } catch (err) {
         setResults([]);
-        setError('No se pudo buscar en tu catálogo');
+        setError(t('lists.searchCatalogError', 'No se pudo buscar en tu catálogo'));
       }
       setSearching(false);
     }, 400);
@@ -61,7 +67,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
       if (!res.ok) throw new Error();
       setMedias(prev => [...prev, media]);
     } catch {
-      setError('No se pudo añadir a la lista');
+      setError(t('lists.errorAddingToList', 'No se pudo añadir a la lista'));
     }
     setAdding(false);
   };
@@ -81,7 +87,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar película o serie para añadir..."
+              placeholder={t('lists.searchPlaceholder', 'Buscar película o serie para añadir...')}
               className="lista-detalle-busqueda-input"
               style={{flex: 1}}
               autoFocus
@@ -90,13 +96,13 @@ export default function ListaDetalleModal({ lista, onClose }) {
               Buscar
             </button>
           </form>
-          {searching && <div className="listas-feedback">Buscando...</div>}
+          {searching && <div className="listas-feedback">{t('messages.searchingInList', 'Buscando...')}</div>}
           {error && <div className="listas-error">{error}</div>}
           {results.length > 0 && (
             <div className="lista-detalle-busqueda-resultados">
               {results.map(media => (
                 <div key={media.id} className="lista-detalle-busqueda-resultado">
-                  <img src={media.imagen} alt={media.titulo} style={{width:40, height:60, borderRadius:6, marginRight:12}} />
+                  <img src={getDynamicPosterUrl(media, postersMap)} alt={media.titulo} style={{width:40, height:60, borderRadius:6, marginRight:12}} />
                   <span style={{color:'#fff', fontWeight:500}}>{media.titulo}</span>
                   <button className="crear-lista-btn" style={{marginLeft: 'auto'}} onClick={() => handleAdd(media)} disabled={adding || medias.some(m => m.id === media.id)}>
                     Añadir

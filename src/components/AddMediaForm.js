@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './AddMediaForm.css';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import TagsModal from './TagsModal';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
 import RelatedMedia from './RelatedMedia';
@@ -11,7 +12,18 @@ const API_URL = BACKEND_URL + '/medias';
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
 export default function AddMediaForm({ onAdded }) {
-  // ...
+  const { t, currentLanguage } = useLanguage();
+  const { showNotification } = useNotification();
+  
+  // Mapear idioma para TMDb API
+  const getTmdbLanguage = (lang) => {
+    switch (lang) {
+      case 'en': return 'en-US';
+      case 'es': return 'es-ES';
+      default: return 'en-US';
+    }
+  };
+  
   // Chequeo de existencia en catálogo
   async function checkExistenceInCatalog(tmdb_id, tipo) {
     setExistStatus(null);
@@ -26,24 +38,22 @@ export default function AddMediaForm({ onAdded }) {
         setExistStatus({ exists: true, tipo });
         setExistMsg(
           tipo.toLowerCase().includes('serie')
-            ? 'Esta serie ya existe en tu catálogo'
-            : 'Esta película ya existe en tu catálogo'
+            ? t('addMedia.seriesExistsInCatalog', 'Esta serie ya existe en tu catálogo')
+            : t('addMedia.movieExistsInCatalog', 'Esta película ya existe en tu catálogo')
         );
       } else {
         setExistStatus({ exists: false, tipo });
         setExistMsg(
           tipo.toLowerCase().includes('serie')
-            ? 'Esta serie no existe en tu catálogo'
-            : 'Esta película no existe en tu catálogo'
+            ? t('addMedia.seriesNotInCatalog', 'Esta serie no existe en tu catálogo')
+            : t('addMedia.movieNotInCatalog', 'Esta película no existe en tu catálogo')
         );
       }
     } catch (err) {
       setExistStatus(null);
-      setExistMsg('No se pudo comprobar la existencia');
+      setExistMsg(t('addMedia.checkingExistence', 'No se pudo comprobar la existencia'));
     }
   }
-
-  const { showNotification } = useNotification();
   const [form, setForm] = useState({
     titulo: '',
     titulo_ingles: '',
@@ -104,20 +114,20 @@ const [existMsg, setExistMsg] = useState('');
     const errors = [];
     
     if (!formData.titulo.trim()) {
-      errors.push('El título es obligatorio');
+      errors.push(t('addMedia.titleRequired', 'El título es obligatorio'));
     }
   
     if (formData.anio) {
       const year = Number(formData.anio);
       if (isNaN(year) || year < 1888 || year > new Date().getFullYear()) {
-        errors.push('El año no es válido');
+        errors.push(t('addMedia.invalidYear', 'El año no es válido'));
       }
     }
   
     if (formData.nota_personal) {
       const rating = Number(formData.nota_personal);
       if (isNaN(rating) || rating < 0 || rating > 10) {
-        errors.push('La nota personal debe estar entre 0 y 10');
+        errors.push(t('addMedia.invalidRating', 'La nota personal debe estar entre 0 y 10'));
       }
     }
   
@@ -154,9 +164,10 @@ const [existMsg, setExistMsg] = useState('');
       });
       if (response.ok) {
         const nuevoMedia = await response.json(); // Capturar el nuevo medio
-        const tipoTexto = (form.tipo && form.tipo.toLowerCase().includes('serie')) ? 'Serie' : 'Película';
-        setResultMsg(tipoTexto + ' añadida con éxito');
-        showNotification(tipoTexto + ' añadida con éxito', 'success');
+        const tipoTexto = (form.tipo && form.tipo.toLowerCase().includes('serie')) ? t('general.series', 'Serie') : t('general.movie', 'Película');
+        const successMsg = (form.tipo && form.tipo.toLowerCase().includes('serie')) ? t('addMedia.seriesAddedSuccess', 'Serie añadida con éxito') : t('addMedia.movieAddedSuccess', 'Película añadida con éxito');
+        setResultMsg(successMsg);
+        showNotification(successMsg, 'success');
         onAdded && onAdded(nuevoMedia); // Pasar el nuevo medio a onAdded
         // No limpiar el formulario ni los tags para mantener colección y recomendaciones visibles
       } else {
@@ -173,19 +184,19 @@ const [existMsg, setExistMsg] = useState('');
               } else {
                 const nombre = custom.titulo || 'este título';
                 const tipo = custom.tipo || '';
-                msg = `Ya tienes "${nombre}"${tipo ? ` (${tipo})` : ''} en tu catálogo.`;
+                msg = `${t('addMedia.duplicateMessage', 'Ya tienes')} "${nombre}"${tipo ? ` (${tipo})` : ''} ${t('addMedia.inCatalog', 'en tu catálogo.')}`;
               }
               setResultMsg(msg);
               showNotification(msg, 'error');
               return;
             } else {
-              setResultMsg('Error inesperado.');
-              showNotification('Error inesperado.', 'error');
+              setResultMsg(t('addMedia.unexpectedError', 'Error inesperado.'));
+              showNotification(t('addMedia.unexpectedError', 'Error inesperado.'), 'error');
               return;
             }
           } catch {
-            setResultMsg('Ya existe una entrada con este TMDb ID en tu catálogo.');
-            showNotification('Ya existe una entrada con este TMDb ID en tu catálogo.', 'error');
+            setResultMsg(t('addMedia.duplicateEntry', 'Ya existe una entrada con este TMDb ID en tu catálogo.'));
+            showNotification(t('addMedia.duplicateEntry', 'Ya existe una entrada con este TMDb ID en tu catálogo.'), 'error');
             return;
           }
         }
@@ -205,7 +216,7 @@ const [existMsg, setExistMsg] = useState('');
             } else {
               const nombre = err.detail.titulo || 'este título';
               const tipo = err.detail.tipo || '';
-              msg = `Ya tienes "${nombre}"${tipo ? ` (${tipo})` : ''} en tu catálogo.`;
+              msg = `${t('addMedia.duplicateMessage', 'Ya tienes')} "${nombre}"${tipo ? ` (${tipo})` : ''} ${t('addMedia.inCatalog', 'en tu catálogo.')}`;
             }
             setResultMsg(msg);
             showNotification(msg, 'error');
@@ -221,17 +232,17 @@ const [existMsg, setExistMsg] = useState('');
           setSubmitStatus({type: 'error', msg});
           showNotification(msg, 'error');
         } else {
-          setSubmitStatus({type: 'error', msg: err.detail || 'Error al añadir'});
-          showNotification(err.detail || 'Error al añadir', 'error');
+          setSubmitStatus({type: 'error', msg: err.detail || t('addMedia.errorAdding', 'Error al añadir')});
+          showNotification(err.detail || t('addMedia.errorAdding', 'Error al añadir'), 'error');
         }
       }
     } catch {
-      setSubmitStatus({type: 'error', msg: 'Error de conexión'});
-      showNotification('Error de conexión', 'error');
+      setSubmitStatus({type: 'error', msg: t('addMedia.connectionError', 'Error de conexión')});
+      showNotification(t('addMedia.connectionError', 'Error de conexión'), 'error');
     }
   };
 
-  const handleTmdbSearch = async e => {
+  const handleTmdbSearch = useCallback(async (e) => {
     e.preventDefault();
     setLoadingTmdb(true);
     setTmdbError('');
@@ -239,30 +250,81 @@ const [existMsg, setExistMsg] = useState('');
     // setTmdbDetails(null);
     try {
       const tipoPreferido = form.tipo?.toLowerCase() === 'serie' ? 'serie' : (form.tipo?.toLowerCase() === 'película' ? 'película' : '');
-      const url = tipoPreferido ? `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&tipo_preferido=${encodeURIComponent(tipoPreferido)}&listar=true` : `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&listar=true`;
+      const tmdbLang = getTmdbLanguage(currentLanguage);
+      const url = tipoPreferido ? `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&tipo_preferido=${encodeURIComponent(tipoPreferido)}&listar=true&language=${tmdbLang}` : `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&listar=true&language=${tmdbLang}`;
       const res = await fetch(url);
       if (!res.ok) {
         const err = await res.json();
-        setTmdbError(err.detail || 'No encontrado');
+        setTmdbError(err.detail || t('addMedia.notFound', 'No encontrado'));
         setLoadingTmdb(false);
         return;
       }
       const data = await res.json();
       if (data.opciones && data.opciones.length > 1) {
         setTmdbOptions(data.opciones);
-        setTmdbError('Elige la opción correcta:');
+        setTmdbError(t('addMedia.chooseCorrectOption', 'Elige la opción correcta:'));
       } else if (data.opciones && data.opciones.length === 1) {
-        handleTmdbSelect(data.opciones[0]);
+        // Llamar handleTmdbSelect directamente sin dependencia circular
+        const opcion = data.opciones[0];
+        setExistStatus(null);
+        setExistMsg('');
+        
+        setLoadingTmdb(true);
+        setTmdbError('');
+        setTmdbOptions([]);
+        
+        try {
+          const tmdbLang = getTmdbLanguage(currentLanguage);
+          const selectUrl = `${TMDB_URL}?id=${encodeURIComponent(opcion.id)}&media_type=${encodeURIComponent(opcion.media_type)}&language=${tmdbLang}`;
+          const selectRes = await fetch(selectUrl);
+          if (!selectRes.ok) {
+            const selectErr = await selectRes.json();
+            setTmdbError(selectErr.detail || t('addMedia.notFound', 'No encontrado'));
+            setLoadingTmdb(false);
+            return;
+          }
+          const selectData = await selectRes.json();
+          
+          const formToSet = {
+            titulo: selectData.titulo || '',
+            titulo_ingles: selectData.titulo_original || selectData.original_title || '',
+            anio: selectData.anio || '',
+            genero: selectData.genero || '',
+            sinopsis: selectData.sinopsis || '',
+            director: selectData.director || '',
+            elenco: selectData.elenco || '',
+            imagen: selectData.imagen || '',
+            estado: selectData.estado || '',
+            tipo: selectData.tipo || '',
+            temporadas: selectData.temporadas || '',
+            episodios: selectData.episodios || '',
+            nota_personal: '',
+            nota_imdb: selectData.nota_tmdb || '',
+            tmdb_id: opcion.id || '',
+          };
+          
+          setSelectedTags([]);
+          setForm(formToSet);
+          setTmdbDetails(selectData);
+          setTmdbError('');
+          
+          if (opcion.id && selectData.tipo) {
+            checkExistenceInCatalog(opcion.id, selectData.tipo);
+          }
+        } catch (selectErr) {
+          setTmdbError(t('addMedia.connectionError', 'Error de conexión'));
+        }
+        setLoadingTmdb(false);
       } else {
-        setTmdbError('No se encontraron opciones válidas.');
+        setTmdbError(t('addMedia.noValidOptions', 'No se encontraron opciones válidas.'));
       }
     } catch (err) {
-      setTmdbError('Error de conexión');
+      setTmdbError(t('addMedia.connectionError', 'Error de conexión'));
     }
     setLoadingTmdb(false);
-  };
+  }, [searchTitle, form.tipo, currentLanguage, t]);
 
-  const handleTmdbSelect = async (opcion) => {
+  const handleTmdbSelect = useCallback(async (opcion) => {
   setExistStatus(null);
   setExistMsg('');
   // Limpiar aviso al seleccionar una nueva opción
@@ -272,11 +334,12 @@ const [existMsg, setExistMsg] = useState('');
     setTmdbOptions([]);
     // setTmdbDetails(null);
     try {
-      const url = `${TMDB_URL}?id=${encodeURIComponent(opcion.id)}&media_type=${encodeURIComponent(opcion.media_type)}`;
+      const tmdbLang = getTmdbLanguage(currentLanguage);
+      const url = `${TMDB_URL}?id=${encodeURIComponent(opcion.id)}&media_type=${encodeURIComponent(opcion.media_type)}&language=${tmdbLang}`;
       const res = await fetch(url);
       if (!res.ok) {
         const err = await res.json();
-        setTmdbError(err.detail || 'No encontrado');
+        setTmdbError(err.detail || t('addMedia.notFound', 'No encontrado'));
         setLoadingTmdb(false);
         return;
       }
@@ -311,10 +374,10 @@ const [existMsg, setExistMsg] = useState('');
         checkExistenceInCatalog(opcion.id, data.tipo);
       }
     } catch (err) {
-      setTmdbError('Error de conexión');
+      setTmdbError(t('addMedia.connectionError', 'Error de conexión'));
     }
     setLoadingTmdb(false);
-  };
+  }, [currentLanguage, t]);
 
   const handleCreateTag = async (nombre) => {
     try {
@@ -326,10 +389,10 @@ const [existMsg, setExistMsg] = useState('');
       if (res.ok) {
         const newTag = await res.json();
         setTags(tags => [...tags, newTag]);
-        showNotification('Etiqueta creada con éxito', 'success');
+        showNotification(t('addMedia.tagCreatedSuccess', 'Etiqueta creada con éxito'), 'success');
       }
     } catch (err) {
-      showNotification('Error creando etiqueta', 'error');
+      showNotification(t('addMedia.errorCreatingTag', 'Error creando etiqueta'), 'error');
     }
   };
 
@@ -341,10 +404,10 @@ const [existMsg, setExistMsg] = useState('');
       if (res.ok) {
         setTags(tags => tags.filter(t => t.id !== tagId));
         setSelectedTags(selected => selected.filter(id => id !== tagId));
-        showNotification('Etiqueta eliminada con éxito', 'success');
+        showNotification(t('addMedia.tagDeletedSuccess', 'Etiqueta eliminada con éxito'), 'success');
       }
     } catch (err) {
-      showNotification('Error eliminando etiqueta', 'error');
+      showNotification(t('addMedia.errorDeletingTag', 'Error eliminando etiqueta'), 'error');
     }
   };
 
@@ -369,7 +432,7 @@ const [existMsg, setExistMsg] = useState('');
         onCancel={tmdbConflict.onCancel}
       />
 
-      <h2 className="addmedia-title">Añadir Película o Serie</h2>
+      <h2 className="addmedia-title">{t('addMedia.title', 'Añadir Película o Serie')}</h2>
       <div className="addmedia-content">
         <form onSubmit={handleSubmit} className="addmedia-form">
           <div className="add-tmdb-row">
@@ -378,7 +441,7 @@ const [existMsg, setExistMsg] = useState('');
               type="text"
               value={searchTitle}
               onChange={e => setSearchTitle(e.target.value)}
-              placeholder="Buscar en TMDb..."
+              placeholder={t('addMedia.searchPlaceholder', 'Buscar en TMDb...')}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -387,7 +450,7 @@ const [existMsg, setExistMsg] = useState('');
               }}
             />
             <button onClick={handleTmdbSearch} disabled={loadingTmdb || !searchTitle} type="button" className="add-tmdb-btn">
-              {loadingTmdb ? <span className="spinner"></span> : <span><img src="https://img.icons8.com/ios-filled/20/ffffff/search--v1.png" alt="Buscar" style={{verticalAlign:'middle',marginRight:4}}/>Buscar TMDb</span>}
+              {loadingTmdb ? <span className="spinner"></span> : <span><img src="https://img.icons8.com/ios-filled/20/ffffff/search--v1.png" alt={t('actions.search', 'Buscar')} style={{verticalAlign:'middle',marginRight:4}}/>{t('addMedia.searchButton', 'Buscar TMDb')}</span>}
             </button>
           </div>
 
@@ -410,8 +473,8 @@ const [existMsg, setExistMsg] = useState('');
                   </div>
                   <div className="add-tmdb-info">
                     <div className="add-tmdb-title">{op.titulo} <span className="add-tmdb-year">({op.anio})</span></div>
-                    <div className="add-tmdb-type">{op.media_type === 'movie' ? '🎬 Película' : '📺 Serie'}</div>
-                    <div className="add-tmdb-rating">{op.nota_tmdb ? `⭐ ${op.nota_tmdb.toFixed(1)}` : ''} {op.votos_tmdb ? `(${op.votos_tmdb} votos)` : ''}</div>
+                    <div className="add-tmdb-type">{op.media_type === 'movie' ? `🎬 ${t('general.movie', 'Película')}` : `📺 ${t('general.series', 'Serie')}`}</div>
+                    <div className="add-tmdb-rating">{op.nota_tmdb ? `⭐ ${op.nota_tmdb.toFixed(1)}` : ''} {op.votos_tmdb ? `(${op.votos_tmdb} ${t('addMedia.votes', 'votos')})` : ''}</div>
                   </div>
                 </div>
               ))}
@@ -420,25 +483,25 @@ const [existMsg, setExistMsg] = useState('');
           {tmdbDetails && (
             <>
               <div className="addmedia-fields">
-                <input name="titulo" value={form.titulo} onChange={handleChange} placeholder="Título" required className="addmedia-field" />
-                <input name="titulo_ingles" value={form.titulo_ingles} onChange={handleChange} placeholder="Título original / en inglés" className="addmedia-field" />
-                <input name="anio" value={form.anio} onChange={handleChange} placeholder="Año" type="number" required className="addmedia-field" />
-                <input name="genero" value={form.genero} onChange={handleChange} placeholder="Género" className="addmedia-field" />
-                <input name="tipo" value={form.tipo} onChange={handleChange} placeholder="Tipo (película o serie)" required className="addmedia-field" />
-                <input name="director" value={form.director} onChange={handleChange} placeholder="Director" className="addmedia-field" />
-                <input name="elenco" value={form.elenco} onChange={handleChange} placeholder="Reparto principal" className="addmedia-field" />
-                <input name="imagen" value={form.imagen} onChange={handleChange} placeholder="URL de la imagen" className="addmedia-field" />
-                <input name="tmdb_id" value={form.tmdb_id} onChange={handleChange} placeholder="ID de TMDb" className="addmedia-field" />
-                <input name="temporadas" value={form.temporadas} onChange={handleChange} placeholder="Temporadas (solo series)" type="number" className="addmedia-field" />
-                <input name="episodios" value={form.episodios} onChange={handleChange} placeholder="Episodios (solo series)" type="number" className="addmedia-field" />
-                <input name="nota_personal" value={form.nota_personal} onChange={handleChange} placeholder="Nota personal (0-10)" type="number" step="0.1" className="addmedia-field" />
+                <input name="titulo" value={form.titulo} onChange={handleChange} placeholder={t('addMedia.titleField', 'Título')} required className="addmedia-field" />
+                <input name="titulo_ingles" value={form.titulo_ingles} onChange={handleChange} placeholder={t('addMedia.originalTitleField', 'Título original / en inglés')} className="addmedia-field" />
+                <input name="anio" value={form.anio} onChange={handleChange} placeholder={t('addMedia.yearField', 'Año')} type="number" required className="addmedia-field" />
+                <input name="genero" value={form.genero} onChange={handleChange} placeholder={t('addMedia.genreField', 'Género')} className="addmedia-field" />
+                <input name="tipo" value={form.tipo} onChange={handleChange} placeholder={t('addMedia.typeField', 'Tipo (película o serie)')} required className="addmedia-field" />
+                <input name="director" value={form.director} onChange={handleChange} placeholder={t('addMedia.directorField', 'Director')} className="addmedia-field" />
+                <input name="elenco" value={form.elenco} onChange={handleChange} placeholder={t('addMedia.castField', 'Reparto principal')} className="addmedia-field" />
+                <input name="imagen" value={form.imagen} onChange={handleChange} placeholder={t('addMedia.imageField', 'URL de la imagen')} className="addmedia-field" />
+                <input name="tmdb_id" value={form.tmdb_id} onChange={handleChange} placeholder={t('addMedia.tmdbIdField', 'ID de TMDb')} className="addmedia-field" />
+                <input name="temporadas" value={form.temporadas} onChange={handleChange} placeholder={t('addMedia.seasonsField', 'Temporadas (solo series)')} type="number" className="addmedia-field" />
+                <input name="episodios" value={form.episodios} onChange={handleChange} placeholder={t('addMedia.episodesField', 'Episodios (solo series)')} type="number" className="addmedia-field" />
+                <input name="nota_personal" value={form.nota_personal} onChange={handleChange} placeholder={t('addMedia.personalRatingField', 'Nota personal (0-10)')} type="number" step="0.1" className="addmedia-field" />
                 {tmdbDetails && tmdbDetails.nota_tmdb && (
                   <div className="addmedia-tmdb-rating">
-                    Nota TMDb: <strong>{tmdbDetails.nota_tmdb.toFixed(1)}</strong>
+                    {t('addMedia.tmdbRatingLabel', 'Nota TMDb:')} <strong>{tmdbDetails.nota_tmdb.toFixed(1)}</strong>
                   </div>
                 )}
-                <textarea name="sinopsis" value={form.sinopsis} onChange={handleChange} placeholder="Sinopsis" className="addmedia-field addmedia-textarea" />
-                <input name="estado" value={form.estado} onChange={handleChange} placeholder="Estado (vista, pendiente, etc.)" className="addmedia-field" />
+                <textarea name="sinopsis" value={form.sinopsis} onChange={handleChange} placeholder={t('addMedia.synopsisField', 'Sinopsis')} className="addmedia-field addmedia-textarea" />
+                <input name="estado" value={form.estado} onChange={handleChange} placeholder={t('addMedia.statusField', 'Estado (vista, pendiente, etc.)')} className="addmedia-field" />
               </div>
               <div className="addmedia-tags-section">
                 <button 
@@ -446,7 +509,7 @@ const [existMsg, setExistMsg] = useState('');
                   className="addmedia-tags-btn"
                   onClick={() => setShowTagsModal(true)}
                 >
-                  Gestionar Tags
+                  {t('addMedia.manageTags', 'Gestionar Tags')}
                 </button>
                 {selectedTags.length > 0 && (
                   <div className="selected-tags">
@@ -461,7 +524,7 @@ const [existMsg, setExistMsg] = useState('');
                   </div>
                 )}
               </div>
-              <button type="submit" className="addmedia-submit-btn">Añadir</button>
+              <button type="submit" className="addmedia-submit-btn">{t('addMedia.addButton', 'Añadir')}</button>
               {form.tmdb_id && tmdbDetails && (
                 <RelatedMedia 
                   tmdbId={form.tmdb_id.toString()} 
@@ -471,11 +534,12 @@ const [existMsg, setExistMsg] = useState('');
                     setTmdbError('');
                     setTmdbOptions([]);
                     try {
-                      const url = `${TMDB_URL}?id=${encodeURIComponent(item.id)}&media_type=${encodeURIComponent(item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}`;
+                      const tmdbLang = getTmdbLanguage(currentLanguage);
+                      const url = `${TMDB_URL}?id=${encodeURIComponent(item.id)}&media_type=${encodeURIComponent(item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}&language=${tmdbLang}`;
                       const res = await fetch(url);
                       if (!res.ok) {
                         const err = await res.json();
-                        setTmdbError(err.detail || 'No encontrado');
+                        setTmdbError(err.detail || t('addMedia.notFound', 'No encontrado'));
                         setLoadingTmdb(false);
                         return;
                       }
@@ -503,7 +567,7 @@ const [existMsg, setExistMsg] = useState('');
                       setTmdbDetails(data);
                       setTmdbError('');
                     } catch (err) {
-                      setTmdbError('Error de conexión');
+                      setTmdbError(t('addMedia.connectionError', 'Error de conexión'));
                     }
                     setLoadingTmdb(false);
                   }}

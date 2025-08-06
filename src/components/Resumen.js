@@ -1,8 +1,45 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import './Resumen.css';
 import GeneroChart, { YearChart } from './GeneroChart';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslatedContent } from '../hooks/useTranslatedContent';
+import { contentTranslationService } from '../utils/contentTranslation';
+
+// Componente auxiliar para mostrar títulos traducidos (definido fuera del componente principal)
+const TranslatedTitle = ({ media, useTranslatedTitle }) => {
+  const translatedTitle = useTranslatedTitle(media);
+  return translatedTitle;
+};
 
 function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directamente aquí
+  const { t, currentLanguage } = useLanguage();
+  
+  // Hook personalizado para traducir títulos
+  const useTranslatedTitle = (media) => {
+    const [translatedTitle, setTranslatedTitle] = useState(media?.titulo || '');
+    
+    useEffect(() => {
+      const translateTitle = async () => {
+        if (!media || currentLanguage === 'es') {
+          setTranslatedTitle(media?.titulo || '');
+          return;
+        }
+        
+        try {
+          const translatedContent = await contentTranslationService.getTranslatedContent(media, currentLanguage);
+          setTranslatedTitle(translatedContent?.titulo || media?.titulo || '');
+        } catch (error) {
+          console.error('Error translating title:', error);
+          setTranslatedTitle(media?.titulo || '');
+        }
+      };
+      
+      translateTitle();
+    }, [media, currentLanguage]);
+    
+    return translatedTitle;
+  };
+
   const [peliculasVistas, setPeliculasVistas] = useState(null);
   const [seriesVistas, setSeriesVistas] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +64,7 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
       ]);
 
       if (!resPelis.ok || !resSeries.ok) {
-        throw new Error('Error al conectar con el backend o respuesta no válida.');
+        throw new Error(t('messages.errorLoadingMovies', 'Error al conectar con el backend o respuesta no válida.'));
       }
 
       const dataPelis = await resPelis.json();
@@ -37,7 +74,7 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
       setSeriesVistas(dataSeries.count);
     } catch (err) {
       console.error('Error detallado al cargar los totales:', err);
-      setError(`Error cargando los totales: ${err.message}`);
+      setError(`${t('messages.errorLoadingMovies', 'Error cargando los totales')}: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -62,14 +99,14 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
           setPeorPelicula(peli);
           setPeorSerie(serie);
         } catch (err) {
-          setErrorPeor('No se pudieron cargar las peor valoradas');
+          setErrorPeor(t('messages.errorLoadingRelated', 'No se pudieron cargar las peor valoradas'));
         } finally {
           setLoadingPeor(false);
         }
       };
       fetchPeores();
     } else {
-      setError('La URL del backend no está configurada.');
+      setError(t('messages.connectionError', 'La URL del backend no está configurada.'));
       setLoading(false);
     }
   }, [BACKEND_URL, fetchCounts, setError, setLoading]); // Añadir fetchCounts y las setters usadas en el else
@@ -223,7 +260,7 @@ useEffect(() => {
     return (
       <div className="resumen-container resumen-loading">
         <div className="loading-spinner"></div>
-        <p>Cargando resumen de tu cinemateca...</p>
+        <p>{t('actions.loading', 'Cargando resumen de tu cinemateca...')}</p>
       </div>
     );
   }
@@ -232,10 +269,10 @@ useEffect(() => {
     return (
       <div className="resumen-container resumen-error">
         <span role="img" aria-label="error-icon" style={{fontSize: '2rem'}}>⚠️</span>
-        <p><strong>Oops! Algo salió mal:</strong></p>
+        <p><strong>{t('messages.error', 'Oops! Algo salió mal')}:</strong></p>
         <p>{error}</p>
         <button onClick={fetchCounts} className="retry-button"> {/* Llama directamente a fetchCounts */}
-          Reintentar
+          {t('summary.retry', 'Reintentar')}
         </button>
       </div>
     );
@@ -244,82 +281,82 @@ useEffect(() => {
   return (
     <div className="resumen-container">
       <header className="resumen-header">
-        <h1>Mi Cinemateca: Resumen</h1>
+        <h1>{t('summary.title', 'Mi Cinemateca: Resumen')}</h1>
       </header>
 
       <section className="resumen-section totals-section">
-        <h2>Totales</h2>
+        <h2>{t('summary.totals', 'Totales')}</h2>
         <div className="totals-grid">
           <div className="total-item">
             <span className="total-number">{peliculasVistas !== null ? peliculasVistas : '-'}</span>
-            <span className="total-label">Películas vistas</span>
+            <span className="total-label">{t('summary.moviesWatched', 'Películas vistas')}</span>
           </div>
           <div className="total-item">
             <span className="total-number">{seriesVistas !== null ? seriesVistas : '-'}</span>
-            <span className="total-label">Series vistas</span>
+            <span className="total-label">{t('summary.seriesWatched', 'Series vistas')}</span>
           </div>
           <div className="total-item">
             <span className="total-number">{mediaNotaPersonal ?? '-'}⭐</span>
-            <span className="total-label">Nota media</span>
+            <span className="total-label">{t('summary.averageRating', 'Nota media')}</span>
           </div>
         </div>
       </section>
 
       <section className="resumen-section stats-section">
-        <h2>Estadísticas destacadas</h2>
+        <h2>{t('summary.outstandingStats', 'Estadísticas destacadas')}</h2>
         <div className="stats-grid">
           <div className="stat-item">
             <span className="stat-value">
               {generoStatsBD.masVisto
-                ? `${generoStatsBD.masVisto} (${generoStatsBD.masVistoCount || 0} título${generoStatsBD.masVistoCount === 1 ? '' : 's'})`
+                ? `${generoStatsBD.masVisto} (${generoStatsBD.masVistoCount || 0} ${t('general.title', 'título')}${generoStatsBD.masVistoCount === 1 ? '' : 's'})`
                 : 'N/A'}
             </span>
-            <span className="stat-label">🎬 Género más visto</span>
+            <span className="stat-label">🎬 {t('summary.mostWatchedGenre', 'Género más visto')}</span>
           </div>
           <div className="stat-item">
             <span className="stat-value">
               {generoStatsBD.mejorValorado || 'N/A'}
               {generoStatsBD.mejorValoradoMedia && ` (${generoStatsBD.mejorValoradoMedia} ⭐)`}
             </span>
-            <span className="stat-label">🌟 Género mejor valorado</span>
+            <span className="stat-label">🌟 {t('summary.bestRatedGenre', 'Género mejor valorado')}</span>
           </div>
         </div>
       </section>
 
       {/* Top 5 */}
       <section className="resumen-section top-lists-section">
-        <h2>Top 5</h2>
+        <h2>{t('summary.top5', 'Top 5')}</h2>
         <div className="top-lists-grid">
           <div className="top-list">
-            <h3>🎬 Películas</h3>
+            <h3>🎬 {t('summary.movies', 'Películas')}</h3>
             {topPeliculasBD.length > 0 ? (
               <ol>
                 {topPeliculasBD.map(m => (
                   <li key={m.id}>
-                    {m.titulo} <span className="nota">({m.nota_personal ?? '-'})</span>
+                    <TranslatedTitle media={m} useTranslatedTitle={useTranslatedTitle} /> <span className="nota">({m.nota_personal ?? '-'})</span>
                   </li>
                 ))}
               </ol>
-            ) : <p className="no-data-message">No hay películas valoradas.</p>}
+            ) : <p className="no-data-message">{t('summary.noRatedMovies', 'No hay películas valoradas.')}</p>}
           </div>
           <div className="top-list">
-            <h3>📺 Series</h3>
+            <h3>📺 {t('summary.series', 'Series')}</h3>
             {topSeriesBD.length > 0 ? (
               <ol>
                 {topSeriesBD.map(m => (
                   <li key={m.id}>
-                    {m.titulo} <span className="nota">({m.nota_personal ?? '-'})</span>
+                    <TranslatedTitle media={m} useTranslatedTitle={useTranslatedTitle} /> <span className="nota">({m.nota_personal ?? '-'})</span>
                   </li>
                 ))}
               </ol>
-            ) : <p className="no-data-message">No hay series valoradas.</p>}
+            ) : <p className="no-data-message">{t('summary.noRatedSeries', 'No hay series valoradas.')}</p>}
           </div>
         </div>
       </section>
 
       {/* Peor valoradas - DISEÑO MEJORADO */}
       <section className="resumen-section peor-valoradas-section">
-        <h2>Peor valoradas</h2>
+        <h2>{t('summary.worstRated', 'Peor valoradas')}</h2>
         {loadingPeor ? (
           <div className="loading-spinner" style={{margin:'1rem auto'}}></div>
         ) : errorPeor ? (
@@ -330,7 +367,7 @@ useEffect(() => {
             <div className="peor-card" style={{background:'#ffeaea'}}>
               <div className="peor-icon" style={{fontSize:'2.5rem', color:'#e74c3c'}}>🎬</div>
               <div className="peor-titulo">
-                {peorPelicula ? peorPelicula.titulo : <span className="no-data-message">No hay películas valoradas.</span>}
+                {peorPelicula ? <TranslatedTitle media={peorPelicula} useTranslatedTitle={useTranslatedTitle} /> : <span className="no-data-message">{t('summary.noRatedMovies', 'No hay películas valoradas.')}</span>}
               </div>
               <div className="peor-nota-badge" style={{background:'#e74c3c', color:'#fff'}}>
                 {peorPelicula && peorPelicula.nota_personal !== null ? peorPelicula.nota_personal : '-'}
@@ -340,7 +377,7 @@ useEffect(() => {
             <div className="peor-card" style={{background:'#eaf7ff'}}>
               <div className="peor-icon" style={{fontSize:'2.5rem', color:'#2980b9'}}>📺</div>
               <div className="peor-titulo">
-                {peorSerie ? peorSerie.titulo : <span className="no-data-message">No hay series valoradas.</span>}
+                {peorSerie ? <TranslatedTitle media={peorSerie} useTranslatedTitle={useTranslatedTitle} /> : <span className="no-data-message">{t('summary.noRatedSeries', 'No hay series valoradas.')}</span>}
               </div>
               <div className="peor-nota-badge" style={{background:'#2980b9', color:'#fff'}}>
                 {peorSerie && peorSerie.nota_personal !== null ? peorSerie.nota_personal : '-'}
@@ -352,10 +389,10 @@ useEffect(() => {
 
       {/* Top Actores y Directores */}
       <section className="resumen-section personas-section">
-        <h2>Top actores y directores más frecuentes</h2>
+        <h2>{t('summary.topActorsDirectors', 'Top actores y directores más frecuentes')}</h2>
         <div className="personas-grid">
           <div className="personas-list">
-            <h3>🎭 Actores</h3>
+            <h3>🎭 {t('summary.actors', 'Actores')}</h3>
             {safeTopActores.length > 0 ? (
               <ol>
                 {safeTopActores.map(([nombre, count]) => (
@@ -365,10 +402,10 @@ useEffect(() => {
                   </li>
                 ))}
               </ol>
-            ) : <p className="no-data-message">No hay datos</p>} 
+            ) : <p className="no-data-message">{t('summary.noData', 'No hay datos')}</p>} 
           </div>
           <div className="personas-list">
-            <h3>🎬 Directores</h3>
+            <h3>🎬 {t('summary.directors', 'Directores')}</h3>
             {safeTopDirectores.length > 0 ? (
               <ol>
                 {safeTopDirectores.map(([nombre, count]) => (
@@ -378,18 +415,18 @@ useEffect(() => {
                   </li>
                 ))}
               </ol>
-            ) : <p className="no-data-message">No hay datos</p>} 
+            ) : <p className="no-data-message">{t('summary.noData', 'No hay datos')}</p>} 
           </div>
         </div>
       </section>
 
       {/* Gráfico de Géneros Vistos */}
       <section className="resumen-section genero-chart-section">
-        <h2>Distribución de géneros vistos</h2>
+        <h2>{t('summary.genreDistribution', 'Distribución de géneros vistos')}</h2>
         <GeneroChart data={safeGenerosVistos} />
       </section>
       <section className="resumen-section yearly-chart-section">
-        <h2>Títulos vistos por año de lanzamiento</h2>
+        <h2>{t('summary.yearlyChart', 'Títulos vistos por año de lanzamiento')}</h2>
         <YearChart data={vistosPorAnio} />
       </section>
 

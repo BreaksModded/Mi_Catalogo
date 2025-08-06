@@ -1,39 +1,11 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
+import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 import SectionRow from './SectionRow';
 import DetailModal from './DetailModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-const SECTIONS = [
-  { title: 'Tendencias', especial: 'tendencias' },
-  { title: 'Añadidas recientemente', especial: 'recientes' },
-  { title: 'Acción', genero: 'Acción' },
-  { title: 'Crimen', genero: 'Crimen' },
-  { title: 'Comedia', genero: 'Comedia' },
-  { title: 'Aventura', genero: 'Aventura' },
-  { title: 'Animación', genero: 'Animación' },
-  { title: 'Terror', genero: 'Terror' },
-  { title: 'Ciencia ficción', genero: 'Ciencia ficción' },
-  { title: 'Drama', genero: 'Drama' },
-  { title: 'Documental', genero: 'Documental' },
-  { title: 'Romance', genero: 'Romance' },
-  { title: 'Fantasía', genero: 'Fantasía' },
-  { title: 'Misterio', genero: 'Misterio' },
-  { title: 'Suspense', genero: 'Suspense' },
-  { title: 'Bélico', genero: 'Bélico' },
-  { title: 'Historia', genero: 'Historia' },
-  { title: 'Familia', genero: 'Familia' },
-  { title: 'Música', genero: 'Música' },
-  { title: 'Western', genero: 'Western' },
-  { title: 'Deporte', genero: 'Deporte' },
-  { title: 'Biografía', genero: 'Biografía' },
-  { title: 'Aventura espacial', genero: 'Aventura espacial' },
-  { title: 'Superhéroes', genero: 'Superhéroes' },
-  { title: 'Policíaco', genero: 'Policíaco' },
-  { title: 'Cine negro', genero: 'Cine negro' },
-  { title: 'Corto', genero: 'Corto' },
-  { title: 'Reality', genero: 'Reality' }
-];
 
 function rotateArray(arr, shift) {
   const n = arr.length;
@@ -43,13 +15,35 @@ function rotateArray(arr, shift) {
 
 // HomeSections ahora recibe 'medias' como prop
 export default function HomeSections({ medias }) {
+  const { t } = useLanguage();
+  
+  // Hook para traducir listas de medios - DEBE IR ANTES que otros useMemo que lo usen
+  const translatedMedias = useTranslatedMediaList(medias || [], 'all');
+  
+  // Hook para portadas dinámicas
+  const postersMap = useDynamicPosters(translatedMedias.displayData || []);
+  
+  // Definir las secciones de forma dinámica para poder traducirlas
+  const getSections = () => [
+    { titleKey: 'homeSections.trends', especial: 'tendencias' },
+    { titleKey: 'homeSections.recentlyAdded', especial: 'recientes' },
+    { titleKey: 'homeSections.action', genero: 'Acción' },
+    { titleKey: 'homeSections.crime', genero: 'Crimen' },
+    { titleKey: 'homeSections.comedy', genero: 'Comedia' },
+    { titleKey: 'homeSections.adventure', genero: 'Aventura' },
+    { titleKey: 'homeSections.animation', genero: 'Animación' },
+    { titleKey: 'homeSections.horror', genero: 'Terror' },
+    { titleKey: 'homeSections.sciFi', genero: 'Ciencia ficción' },
+    { titleKey: 'homeSections.drama', genero: 'Drama' }
+  ];
   // Estado para medias extra por género
   const [extraMediasPorGenero, setExtraMediasPorGenero] = useState({});
-  // Agrupación de medias por género individual
+  // Agrupación de medias por género individual (usando datos traducidos)
   const mediasPorGenero = useMemo(() => {
     const agrupado = {};
-    if (!medias || !medias.length) return agrupado;
-    medias.forEach(media => {
+    const displayData = translatedMedias.displayData || [];
+    if (!displayData.length) return agrupado;
+    displayData.forEach(media => {
       if (!media.genero) return;
       // Divide por coma y quita espacios
       media.genero.split(',').map(g => g.trim()).forEach(genero => {
@@ -58,11 +52,11 @@ export default function HomeSections({ medias }) {
       });
     });
     return agrupado;
-  }, [medias]);
+  }, [translatedMedias.displayData]);
 
   // Efecto para cargar más títulos si faltan en cada género
   useEffect(() => {
-    SECTIONS.forEach(section => {
+    getSections().forEach(section => {
       if (!section.genero) return;
       const base = mediasPorGenero[section.genero] || [];
       const extra = extraMediasPorGenero[section.genero]?.items || [];
@@ -100,13 +94,19 @@ export default function HomeSections({ medias }) {
   function getItemsForSection(genero) {
     const base = mediasPorGenero[genero] || [];
     const extra = extraMediasPorGenero[genero]?.items || [];
-    return [...base, ...extra].slice(0, ITEMS_PER_ROW);
+    const items = [...base, ...extra].slice(0, ITEMS_PER_ROW);
+    
+    // Aplicar portadas dinámicas
+    return items.map(item => ({
+      ...item,
+      imagen: getDynamicPosterUrl(item, postersMap)
+    }));
   }
 
-  // Rotar SECTIONS según el día del año
+  // Rotar secciones según el día del año
   const today = new Date();
   const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-  const rotatedSections = useMemo(() => rotateArray(SECTIONS, dayOfYear), [dayOfYear]);
+  const rotatedSections = useMemo(() => rotateArray(getSections(), dayOfYear), [dayOfYear, t]);
   const INITIAL_SECTIONS = 6;
   const ITEMS_PER_ROW = 20;
   const [visibleCount, setVisibleCount] = useState(INITIAL_SECTIONS);
@@ -130,7 +130,7 @@ export default function HomeSections({ medias }) {
           const ahora = new Date();
           const haceUnMes = new Date();
           haceUnMes.setDate(ahora.getDate() - 30);
-          const items = (medias || [])
+          const items = (translatedMedias.displayData || [])
             .slice()
             .map(m => ({
               ...m,
@@ -138,15 +138,16 @@ export default function HomeSections({ medias }) {
                 (m.favorito ? 15 : 0) +
                 (m.nota_personal ? m.nota_personal * 2 : 0) +
                 (m.nota_imdb ? m.nota_imdb : 0) +
-                (m.fecha_creacion && new Date(m.fecha_creacion) > haceUnMes ? 5 : 0)
+                (m.fecha_creacion && new Date(m.fecha_creacion) > haceUnMes ? 5 : 0),
+              imagen: getDynamicPosterUrl(m, postersMap)
             }))
             .sort((a, b) => b.tendenciaScore - a.tendenciaScore)
             .slice(0, ITEMS_PER_ROW);
           if (!items.length) return null;
           return (
             <SectionRow
-              key={section.title}
-              title={section.title}
+              key={section.titleKey}
+              title={t(section.titleKey)}
               items={items}
               carousel={true}
               onSelect={handleSelect}
@@ -155,15 +156,19 @@ export default function HomeSections({ medias }) {
         }
         if (section.especial === 'recientes') {
           // Ordena por fecha_creacion descendente, mismo límite
-          const items = (medias || [])
+          const items = (translatedMedias.displayData || [])
             .slice()
+            .map(m => ({
+              ...m,
+              imagen: getDynamicPosterUrl(m, postersMap)
+            }))
             .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
             .slice(0, ITEMS_PER_ROW);
           if (!items.length) return null;
           return (
             <SectionRow
-              key={section.title}
-              title={section.title}
+              key={section.titleKey}
+              title={t(section.titleKey)}
               items={items}
               carousel={true}
               onSelect={handleSelect}
@@ -175,7 +180,7 @@ export default function HomeSections({ medias }) {
           return (
             <SectionRow
               key={section.genero}
-              title={section.title}
+              title={t(section.titleKey)}
               items={getItemsForSection(section.genero)}
               carousel={true}
               loading={false}

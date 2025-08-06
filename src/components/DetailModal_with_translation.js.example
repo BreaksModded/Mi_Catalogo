@@ -1,0 +1,76 @@
+// Ejemplo de cómo integrar en DetailModal.js
+import React, { useEffect, useState, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslatedContent } from '../hooks/useTranslatedContent';
+import './DetailModal.css';
+import './DetailModal.similares.css';
+import FavoriteButton from './FavoriteButton';
+import PendingButton from './PendingButton';
+import ListasModal from './ListasModal';
+import { getPlatformLink } from './platformLinks';
+
+function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePending, tags, onAddTag, onRemoveTag, onUpdate }) {
+  const { t } = useLanguage();
+  
+  // ✨ NUEVO: Usar contenido traducido automáticamente
+  const { translatedMedia, isTranslating } = useTranslatedContent(media);
+  
+  // ... resto del estado existente ...
+  const [tmdbDetails, setTmdbDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  // ... otros estados ...
+
+  // Usar translatedMedia en lugar de media directamente
+  const displayMedia = translatedMedia || media;
+
+  return (
+    <div>
+      <div className="detail-modal-bg" onClick={e => { if (e.target.classList.contains('detail-modal-bg')) onClose(); }}>
+        <div className="detail-modal wide" onClick={e => e.stopPropagation()}>
+          <button className="close-btn" onClick={onClose}>&times;</button>
+
+          <div className="detail-modal-content">
+            {/* Mostrar indicador de traducción si está cargando */}
+            {isTranslating && (
+              <div className="translation-indicator">
+                <span>🌐 {t('messages.translating')}...</span>
+              </div>
+            )}
+
+            <div className="detail-modal-poster-container-with-actions">
+              <div className="detail-modal-poster-container">
+                <img src={displayMedia.imagen} alt={displayMedia.titulo} className="detail-modal-poster" />
+                {/* ... badges existentes ... */}
+              </div>
+            </div>
+
+            <div className="detail-modal-info">
+              {/* ✨ NUEVO: Usar título y contenido traducido */}
+              <h2>
+                {displayMedia.titulo} 
+                <span className="detail-modal-year">({displayMedia.anio})</span>
+                {/* Mostrar título original si es diferente */}
+                {displayMedia.titulo_original && displayMedia.titulo !== displayMedia.titulo_original && (
+                  <div className="original-title">
+                    <small>{t('detailModal.originalTitle')}: {displayMedia.titulo_original}</small>
+                  </div>
+                )}
+              </h2>
+              
+              <p><strong>{t('detailModal.genre')}</strong> {displayMedia.genero}</p>
+              <p><strong>{t('detailModal.director')}</strong> {displayMedia.director}</p>
+              <p><strong>{t('detailModal.cast')}</strong> {displayMedia.elenco}</p>
+              <p><strong>{t('detailModal.synopsis')}</strong> {displayMedia.sinopsis}</p>
+              <p><strong>{t('detailModal.status')}</strong> {displayMedia.estado}</p>
+
+              {/* ... resto del componente ... */}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DetailModal;

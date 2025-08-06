@@ -1,10 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import Select from 'react-select';
 
 export default function SelectGenero({ generos, selectedGeneros, onChange }) {
-  const options = generos.map(g => ({ value: g, label: g }));
   const selectRef = useRef(null);
   const [menuIsOpen, setMenuIsOpen] = useState(false);
+  const { t } = useLanguage();
+  
+  // Función para traducir géneros
+  const translateGenre = (genre) => {
+    const lowerGenre = genre.toLowerCase();
+    // Buscar en las traducciones de géneros
+    const translation = t(`genres.${lowerGenre}`, genre);
+    return translation;
+  };
+  
+  // Crear opciones con géneros traducidos
+  const options = generos.map(g => ({ 
+    value: g, // Mantener el valor original para filtros
+    label: translateGenre(g) // Mostrar la traducción
+  }));
   
   // Efecto para manejar clics fuera del componente
   useEffect(() => {
@@ -124,7 +139,7 @@ export default function SelectGenero({ generos, selectedGeneros, onChange }) {
               {selectedValues.map(option => option.label).join(', ')}
             </div>
           ) : (
-            <div style={{ color: '#aaa' }}>Géneros...</div>
+            <div style={{ color: '#aaa' }}>{t('filters.genres')}</div>
           )}
           {children[1]}
         </div>
@@ -139,7 +154,7 @@ export default function SelectGenero({ generos, selectedGeneros, onChange }) {
         options={options}
         value={options.filter(opt => selectedGeneros.includes(opt.value))}
         onChange={selected => onChange(selected ? selected.map(opt => opt.value) : [])}
-        placeholder="Géneros..."
+        placeholder={t('filters.genres')}
         classNamePrefix="react-select"
         menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
         menuPosition="fixed"

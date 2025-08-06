@@ -1,22 +1,31 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { useLanguage } from '../context/LanguageContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function GeneroChart({ data }) {
+  const { t } = useLanguage();
+  
   if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
-    return <div className="no-data-message">No hay datos de géneros</div>;
+    return <div className="no-data-message">{t('messages.noData', 'No hay datos de géneros')}</div>;
   }
 
-  const labels = Object.keys(data);
+  // Traducir los géneros
+  const translateGenre = (genre) => {
+    const lowerGenre = genre.toLowerCase();
+    return t(`genres.${lowerGenre}`, genre);
+  };
+
+  const labels = Object.keys(data).map(translateGenre);
   const counts = Object.values(data);
 
   const chartData = {
     labels,
     datasets: [
       {
-        label: 'Títulos vistos',
+        label: t('summary.moviesWatched', 'Títulos vistos'),
         data: counts,
         backgroundColor: '#1976d2',
         borderRadius: 6,
@@ -30,7 +39,11 @@ export default function GeneroChart({ data }) {
     plugins: {
       legend: { display: false },
       title: { display: false },
-      tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} título${ctx.parsed.y === 1 ? '' : 's'}` } }
+      tooltip: { 
+        callbacks: { 
+          label: ctx => `${ctx.parsed.y} ${t('general.title', 'título')}${ctx.parsed.y === 1 ? '' : 's'}` 
+        } 
+      }
     },
     scales: {
       x: { ticks: { color: '#fff' } },
@@ -46,8 +59,10 @@ export default function GeneroChart({ data }) {
 }
 
 export function YearChart({ data }) {
+  const { t } = useLanguage();
+  
   if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
-    return <div className="no-data-message">No hay datos de años</div>;
+    return <div className="no-data-message">{t('messages.noData', 'No hay datos de años')}</div>;
   }
 
   // Ordenar años numéricamente
@@ -58,7 +73,7 @@ export function YearChart({ data }) {
     labels,
     datasets: [
       {
-        label: 'Títulos vistos',
+        label: t('summary.moviesWatched', 'Títulos vistos'),
         data: counts,
         backgroundColor: '#43a047', // Verde
         borderRadius: 6,
@@ -72,7 +87,11 @@ export function YearChart({ data }) {
     plugins: {
       legend: { display: false },
       title: { display: false },
-      tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} título${ctx.parsed.y === 1 ? '' : 's'}` } }
+      tooltip: { 
+        callbacks: { 
+          label: ctx => `${ctx.parsed.y} ${t('general.title', 'título')}${ctx.parsed.y === 1 ? '' : 's'}` 
+        } 
+      }
     },
     scales: {
       x: { ticks: { color: '#fff' } },

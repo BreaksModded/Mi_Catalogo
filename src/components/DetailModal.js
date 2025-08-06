@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useLanguage } from '../context/LanguageContext';
+import { useTranslatedContent } from '../hooks/useTranslatedContent';
+import { useDynamicPoster, useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 import './DetailModal.css';
 import './DetailModal.similares.css';
 import FavoriteButton from './FavoriteButton';
@@ -46,6 +49,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
   const [externalIds, setExternalIds] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!tmdbId || !mediaType) return;
@@ -72,7 +76,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
   const renderProviders = (arr, tipo) => (
     <div className="streaming-provider-row">
       <span className="streaming-provider-label" style={{color: tipo==='flat' ? '#1db954' : tipo==='rent' ? '#ff9800' : '#1976d2'}}>
-        {tipo==='flat' ? 'Suscripción:' : tipo==='rent' ? 'Alquiler:' : 'Compra:'}
+        {tipo==='flat' ? t('detailModal.subscription') : tipo==='rent' ? t('detailModal.rental') : t('detailModal.purchase')}
       </span>
       <div className="streaming-provider-icons">
         {arr.map(p => {
@@ -121,8 +125,8 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
 
   return (
     <div className="streaming-availability-block">
-      <b>Disponibilidad en streaming:</b>
-      {loading && <span style={{marginLeft:8}}>Cargando...</span>}
+      <b>{t('detailModal.streamingAvailabilityTitle')}</b>
+      {loading && <span style={{marginLeft:8}}>{t('detailModal.loading')}</span>}
       {error && <span style={{color:'#c00', marginLeft:8}}>{error}</span>}
       {!loading && !error && providers && (
         <div className="streaming-providers-list">
@@ -130,12 +134,12 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
           {providers.rent && providers.rent.length > 0 && renderProviders(providers.rent, 'rent')}
           {providers.buy && providers.buy.length > 0 && renderProviders(providers.buy, 'buy')}
           {!providers.flatrate && !providers.rent && !providers.buy && (
-            <span style={{color:'#888'}}>No disponible en plataformas conocidas.</span>
+            <span style={{color:'#888'}}>{t('detailModal.notAvailableOnPlatforms')}</span>
           )}
         </div>
       )}
       {!loading && !error && !providers && (
-        <span style={{color:'#888', marginLeft:8}}>No disponible en plataformas conocidas.</span>
+        <span style={{color:'#888', marginLeft:8}}>{t('detailModal.notAvailableOnPlatforms')}</span>
       )}
     </div>
   );
@@ -168,6 +172,29 @@ const scrollLeftRef = useRef(0);
   const [listas, setListas] = useState([]);
   const [listasDeMedia, setListasDeMedia] = useState([]);
   const [listasFeedback, setListasFeedback] = useState('');
+  const { t, currentLanguage } = useLanguage();
+
+  // Hook para portada dinámica
+  const mediaType = media?.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
+  const { posterUrl } = useDynamicPoster(media?.tmdb_id, mediaType, media?.imagen);
+
+  // Hook para portadas dinámicas de similares
+  const postersMap = useDynamicPosters(similares);
+
+  // Mapear idioma para TMDb API
+  const getTmdbLanguage = (lang) => {
+    switch (lang) {
+      case 'en': return 'en-US';
+      case 'es': return 'es-ES';
+      default: return 'en-US';
+    }
+  };
+
+  // ✨ NUEVO: Usar contenido traducido automáticamente
+  const { translatedMedia, isTranslating } = useTranslatedContent(media);
+  
+  // Usar translatedMedia en lugar de media directamente para mostrar
+  const displayMedia = translatedMedia || media;
 
   useEffect(() => {
     if (!media) return;
@@ -175,18 +202,20 @@ const scrollLeftRef = useRef(0);
     setPendiente(media.pendiente || false);
     setLocalTags(Array.isArray(media.tags) ? media.tags : []);
 
+    // Usar media original para operaciones de backend, displayMedia para mostrar
     const tipo = typeof media.tipo === 'string' && media.tipo.toLowerCase() === 'serie' ? 'serie' : 'película';
+    const tmdbLang = getTmdbLanguage(currentLanguage);
     setLoading(true);
 
     if (media.tmdb_id && media.tipo) {
       const mediaType = media.tipo.toLowerCase() === 'serie' ? 'tv' : 'movie';
-      fetch(`${TMDB_URL}?id=${media.tmdb_id}&media_type=${mediaType}`)
+      fetch(`${TMDB_URL}?id=${media.tmdb_id}&media_type=${mediaType}&language=${tmdbLang}`)
         .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail); }))
         .then(setTmdbDetails)
         .catch(() => setError('No se pudo cargar detalles avanzados TMDb'))
         .finally(() => setLoading(false));
     } else {
-      fetch(`${TMDB_URL}?title=${encodeURIComponent(media.titulo)}&tipo_preferido=${encodeURIComponent(tipo)}`)
+      fetch(`${TMDB_URL}?title=${encodeURIComponent(media.titulo)}&tipo_preferido=${encodeURIComponent(tipo)}&language=${tmdbLang}`)
         .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail); }))
         .then(setTmdbDetails)
         .catch(() => setError('No se pudo cargar detalles avanzados TMDb'))
@@ -202,7 +231,7 @@ fetch(BACKEND_URL + '/listas')
           data.filter(lista => Array.isArray(lista.medias) && lista.medias.some(m => m.id === media.id)).map(l => l.id)
         );
       });
-  }, [media]);
+  }, [media, currentLanguage]);
 
 useEffect(() => {
   if (!media || !media.id) {
@@ -259,19 +288,36 @@ fetch(BACKEND_URL + '/listas')
         <div className="detail-modal wide" onClick={e => e.stopPropagation()}>
           <button className="close-btn" onClick={onClose}>&times;</button>
 
+          {/* Mostrar indicador de traducción si está cargando */}
+          {isTranslating && (
+            <div className="translation-indicator" style={{
+              position: 'absolute',
+              top: '10px',
+              right: '50px',
+              background: 'rgba(25, 118, 210, 0.9)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              zIndex: 1001
+            }}>
+              🌐 {t('messages.translating')}...
+            </div>
+          )}
+
           <div className="detail-modal-content">
             <div className="detail-modal-poster-container-with-actions">
               <div className="detail-modal-poster-container">
-                <img src={media.imagen} alt={media.titulo} className="detail-modal-poster" />
-                {media.nota_imdb && (
+                <img src={posterUrl} alt={displayMedia.titulo} className="detail-modal-poster" />
+                {displayMedia.nota_imdb && (
                   <div className="nota-imdb-badge-card">
-                    <span className="nota-imdb-num-card">{Number(media.nota_imdb).toFixed(1)}</span>
+                    <span className="nota-imdb-num-card">{Number(displayMedia.nota_imdb).toFixed(1)}</span>
                     <span className="nota-imdb-star-card">★</span>
                   </div>
                 )}
                 <div className="nota-personal-badge-card">
                   <span className="nota-personal-num-card">
-                    {media.nota_personal > 0 ? media.nota_personal.toFixed(1) : '-'}
+                    {displayMedia.nota_personal > 0 ? displayMedia.nota_personal.toFixed(1) : '-'}
                   </span>
                   <span className="nota-personal-star-card">★</span>
                 </div>
@@ -280,32 +326,35 @@ fetch(BACKEND_URL + '/listas')
               <div className="detail-modal-actions-under-poster">
                 <PendingButton isPending={pendiente} onToggle={() => { onTogglePending(media.id); setPendiente(p => !p); }} />
                 <FavoriteButton isFavorite={favorito} onToggle={() => { onToggleFavorite(media.id); setFavorito(f => !f); }} small />
-                <button className="mini-action-btn" title="Añadir a lista" onClick={() => setShowListasModal(true)}>
+                <button className="mini-action-btn" title={t('detailModal.addToList')} onClick={() => setShowListasModal(true)}>
                   <span role="img" aria-label="listas">📂</span>
                 </button>
                 {listasFeedback && <span className="listas-feedback-detail">{listasFeedback}</span>}
-                <button className="mini-action-btn delete-btn" title="Eliminar" onClick={() => setShowDelete(true)}>
+                <button className="mini-action-btn delete-btn" title={t('detailModal.delete')} onClick={() => setShowDelete(true)}>
                   <span role="img" aria-label="Eliminar">🗑️</span>
                 </button>
               </div>
             </div>
 
             <div className="detail-modal-info">
-              <h2>{media.titulo} <span className="detail-modal-year">({media.anio})</span></h2>
-              <p><strong>Género:</strong> {media.genero}</p>
-              <p><strong>Director:</strong> {media.director}</p>
-              <p><strong>Reparto:</strong> {media.elenco}</p>
-              <p><strong>Sinopsis:</strong> {media.sinopsis}</p>
-              <p><strong>Estado:</strong> {media.estado}</p>
+              <h2>
+                {displayMedia.titulo} 
+                <span className="detail-modal-year">({displayMedia.anio})</span>
+              </h2>
+              <p><strong>{t('detailModal.genre')}</strong> {displayMedia.genero}</p>
+              <p><strong>{t('detailModal.director')}</strong> {displayMedia.director}</p>
+              <p><strong>{t('detailModal.cast')}</strong> {displayMedia.elenco}</p>
+              <p><strong>{t('detailModal.synopsis')}</strong> {displayMedia.sinopsis}</p>
+              <p><strong>{t('detailModal.status')}</strong> {displayMedia.estado}</p>
 
               <div className="media-tags-block">
                 <div className="media-tags-header">
-                  <strong>Tags</strong>
+                  <strong>{t('detailModal.tags')}</strong>
                   <button 
                     className={`tags-toggle-btn ${selectingTags ? 'active' : ''}`}
                     onClick={() => { setSelectingTags(!selectingTags); setSelectedTags([]); }}
                   >
-                    {selectingTags ? 'Cancelar' : 'Gestionar'}
+                    {selectingTags ? t('detailModal.cancel') : t('detailModal.manage')}
                   </button>
                 </div>
                 {localTags.map(tag => (
@@ -334,7 +383,7 @@ fetch(BACKEND_URL + '/listas')
                     </div>
                     {selectedTags.length > 0 && (
                       <button className="add-tags-btn" onClick={addSelectedTags}>
-                        Añadir {selectedTags.length} {selectedTags.length === 1 ? 'etiqueta' : 'etiquetas'}
+                        {t('detailModal.add')} {selectedTags.length} {selectedTags.length === 1 ? t('detailModal.tag') : t('detailModal.tags')}
                       </button>
                     )}
                   </div>
@@ -342,18 +391,18 @@ fetch(BACKEND_URL + '/listas')
               </div>
               
               <div className="similares-block">
-                <h3>Similares</h3>
+                <h3>{t('detailModal.similar')}</h3>
                 {loadingSimilares && (
                   <div className="similares-cargando">
                     <div className="similares-spinner"></div>
-                    <div style={{marginTop: 10, fontWeight: 500, color: '#1976d2'}}>Buscando coincidencias en la base de datos…</div>
+                    <div style={{marginTop: 10, fontWeight: 500, color: '#1976d2'}}>{t('detailModal.searchingMatches')}</div>
                   </div>
                 )}
                 {errorSimilares && (
                   <div className="similares-error">{errorSimilares}</div>
                 )}
                 {!loadingSimilares && similares.length === 0 && !errorSimilares && (
-                  <div className="similares-vacio">No se han encontrado títulos similares.</div>
+                  <div className="similares-vacio">{t('detailModal.noSimilarTitles')}</div>
                 )}
                 {!loadingSimilares && similares.length > 0 && (
                   <div
@@ -377,7 +426,7 @@ fetch(BACKEND_URL + '/listas')
                     {similares.map(item => (
                       <div className="similares-item" key={item.id}>
                         <img
-                          src={item.imagen}
+                          src={getDynamicPosterUrl(item, postersMap)}
                           alt={item.titulo}
                           className="similares-img"
                           onClick={() => {
@@ -395,7 +444,7 @@ fetch(BACKEND_URL + '/listas')
 
             <div className="detail-modal-info">
             <div className="tmdb-extra-info-modal">
-              {loading && <div>Cargando detalles avanzados TMDb...</div>}
+              {loading && <div>{t('detailModal.loadingAdvancedDetails')}</div>}
               {error && <div style={{ color: '#ff4c4c' }}>{error}</div>}
               {tmdbDetails && <TMDBDetails tmdbDetails={tmdbDetails} media={media} />}
               {tmdbDetails && (
@@ -420,10 +469,10 @@ fetch(BACKEND_URL + '/listas')
                         style={{ display: 'block', margin: '18px auto 0 auto', borderRadius: '8px', boxShadow: '0 2px 12px #0007' }}
                       />
                     ) : (
-                      <div style={{color:'#ff4c4c', textAlign:'center', marginTop:'16px'}}>No se pudo extraer el vídeo de YouTube.</div>
+                      <div style={{color:'#ff4c4c', textAlign:'center', marginTop:'16px'}}>{t('detailModal.couldNotExtractVideo')}</div>
                     );
                   })() : (
-                    <div style={{color:'#ff4c4c', textAlign:'center', marginTop:'16px'}}>No hay tráiler disponible para este título.</div>
+                    <div style={{color:'#ff4c4c', textAlign:'center', marginTop:'16px'}}>{t('detailModal.noTrailerAvailable')}</div>
                   )}
                 </div>
               )}
@@ -442,10 +491,10 @@ fetch(BACKEND_URL + '/listas')
             {showDelete && (
               <div className="delete-confirm-modal-bg">
                 <div className="delete-confirm-modal">
-                  <div className="delete-confirm-title">¿Seguro que quieres eliminar esta {media.tipo} de la base de datos?</div>
+                  <div className="delete-confirm-title">{t('detailModal.deleteConfirmTitle')} {media.tipo} {t('detailModal.deleteFromDatabase')}</div>
                   <div className="delete-confirm-buttons">
-                    <button className="delete-confirm-btn delete-confirm-btn-danger" onClick={() => { onDelete(media); setShowDelete(false); }}>Eliminar</button>
-                    <button className="delete-confirm-btn" onClick={() => setShowDelete(false)}>Cancelar</button>
+                    <button className="delete-confirm-btn delete-confirm-btn-danger" onClick={() => { onDelete(media); setShowDelete(false); }}>{t('detailModal.delete')}</button>
+                    <button className="delete-confirm-btn" onClick={() => setShowDelete(false)}>{t('detailModal.cancel')}</button>
                   </div>
                 </div>
               </div>
@@ -459,7 +508,7 @@ fetch(BACKEND_URL + '/listas')
                 onClose={() => setShowListasModal(false)}
                 onListasChange={() => {
                   refreshListas();
-                  setListasFeedback('¡Listas actualizadas!');
+                  setListasFeedback(t('detailModal.listsUpdated'));
                   setTimeout(() => setListasFeedback(''), 1500);
                 }}
               />
@@ -477,6 +526,7 @@ function PersonalNotes({ media, onUpdate, onClose }) {
   const [note, setNote] = useState(media.anotacion_personal || '');
   const [tempNote, setTempNote] = useState(note);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   const handleSave = async () => {
     try {
@@ -506,9 +556,9 @@ function PersonalNotes({ media, onUpdate, onClose }) {
   return (
     <div className="personal-notes-container">
       <div className="personal-notes-header">
-        <span role="img" aria-label="nota">📝</span> <b>Anotaciones personales</b>
+        <span role="img" aria-label="nota">📝</span> <b>{t('detailModal.personalNotes')}</b>
         {!editMode && (
-          <button className="personal-notes-edit-btn" onClick={() => setEditMode(true)}>Editar</button>
+          <button className="personal-notes-edit-btn" onClick={() => setEditMode(true)}>{t('detailModal.edit')}</button>
         )}
       </div>
       {editMode ? (
@@ -518,12 +568,12 @@ function PersonalNotes({ media, onUpdate, onClose }) {
             value={tempNote}
             onChange={e => setTempNote(e.target.value)}
             rows={4}
-            placeholder="Escribe aquí tus anotaciones personales sobre este título..."
+            placeholder={t('detailModal.personalNotesPlaceholder')}
             autoFocus
           />
           <div style={{marginTop: 8, display: 'flex', gap: 10}}>
-            <button className="personal-notes-save-btn" onClick={handleSave}>Guardar</button>
-            <button className="personal-notes-cancel-btn" onClick={() => { setTempNote(note); setEditMode(false); }}>Cancelar</button>
+            <button className="personal-notes-save-btn" onClick={handleSave}>{t('actions.save')}</button>
+            <button className="personal-notes-cancel-btn" onClick={() => { setTempNote(note); setEditMode(false); }}>{t('actions.cancel')}</button>
           </div>
         </div>
       ) : (
@@ -531,7 +581,7 @@ function PersonalNotes({ media, onUpdate, onClose }) {
           {note && note.trim() !== '' ? (
             <ReactMarkdown>{note}</ReactMarkdown>
           ) : (
-            <span style={{color: '#888'}}>No hay anotaciones personales.</span>
+            <span style={{color: '#888'}}>{t('detailModal.noPersonalNotes')}</span>
           )}
         </div>
       )}
@@ -542,29 +592,31 @@ function PersonalNotes({ media, onUpdate, onClose }) {
 export default DetailModal;
 
 const TMDBDetails = ({ tmdbDetails, media }) => {
+  const { t } = useLanguage();
+  
   return (
     <>
-      {tmdbDetails.titulo_original && <div><b>Título original:</b> {tmdbDetails.titulo_original}</div>}
-      {tmdbDetails.idioma_original && <div><b>Idioma original:</b> {tmdbDetails.idioma_original.toUpperCase()}</div>}
-      {tmdbDetails.generos && <div><b>Géneros:</b> {tmdbDetails.generos}</div>}
-      {tmdbDetails.pais && <div><b>País:</b> {tmdbDetails.pais}</div>}
-      {tmdbDetails.duracion && <div><b>Duración:</b> {tmdbDetails.duracion} min</div>}
+      {tmdbDetails.titulo_original && <div><b>{t('detailModal.originalTitle')}:</b> {tmdbDetails.titulo_original}</div>}
+      {tmdbDetails.idioma_original && <div><b>{t('detailModal.originalLanguage')}:</b> {tmdbDetails.idioma_original.toUpperCase()}</div>}
+      {tmdbDetails.generos && <div><b>{t('detailModal.genres')}:</b> {tmdbDetails.generos}</div>}
+      {tmdbDetails.pais && <div><b>{t('detailModal.country')}:</b> {tmdbDetails.pais}</div>}
+      {tmdbDetails.duracion && <div><b>{t('detailModal.duration')}:</b> {tmdbDetails.duracion} min</div>}
       {media.tipo === 'película' && (
         <>
           {tmdbDetails.presupuesto !== undefined && tmdbDetails.presupuesto !== null && (
-            <div><b>Presupuesto:</b> {tmdbDetails.presupuesto > 0 ? `$${tmdbDetails.presupuesto.toLocaleString('es-ES')}` : 'No disponible'}</div>
+            <div><b>{t('detailModal.budget')}:</b> {tmdbDetails.presupuesto > 0 ? `$${tmdbDetails.presupuesto.toLocaleString('es-ES')}` : t('detailModal.notAvailable')}</div>
           )}
           {tmdbDetails.recaudacion !== undefined && tmdbDetails.recaudacion !== null && (
-            <div><b>Recaudación:</b> {tmdbDetails.recaudacion > 0 ? `$${tmdbDetails.recaudacion.toLocaleString('es-ES')}` : 'No disponible'}</div>
+            <div><b>{t('detailModal.revenue')}:</b> {tmdbDetails.recaudacion > 0 ? `$${tmdbDetails.recaudacion.toLocaleString('es-ES')}` : t('detailModal.notAvailable')}</div>
           )}
         </>
       )}
       {media.tipo === 'serie' && tmdbDetails.temporadas_detalle?.length > 0 && (
         <div className="tmdb-seasons-block">
-          <h4>Temporadas y episodios</h4>
+          <h4>{t('detailModal.seasonsAndEpisodes')}</h4>
           {tmdbDetails.temporadas_detalle.map(season => (
             <details key={season.numero} className="tmdb-season">
-              <summary>{season.nombre} ({season.episodios.length} episodios)</summary>
+              <summary>{season.nombre} ({season.episodios.length} {t('detailModal.episodes')})</summary>
               <ul className="tmdb-episode-list">
                 {season.episodios.map(ep => (
                   <li key={ep.numero} className="tmdb-episode-item">
