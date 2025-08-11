@@ -5,6 +5,15 @@ export class ContentTranslationService {
   constructor() {
     this.memoryCache = new Map();
     this.pendingRequests = new Map();
+    // Circuit breaker para prevenir flood de requests cuando el backend está fallando
+    this.circuitBreaker = {
+      failures: 0,
+      lastFailureTime: null,
+      state: 'CLOSED', // CLOSED, OPEN, HALF_OPEN
+      threshold: 5, // Número de fallos antes de abrir el circuito
+      timeout: 30000, // 30 segundos antes de intentar de nuevo
+      resetTimeout: 300000 // 5 minutos para reset completo
+    };
   }
 
   // Método principal para obtener contenido traducido
@@ -46,7 +55,65 @@ export class ContentTranslationService {
     }
   }
 
+  // Método para verificar el estado del circuit breaker
+  isCircuitOpen() {
+    if (this.circuitBreaker.state === 'CLOSED') {
+      return false;
+    }
+
+    if (this.circuitBreaker.state === 'OPEN') {
+      const now = Date.now();
+      const timeSinceLastFailure = now - this.circuitBreaker.lastFailureTime;
+      
+      if (timeSinceLastFailure >= this.circuitBreaker.timeout) {
+        this.circuitBreaker.state = 'HALF_OPEN';
+        return false;
+      }
+      return true;
+    }
+
+    return false; // HALF_OPEN permite intentos
+  }
+
+  // Método para registrar un fallo en el circuit breaker
+  recordFailure() {
+    this.circuitBreaker.failures++;
+    this.circuitBreaker.lastFailureTime = Date.now();
+
+    if (this.circuitBreaker.failures >= this.circuitBreaker.threshold) {
+      this.circuitBreaker.state = 'OPEN';
+      console.warn('Circuit breaker OPEN - Translation service temporarily disabled due to repeated failures');
+      
+      // Reset automático después del timeout completo
+      setTimeout(() => {
+        this.circuitBreaker.failures = 0;
+        this.circuitBreaker.state = 'CLOSED';
+        console.info('Circuit breaker RESET - Translation service re-enabled');
+      }, this.circuitBreaker.resetTimeout);
+    }
+  }
+
+  // Método para registrar un éxito en el circuit breaker
+  recordSuccess() {
+    if (this.circuitBreaker.state === 'HALF_OPEN') {
+      this.circuitBreaker.state = 'CLOSED';
+      this.circuitBreaker.failures = 0;
+    } else if (this.circuitBreaker.failures > 0) {
+      this.circuitBreaker.failures = Math.max(0, this.circuitBreaker.failures - 1);
+    }
+  }
+
   async fetchTranslation(media, targetLanguage) {
+    // Verificar circuit breaker antes de hacer la petición
+    if (this.isCircuitOpen()) {
+      console.warn(`Circuit breaker is OPEN - Skipping translation request for media ${media.id}`);
+      return {
+        ...media,
+        titulo_original: media.titulo,
+        translationSource: 'original'
+      };
+    }
+
     try {
       // Intentar obtener del caché del backend
       const response = await fetch(
@@ -56,11 +123,16 @@ export class ContentTranslationService {
           headers: {
             'Content-Type': 'application/json',
           },
+          // Timeout más agresivo para evitar requests colgados
+          signal: AbortSignal.timeout(10000)
         }
       );
 
       if (response.ok) {
         const translatedData = await response.json();
+        
+        // Registrar éxito en circuit breaker
+        this.recordSuccess();
         
         // Fusionar con datos originales
         return {
@@ -75,8 +147,9 @@ export class ContentTranslationService {
           translationSource: translatedData.translationSource || 'backend'
         };
       } else if (response.status === 404) {
+        // 404 no es un error de sistema, no afecta circuit breaker
         // No hay traducción en caché, intentar crear una si hay TMDb ID
-        if (media.tmdb_id) {
+        if (media.tmdb_id && !this.isCircuitOpen()) {
           try {
             const cacheResponse = await fetch(
               `${BACKEND_URL}/translations/${media.id}/cache?language=${targetLanguage}`,
@@ -85,11 +158,13 @@ export class ContentTranslationService {
                 headers: {
                   'Content-Type': 'application/json',
                 },
+                signal: AbortSignal.timeout(15000)
               }
             );
 
             if (cacheResponse.ok) {
               const cachedData = await cacheResponse.json();
+              this.recordSuccess();
               return {
                 ...media,
                 titulo: cachedData.data.translated_title || media.titulo,
@@ -101,9 +176,14 @@ export class ContentTranslationService {
                 titulo_original: media.titulo,
                 translationSource: 'tmdb'
               };
+            } else if (cacheResponse.status >= 500) {
+              this.recordFailure();
             }
           } catch (cacheError) {
             console.warn('Failed to cache translation:', cacheError);
+            if (cacheError.name !== 'AbortError') {
+              this.recordFailure();
+            }
           }
         }
 
@@ -113,10 +193,25 @@ export class ContentTranslationService {
           titulo_original: media.titulo,
           translationSource: 'original'
         };
+      } else if (response.status >= 500) {
+        // Solo errores 5xx afectan el circuit breaker
+        this.recordFailure();
+        throw new Error(`Translation service error: ${response.status}`);
       } else {
+        // Errores 4xx (excepto 404) no abren circuit breaker
         throw new Error(`Translation service error: ${response.status}`);
       }
     } catch (error) {
+      // Solo registrar fallo si no es timeout o abort
+      if (error.name === 'AbortError') {
+        console.warn(`Translation request timeout for media ${media.id}`);
+      } else if (error.message.includes('500')) {
+        // Ya se registró el fallo arriba
+      } else {
+        // Errores de red general
+        this.recordFailure();
+      }
+      
       console.error('Error fetching translation:', error);
       
       // Fallback al contenido original
@@ -134,14 +229,39 @@ export class ContentTranslationService {
       return;
     }
 
-    const promises = mediaList
-      .filter(media => media && media.id)
-      .map(media => this.getTranslatedContent(media, targetLanguage).catch(err => {
-        console.warn(`Failed to preload translation for ${media.id}:`, err);
-        return media;
-      }));
+    // Si el circuit breaker está abierto, no hacer preloads
+    if (this.isCircuitOpen()) {
+      console.warn('Circuit breaker is OPEN - Skipping translation preload');
+      return;
+    }
 
-    await Promise.allSettled(promises);
+    // Limitar la concurrencia para evitar sobrecargar el backend
+    const BATCH_SIZE = 5;
+    const batches = [];
+    
+    for (let i = 0; i < mediaList.length; i += BATCH_SIZE) {
+      batches.push(mediaList.slice(i, i + BATCH_SIZE));
+    }
+
+    for (const batch of batches) {
+      // Si el circuit breaker se abre durante el proceso, parar
+      if (this.isCircuitOpen()) {
+        console.warn('Circuit breaker opened during preload - Stopping remaining batches');
+        break;
+      }
+
+      const promises = batch
+        .filter(media => media && media.id)
+        .map(media => this.getTranslatedContent(media, targetLanguage).catch(err => {
+          console.warn(`Failed to preload translation for ${media.id}:`, err);
+          return media;
+        }));
+
+      await Promise.allSettled(promises);
+      
+      // Pequeña pausa entre batches para evitar saturar el servidor
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
 
   // Método para obtener estadísticas del caché
@@ -184,6 +304,25 @@ export class ContentTranslationService {
   clearMemoryCache() {
     this.memoryCache.clear();
     this.pendingRequests.clear();
+  }
+
+  // Método para obtener el estado del circuit breaker
+  getCircuitBreakerStatus() {
+    return {
+      state: this.circuitBreaker.state,
+      failures: this.circuitBreaker.failures,
+      lastFailureTime: this.circuitBreaker.lastFailureTime,
+      threshold: this.circuitBreaker.threshold,
+      isOpen: this.isCircuitOpen()
+    };
+  }
+
+  // Método para forzar el reset del circuit breaker (para debugging)
+  resetCircuitBreaker() {
+    this.circuitBreaker.failures = 0;
+    this.circuitBreaker.lastFailureTime = null;
+    this.circuitBreaker.state = 'CLOSED';
+    console.info('Circuit breaker manually reset');
   }
 }
 

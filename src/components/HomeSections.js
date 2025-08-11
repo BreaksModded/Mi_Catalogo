@@ -5,7 +5,7 @@ import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoste
 import SectionRow from './SectionRow';
 import DetailModal from './DetailModal';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 
 function rotateArray(arr, shift) {
   const n = arr.length;
@@ -13,8 +13,8 @@ function rotateArray(arr, shift) {
   return arr.slice(s).concat(arr.slice(0, s));
 }
 
-// HomeSections ahora recibe 'medias' como prop
-export default function HomeSections({ medias }) {
+// HomeSections ahora recibe 'medias' como prop y 'onMediaClick' para la selección
+export default function HomeSections({ medias, onMediaClick }) {
   const { t } = useLanguage();
   
   // Hook para traducir listas de medios - DEBE IR ANTES que otros useMemo que lo usen
@@ -71,7 +71,9 @@ export default function HomeSections({ medias }) {
           ...prev,
           [section.genero]: { loading: true, items: extra, allLoaded: false }
         }));
-        fetch(`${BACKEND_URL}/medias?genero=${encodeURIComponent(section.genero)}&skip=${total}&limit=${ITEMS_PER_ROW - total}`)
+        fetch(`${BACKEND_URL}/medias?genero=${encodeURIComponent(section.genero)}&skip=${total}&limit=${ITEMS_PER_ROW - total}`, {
+          credentials: 'include'
+        })
           .then(res => res.json())
           .then(nuevos => setExtraMediasPorGenero(prev => ({
             ...prev,
@@ -111,15 +113,10 @@ export default function HomeSections({ medias }) {
   const ITEMS_PER_ROW = 20;
   const [visibleCount, setVisibleCount] = useState(INITIAL_SECTIONS);
 
-  const [selectedMedia, setSelectedMedia] = useState(null);
-
-  function handleSelect(item) {
-    setSelectedMedia(item);
-  }
-
-  function handleCloseModal() {
-    setSelectedMedia(null);
-  }
+  // Si no se proporciona onMediaClick, usar un manejador por defecto
+  const handleSelect = onMediaClick || function(item) {
+    // Fallback por si no se pasa onMediaClick
+  };
 
   return (
     <>
@@ -190,13 +187,6 @@ export default function HomeSections({ medias }) {
           );
         }
       })}
-      {selectedMedia && (
-        <DetailModal
-          media={selectedMedia}
-          onClose={handleCloseModal}
-          onUpdate={setSelectedMedia}
-        />
-      )}
     </>
   );
 }

@@ -1,4 +1,10 @@
 export const en = {
+  person: {
+    full_filmography: 'Full filmography',
+    knownFor: 'Known for',
+    yourWatchedTitles: 'Your watched titles with this actor',
+    born: 'Born'
+  },
   // Navbar
   navbar: {
     title: 'My Catalog',
@@ -6,6 +12,25 @@ export const en = {
     series: 'Series',
     summary: 'Summary',
     favorites: 'Favorites',
+    streaming: {
+      errorLoading: 'Could not load streaming availability.',
+      platform: 'platform',
+      platforms: 'platforms',
+      noLink: 'No link',
+      showLess: 'Show less',
+      seeMore: 'See {{count}} more',
+      availabilityByRegion: 'Availability by region',
+      notAvailableOnPlatforms: 'Not available on platforms',
+      notAvailableInRegion: 'This content is not available on streaming platforms in {{region}}.',
+      thisRegion: 'this region',
+      tryChangingRegion: 'Try changing to another region above',
+      notAvailable: 'Not available',
+      noStreamingInfoFound: 'No streaming information found for {{region}}.',
+      pricesEstimated: 'Prices are estimated and may vary',
+      directLinksOpen: 'Direct links open in corresponding platform',
+      availabilityUpdated: 'Availability updated from TMDb',
+      priceNotAvailable: 'Price not available'
+    },
     pending: 'Pending',
     lists: 'Lists',
     add: '+ Add',
@@ -83,6 +108,7 @@ export const en = {
     removeFromPending: 'Remove from pending',
     addToList: 'Add to list',
     delete: 'Delete',
+    rate: 'Rate',
     personalNote: 'Personal note',
     editNote: 'Edit note',
     saveNote: 'Save',
@@ -126,12 +152,70 @@ export const en = {
     listsUpdated: 'Lists updated!',
     deleteConfirmTitle: 'Are you sure you want to delete this',
     deleteFromDatabase: 'from the database?',
-    tag: 'tag',
-    tags: 'tags',
+    tag: 'Tag',
+    addFirstTag: 'Add first tag',
+    searchTags: 'Search tags...',
+    noTagsFound: 'No tags match',
+    selected: 'Selected',
+    showLess: 'Show less',
+    more: 'more',
     rating: 'Rating',
     personalRating: 'My rating',
     imdbRating: 'TMDb',
-    notAvailable: 'Not available'
+    notAvailable: 'Not available',
+    additionalInfo: 'Additional information',
+    addNotes: 'Add',
+    noNotesYet: 'No notes yet',
+    clickToAdd: 'Click to add',
+    manageTags: 'Manage Tags'
+  },
+
+  // Countries
+  countries: {
+    spain: 'Spain',
+    unitedStates: 'United States',
+    unitedKingdom: 'United Kingdom',
+    france: 'France',
+    germany: 'Germany',
+    italy: 'Italy',
+    portugal: 'Portugal',
+    brazil: 'Brazil',
+    mexico: 'Mexico',
+    argentina: 'Argentina',
+    canada: 'Canada',
+    australia: 'Australia',
+    japan: 'Japan',
+    southKorea: 'South Korea'
+  },
+
+  // Streaming
+  streaming: {
+    errorLoading: 'Could not get streaming availability.',
+    platform: 'platform',
+    platforms: 'platforms',
+    noLink: 'No link',
+    showLess: 'Show less',
+    seeMore: 'See {{count}} more',
+    availabilityByRegion: 'Availability by region',
+    notAvailableOnPlatforms: 'Not available on platforms',
+    notAvailableInRegion: 'This content is not available on streaming platforms in {{region}}.',
+    thisRegion: 'this region',
+    tryChangingRegion: 'Try changing to another region above',
+    notAvailable: 'Not available',
+    noStreamingInfoFound: 'No streaming information found for {{region}}.',
+    pricesEstimated: 'Prices are estimated and may vary',
+    directLinksOpen: 'Direct links open in the corresponding platform',
+    availabilityUpdated: 'Availability updated from TMDb',
+    priceNotAvailable: 'Price not available'
+  },
+
+  // Errors
+  errors: {
+    mediaNotFound: 'Media not found',
+    couldNotLoadTmdbDetails: 'Could not load advanced TMDb details',
+    couldNotLoadSimilar: 'Could not load similar titles.',
+    errorSaving: 'Error saving',
+    errorSavingNotes: 'Error saving notes. Please try again.'
   },
 
   // Buttons and actions
@@ -144,10 +228,20 @@ export const en = {
     create: 'Create',
     close: 'Close',
     loadMore: 'Load more',
+    showMore: 'Show more',
     loading: 'Loading...',
     search: 'Search',
     filter: 'Filter',
-    clear: 'Clear'
+    clear: 'Clear',
+    confirm: 'Confirm',
+    backToHome: 'Back to home'
+  },
+
+  // Tooltips
+  tooltips: {
+    tmdbRating: 'TMDb Rating',
+    personalRating: 'My Rating',
+    noPersonalRating: 'No personal rating'
   },
 
   // Database sleep notice
@@ -254,6 +348,9 @@ export const en = {
     errorCreatingGeneric: 'Error creating the list',
     // List details modal
     searchPlaceholder: 'Search movie or series to add...',
+    searchButton: 'Search',
+    addButton: 'Add',
+    emptyList: 'This list is empty.',
     searchError: 'Search error',
     noResultsInCatalog: 'No results found in your catalog',
     searchCatalogError: 'Could not search your catalog',
@@ -266,7 +363,19 @@ export const en = {
     deleteMode: 'Delete Mode',
     deleteSelected: 'Delete Selected',
     confirmDelete: 'Will delete',
-    permanently: 'tags permanently.'
+    permanently: 'tags permanently.',
+    nameRequired: 'Tag name cannot be empty',
+    nameExists: 'A tag with that name already exists',
+    tagNamePlaceholder: 'New tag name',
+    existingTags: 'Existing Tags',
+    selected: 'Selected',
+    confirmTitle: 'Are you sure?',
+    // Added operation result messages
+    created: 'Tag created successfully',
+    createFailed: 'Could not create tag',
+    deleteFailed: 'Could not delete tags',
+    addFailed: 'Could not add tag',
+    removeFailed: 'Could not remove tag'
   },
 
   // Add Media Form
@@ -408,5 +517,19 @@ export const en = {
     'sport': 'Sport',
     'música': 'Music',
     'music': 'Music'
+  },
+
+  // Welcome screen
+  welcome: {
+    title: 'Welcome to Your Personal Catalog',
+    subtitle: 'Create and manage your personal collection of movies and series',
+    feature1: 'Personal Catalog',
+    feature1Desc: 'Organize your favorite movies and series',
+    feature2: 'Custom Tags',
+    feature2Desc: 'Tag and categorize your content',
+    feature3: 'Favorites and Notes',
+    feature3Desc: 'Mark favorites and add annotations',
+    getStarted: 'Get Started!',
+    loginPrompt: 'Sign in to access your personal catalog and start adding movies and series'
   }
 };

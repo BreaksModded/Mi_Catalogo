@@ -1,0 +1,80 @@
+.auth-modal-overlay {
+  background: rgba(45,55,72,0.65);
+  z-index: 2000;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-modal-content {
+  max-width: 400px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 32px;
+  position: relative;
+  width: 90vw;
+}
+.auth-modal-content h2 {
+  text-align: center;
+  color: #2d3748;
+  margin-bottom: 24px;
+}
+.auth-modal-content label {
+  color: #4a5568;
+  font-weight: 500;
+}
+.auth-modal-content input[type="email"],
+.auth-modal-content input[type="password"] {
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  padding: 10px;
+  margin-bottom: 12px;
+  width: 100%;
+  font-size: 1rem;
+}
+.auth-modal-content .form-error {
+  color: #e53e3e;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+.auth-modal-content .add-btn {
+  margin-top: 16px;
+  width: 100%;
+  background: #2d3748;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-modal-content .add-btn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+.auth-modal-content .link-btn {
+  color: #3182ce;
+  background: none;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 18px;
+}
+.auth-modal-content .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 28px;
+  color: #2d3748;
+  background: none;
+  border: none;
+  cursor: pointer;
+}

@@ -7,8 +7,19 @@ export default async function cacheFetch(url, options = {}, ttlMs = 60000) {
   if (cache[url] && (now - cache[url].ts < ttlMs)) {
     return cache[url].response;
   }
+  
   const response = await fetch(url, options);
-  if (!response.ok) throw new Error('Network response was not ok');
+  
+  // Si es 401 (no autenticado), retornar array vacío sin error
+  if (response.status === 401) {
+    return [];
+  }
+  
+  // Para otros errores, arrojar error
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
   const data = await response.json();
   cache[url] = { response: data, ts: now };
   return data;

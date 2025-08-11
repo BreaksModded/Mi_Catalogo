@@ -1,4 +1,5 @@
-.modal-backdrop {
+/* Modal overlay con el mismo estilo que DetailModal */
+.tags-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -9,293 +10,579 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
+/* Modal principal - tema oscuro */
 .tags-modal {
   background: #1a1a1a;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 600px;
+  max-width: 960px;
   max-height: 90vh;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 15px; /* ~+1px sobre default para todo el modal */
 }
 
+/* Header del modal */
 .tags-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #232323;
-  border-bottom: 1px solid #333;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #2d6da3 0%, #1e4c73 100%);
+  color: white;
+  border-bottom: 1px solid #1e4c73;
 }
 
-.tags-modal-header h2 {
+.tags-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tags-modal-icon {
+  font-size: 1.4em;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.tags-modal-title h3 {
   margin: 0;
-  color: #fff;
-  font-size: 1.5em;
+  font-size: 1.4em;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.close-button {
+.tags-modal-close {
   background: none;
   border: none;
-  color: #999;
-  font-size: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 28px;
   cursor: pointer;
-  padding: 0 8px;
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: #fff;
-}
-
-.tags-modal-content {
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.tags-creation-section {
-  margin-bottom: 24px;
-}
-
-.input-group {
-  display: flex;
-  gap: 10px;
-}
-
-.tag-input {
-  flex: 1;
-  background: #2a2a2a;
-  border: 1px solid #444;
+  padding: 4px 8px;
   border-radius: 6px;
-  padding: 10px 15px;
-  color: #fff;
-  font-size: 1em;
+  transition: all 0.2s ease;
+  line-height: 1;
 }
 
-.tag-input:focus {
-  outline: none;
-  border-color: #666;
-}
-
-.create-tag-button {
-  background: #2d6da3;
+.tags-modal-close:hover {
   color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
 }
 
-.create-tag-button:hover {
-  background: #3884c7;
+/* Contenido del modal - tema oscuro */
+.tags-modal-content {
+  padding: 28px;
+  overflow-y: auto;
+  flex: 1;
+  background: #1a1a1a;
 }
 
-.error-message {
-  color: #ff6b6b;
-  margin-top: 8px;
-  font-size: 0.9em;
-}
-
-.tags-header {
+/* Títulos de sección - tema oscuro */
+.section-title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin: 0 0 8px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #fff;
 }
 
-.tags-header h3 {
-  color: #fff;
-  margin: 0;
+.section-icon {
   font-size: 1.2em;
 }
 
-.mode-button {
-  background: #2a2a2a;
-  color: #999;
-  border: 1px solid #444;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9em;
+/* Sección de creación de tags - tema oscuro */
+.tags-creation-section {
+  margin-bottom: 8px;
+  padding: 16px;
+  background: #232323;
+  border-radius: 12px;
+  border: 1px solid #333;
 }
 
-.mode-button:hover {
-  background: #333;
-  color: #fff;
-  border-color: #666;
-}
-
-.mode-button-active {
-  background: #c62828;
-  color: white;
-  border-color: #c62828;
-}
-
-.tags-grid {
+.tags-input-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px;
+  gap: 12px;
+  align-items: stretch;
 }
 
-.tag-checkbox {
-  display: inline-flex;
-  align-items: center;
+.tags-input {
+  flex: 1;
   background: #2a2a2a;
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.2s;
-  user-select: none;
-}
-
-.tag-checkbox:hover {
-  background: #333;
-  border-color: #666;
-}
-
-.tag-checkbox input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.tag-checkbox input:checked + span {
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 14px 16px;
   color: #fff;
+  font-size: 1em;
+  transition: all 0.2s ease;
 }
 
-.tag-checkbox span {
-  color: #999;
-  transition: all 0.2s;
-}
-
-.tag-checkbox:has(input:checked) {
-  background: #2d6da3;
+.tags-input:focus {
+  outline: none;
   border-color: #2d6da3;
+  box-shadow: 0 0 0 3px rgba(45, 109, 163, 0.2);
 }
 
-.tag-checkbox:has(input:checked) span {
-  color: #fff;
-}
-
-.tag-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+.tags-create-btn {
+  background: linear-gradient(135deg, #2d6da3 0%, #1e4c73 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(45, 109, 163, 0.3);
+  min-height: 38px;
 }
 
-.tag-name {
-  font-size: 0.95em;
+.tags-create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(45, 109, 163, 0.4);
 }
 
-.delete-actions {
+.create-icon {
+  font-size: 1.1em;
+}
+
+.tags-error-message {
+  color: #ff6b6b;
+  margin-top: 12px;
+  font-size: 0.9em;
+  padding: 8px 12px;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 6px;
+  border-left: 4px solid #ff6b6b;
+}
+
+/* Sección de búsqueda */
+.tags-search-section {
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.tags-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #999;
+  font-size: 1em;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tags-search-input {
+  width: 100%;
+  background: #2a2a2a;
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 10px 14px 10px 40px;
+  color: #fff;
+  font-size: 1em;
+  transition: all 0.2s ease;
+}
+
+.tags-search-input:focus {
+  outline: none;
+  border-color: #2d6da3;
+  box-shadow: 0 0 0 3px rgba(45, 109, 163, 0.2);
+}
+
+.clear-search-btn {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* Sección de selección */
+.tags-selection-section {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.tags-selection-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding: 12px;
-  background: rgba(198, 40, 40, 0.1);
-  border: 1px solid rgba(198, 40, 40, 0.2);
-  border-radius: 6px;
 }
 
-.selected-count {
-  color: #ff6b6b;
+.tags-mode-btn {
+  background: #666;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  min-height: 38px;
 }
 
-.delete-confirm-button {
+.tags-mode-btn:hover {
+  background: #777;
+  transform: translateY(-1px);
+}
+
+.tags-mode-btn.delete-mode {
+  background: #c62828;
+  color: white;
+}
+
+.tags-mode-btn.delete-mode:hover {
+  background: #d32f2f;
+}
+
+.mode-icon {
+  font-size: 1em;
+}
+
+/* Preview de eliminación - tema oscuro */
+.delete-preview {
+  background: rgba(198, 40, 40, 0.2);
+  border: 1px solid rgba(198, 40, 40, 0.4);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-count {
+  color: #ff6b6b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count-icon {
+  font-size: 1.1em;
+}
+
+.tags-delete-btn {
   background: #c62828;
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   font-size: 0.9em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
 }
 
-.delete-confirm-button:hover {
+.tags-delete-btn:hover {
   background: #d32f2f;
   transform: translateY(-1px);
 }
 
-.confirm-dialog {
+.delete-icon {
+  font-size: 1em;
+}
+
+/* Área de selección de tags - tema oscuro */
+.tags-selection-area {
+  min-height: 150px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 12px;
+  background: #232323;
+}
+
+/* === Rediseño de botones (chips) en el área de selección === */
+.tags-modal .tags-selection-area {
+  background: radial-gradient(900px 300px at 0% -20%, rgba(45, 109, 163, 0.06), transparent 70%), #232323;
+  border: 1px solid #3a3a3a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Grid final y simétrico para chips */
+.tags-modal .tags-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)) !important;
+  grid-auto-rows: 40px;
+  gap: 8px !important;
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+/* Botón tipo pill, compacto y consistente con la web */
+.tags-modal .tag-option {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #2a2a2a, #212121);
+  border: 1px solid #3a3a3a;
+  color: #e8e8e8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 6px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.08s ease;
+}
+
+.tags-modal .tag-option:hover {
+  background: linear-gradient(180deg, #323232, #262626);
+  border-color: #2d6da3;
+  box-shadow: 0 0 0 2px rgba(45, 109, 163, 0.25), 0 6px 14px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.tags-modal .tag-option:active {
+  transform: translateY(0);
+  box-shadow: 0 0 0 2px rgba(45, 109, 163, 0.2), inset 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Foco accesible (teclado) */
+.tags-modal .tag-option:focus-within,
+.tags-modal .tag-option:has(input:focus-visible) {
+  outline: none;
+  border-color: #2d6da3;
+  box-shadow: 0 0 0 2px rgba(45, 109, 163, 0.35);
+}
+
+/* Estado seleccionado con acento corporativo */
+.tags-modal .tag-option.selected {
+  background: linear-gradient(135deg, #2d6da3 0%, #1e4c73 100%);
+  border-color: #64a1d1;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(45, 109, 163, 0.35), 0 6px 16px rgba(45, 109, 163, 0.25);
+}
+
+/* Modo eliminar: tono y anillo rojo sutil */
+.tags-modal .tag-option.delete-mode {
+  border-color: #c62828;
+  background: linear-gradient(180deg, #2a1f1f, #221818);
+}
+
+.tags-modal .tag-option.delete-mode:hover {
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.25), 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.tags-modal .tag-option.delete-mode.selected {
+  background: linear-gradient(135deg, #c62828 0%, #d32f2f 100%);
+  border-color: #e57373;
+  box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.35), 0 6px 16px rgba(198, 40, 40, 0.25);
+}
+
+/* Texto truncado y marca de check alineada al extremo */
+.tags-modal .tag-option-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  font-size: 0.92em;
+}
+
+/* Quitar el checkbox visualmente y reservar espacio para el check */
+.tags-modal .tag-checkbox {
+  display: none !important;
+}
+
+.tags-modal .tag-check-mark {
+  margin-left: 8px;
+  min-width: 1.1em;
+  text-align: center;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.tags-modal .tag-option.selected .tag-check-mark {
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Footer del modal - tema oscuro */
+.tags-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #232323;
+  border-top: 1px solid #333;
+}
+
+.selected-count {
+  color: #fff;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tags-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.tags-cancel-btn {
+  background: #666;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  min-height: 38px;
+}
+
+.tags-cancel-btn:hover {
+  background: #777;
+  transform: translateY(-1px);
+}
+
+/* Modal de confirmación - tema oscuro */
+.tags-confirm-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1100;
+  backdrop-filter: blur(4px);
 }
 
-.confirm-dialog-content {
+.tags-confirm-modal {
   background: #1a1a1a;
-  padding: 24px;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
   max-width: 400px;
+  padding: 24px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.confirm-dialog-content h4 {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  border: 1px solid #333;
   color: #fff;
-  margin: 0 0 12px 0;
-  font-size: 1.3em;
 }
 
-.confirm-dialog-content p {
-  color: #999;
-  margin: 0 0 20px 0;
+.confirm-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.confirm-dialog-buttons {
+.confirm-icon {
+  font-size: 2em;
+}
+
+.tags-confirm-modal h4 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.tags-confirm-modal p {
+  color: #ccc;
+  margin: 0 0 24px 0;
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+.confirm-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
 
-.confirm-dialog-buttons button {
-  padding: 10px 24px;
-  border-radius: 6px;
+.confirm-cancel-btn,
+.confirm-delete-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   font-size: 0.95em;
-}
-
-.cancel-button {
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
-}
-
-.cancel-button:hover {
-  background: #333;
-  border-color: #666;
-}
-
-.confirm-button {
-  background: #c62828;
-  color: white;
+  font-weight: 500;
   border: none;
 }
 
-.confirm-button:hover {
+.confirm-cancel-btn {
+  background: #666;
+  color: white;
+}
+
+.confirm-cancel-btn:hover {
+  background: #777;
+  transform: translateY(-1px);
+}
+
+.confirm-delete-btn {
+  background: #c62828;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-delete-btn:hover {
   background: #d32f2f;
   transform: translateY(-1px);
 }
+
+.confirm-delete-icon {
+  font-size: 1em;
+}
+
+/* Overrides específicos para TagsModal (evita conflictos y ajusta spacing) */
+.tags-modal { max-width: 960px; }
+.tags-modal .section-title { margin: 0 0 8px 0; }
+.tags-modal .tags-creation-section { margin-bottom: 8px; padding: 16px; }
+.tags-modal .tags-create-btn { padding: 8px 16px; font-size: 0.95em; }
+.tags-modal .tags-search-section { margin-top: 4px; margin-bottom: 10px; }
+.tags-modal .tags-selection-section { margin-top: 0; margin-bottom: 16px; }
+
+/* Forzar posición del icono de búsqueda solo dentro de este modal */
+.tags-modal .tags-search-container .search-icon { left: 12px !important; top: 50% !important; transform: translateY(-50%) !important; }
+.tags-modal .tags-search-input { padding: 10px 14px 10px 40px; font-size: 1em; }
+.tags-modal .clear-search-btn { right: 8px !important; width: 18px; height: 18px; font-size: 11px; }

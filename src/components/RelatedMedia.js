@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './RelatedMedia.css';
 import { useLanguage } from '../context/LanguageContext';
 
-const TMDB_API_KEY = 'ffac9eb544563d4d36980ea638fca7ce';
-const TMDB_URL = `https://api.themoviedb.org/3`;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+const TMDB_URL = `${BACKEND_URL}/tmdb`;
 
 function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
   const { t, currentLanguage } = useLanguage();
@@ -26,14 +26,14 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         let collectionIds = [];
 
         // Obtener información de la colección si existe
-        const languageCode = currentLanguage === 'en' ? 'en-US' : 'es-ES';
-        const collectionRes = await fetch(`${TMDB_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=${languageCode}`);
+  const languageCode = currentLanguage === 'en' ? 'en-US' : 'es-ES';
+  const collectionRes = await fetch(`${TMDB_URL}/movie/${tmdbId}?language=${languageCode}`);
         const movieData = await collectionRes.json();
 
         // Si hay colección, obtener sus partes
         if (movieData.belongs_to_collection) {
           const collectionId = movieData.belongs_to_collection.id;
-          const collectionPartsRes = await fetch(`${TMDB_URL}/collection/${collectionId}?api_key=${TMDB_API_KEY}&language=${languageCode}`);
+          const collectionPartsRes = await fetch(`${TMDB_URL}/collection/${collectionId}?language=${languageCode}`);
           const collectionPartsData = await collectionPartsRes.json();
 
           if (collectionPartsData.parts) {
@@ -59,9 +59,9 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         // Obtener recomendaciones según el tipo
         let recommendationsUrl = '';
         if (mediaType === 'tv') {
-          recommendationsUrl = `${TMDB_URL}/tv/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=${languageCode}&page=1`;
+          recommendationsUrl = `${TMDB_URL}/tv/${tmdbId}/recommendations?language=${languageCode}&page=1`;
         } else {
-          recommendationsUrl = `${TMDB_URL}/movie/${tmdbId}/recommendations?api_key=${TMDB_API_KEY}&language=${languageCode}&page=1`;
+          recommendationsUrl = `${TMDB_URL}/movie/${tmdbId}/recommendations?language=${languageCode}&page=1`;
         }
         const recommendationsRes = await fetch(recommendationsUrl);
         const recommendationsData = await recommendationsRes.json();

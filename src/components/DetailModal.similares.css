@@ -1,13 +1,110 @@
 .similares-carousel-block {
   margin: 0 0 16px 0;
 }
+
+.similares-block {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Ajustes específicos para móvil */
+@media (max-width: 768px) {
+  .similares-block {
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+  
+  /* Asegurar que el modal no tenga scroll horizontal */
+  .detail-modal {
+    overflow-x: hidden;
+  }
+  
+  .detail-modal-content {
+    overflow-x: hidden;
+  }
+}
 .similares-carousel {
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden;
   gap: 10px;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   scrollbar-width: thin;
   scrollbar-color: #bbb #eee;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Reducir gap en móvil y optimizar scroll nativo */
+@media (max-width: 768px) {
+  .similares-carousel {
+    gap: 8px;
+    padding: 0 10px 8px 10px;
+    scroll-snap-type: none;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    max-width: 98vw; /* Ancho más amplio para portadas grandes */
+    width: 98vw;
+    margin: 0 auto;
+    position: relative;
+    box-sizing: border-box;
+  }
+  
+  .similares-block {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+}
+
+.similares-item {
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+  height: 180px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.similares-item:hover {
+  transform: scale(1.05);
+}
+
+/* Ajustes para móvil */
+@media (max-width: 768px) {
+  .similares-item {
+    width: 140px;
+    height: 210px;
+    margin-right: 0; /* Removido margin-right extra */
+    flex-shrink: 0;
+    flex-grow: 0;
+    min-width: 140px; /* Asegurar ancho mínimo */
+  }
+  
+  .similares-item:hover {
+    transform: none; /* Desactivar hover en móvil */
+  }
+  
+  .similares-item:active {
+    transform: scale(0.95); /* Feedback visual al tocar */
+  }
+}
+
+.similares-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
 }
 .similares-carousel::-webkit-scrollbar {
   height: 8px;
@@ -16,9 +113,21 @@
   background: #bbb;
   border-radius: 4px;
 }
+
+/* Ocultar scrollbar en móvil para una experiencia más limpia */
+@media (max-width: 768px) {
+  .similares-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .similares-carousel {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
 .similares-card {
-  min-width: 96px;
-  max-width: 110px;
+  min-width: 120px;
+  max-width: 140px;
   background: #23272f;
   border-radius: 7px;
   box-shadow: 0 1px 8px #0003;
@@ -29,14 +138,22 @@
   cursor: pointer;
   transition: transform 0.14s, box-shadow 0.14s;
 }
+
+/* Ajustes específicos para móvil en similares-card */
+@media (max-width: 768px) {
+  .similares-card {
+    min-width: 135px;
+    max-width: 145px;
+  }
+}
 .similares-card:hover {
   transform: translateY(-4px) scale(1.04);
   box-shadow: 0 4px 16px #0005;
   background: #29303b;
 }
 .similares-img {
-  width: 84px;
-  height: 120px;
+  width: 140px;
+  height: 185px;
   object-fit: cover;
   border-radius: 5px;
 }
@@ -73,7 +190,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 90px;
+  max-width: 120px;
+}
+
+/* Ajustes específicos para móvil en similares-title */
+@media (max-width: 768px) {
+  .similares-title {
+    max-width: 135px;
+  }
 }
 .similares-year {
   font-size: 0.85em;
@@ -86,16 +210,16 @@
 }
 @media (max-width: 600px) {
   .similares-card {
-    min-width: 80px;
-    max-width: 92px;
+    min-width: 110px;
+    max-width: 125px;
     padding: 4px 3px 6px 3px;
   }
   .similares-img {
-    width: 64px;
-    height: 92px;
+    width: 110px;
+    height: 155px;
   }
   .similares-title {
-    max-width: 76px;
+    max-width: 105px;
     font-size: 0.85em;
   }
 }

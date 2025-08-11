@@ -2,13 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
-import { useDynamicPoster, useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
+import { useDynamicPoster } from '../hooks/useDynamicPoster';
+import PosterSkeleton from './PosterSkeleton';
 import './DetailModal.css';
 import './DetailModal.similares.css';
 import FavoriteButton from './FavoriteButton';
 import PendingButton from './PendingButton';
 import ListasModal from './ListasModal';
 import { getPlatformLink } from './platformLinks';
+import { getRatingColors } from './SectionRow';
 
 // Componente para mostrar plataformas de streaming
 function getPlatformHome(providerName) {
@@ -56,14 +58,14 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
     setLoading(true);
     setError('');
     // 1. Cargar plataformas
-    fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=ffac9eb544563d4d36980ea638fca7ce`)
+  fetch(`${BACKEND_URL}/tmdb/${mediaType}/${tmdbId}/watch/providers`)
       .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.status_message || 'Error TMDb'); }))
       .then(data => {
         setProviders(data.results && data.results[country] ? data.results[country] : null);
       })
       .catch(() => setError('No se pudo obtener disponibilidad en streaming.'));
     // 2. Cargar external_ids para enlaces directos
-    fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=ffac9eb544563d4d36980ea638fca7ce`)
+  fetch(`${BACKEND_URL}/tmdb/${mediaType}/${tmdbId}/external_ids`)
       .then(res => res.ok ? res.json() : {})
       .then(setExternalIds)
       .catch(() => setExternalIds(null))
@@ -146,16 +148,67 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
 }
 
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
-function DetailModal({ media, onClose, onDelete, onToggleFavorite, onTogglePending, tags, onAddTag, onRemoveTag, onUpdate }) {
+// Componente para cada item similar con su propia portada dinámica
+function SimilarItem({ item, onUpdate, isDraggingRef, isMobile }) {
+  const mediaType = item.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
+  const { posterUrl, loading } = useDynamicPoster(item.tmdb_id, mediaType, item.imagen);
+
+  const handleClick = () => {
+    // En móvil, permitir click directo; en desktop, verificar si no está dragging
+    if (isMobile || !isDraggingRef.current) {
+      onUpdate(item);
+    }
+  };
+
+  return (
+    <div className="similares-item">
+      {loading ? (
+        <PosterSkeleton width="100%" height="100%" />
+      ) : (
+        <img
+          src={posterUrl}
+          alt={item.titulo}
+          className="similares-img"
+          onClick={handleClick}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DetailModal({ 
+  isOpen, 
+  media, 
+  onClose, 
+  onUpdate, 
+  onFavorite, 
+  onPendiente, 
+  onDelete, 
+  etiquetas, 
+  onTagAdded, 
+  onTagToggle, 
+  listas, 
+  onListaToggle,
+  tags,
+  // Compatibilidad con props usados desde App.js
+  onToggleFavorite,
+  onTogglePending,
+  onAddTag,
+  onRemoveTag
+}) {
   // --- Similares ---
   const [similares, setSimilares] = useState([]);
   const [loadingSimilares, setLoadingSimilares] = useState(false);
   const [errorSimilares, setErrorSimilares] = useState('');
   const carouselRef = useRef(null);
-const isDraggingRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  
+  // Detectar si es dispositivo móvil
+  const isMobile = window.innerWidth <= 768;
 const startXRef = useRef(0);
 const scrollLeftRef = useRef(0);
 
@@ -166,20 +219,20 @@ const scrollLeftRef = useRef(0);
   const [favorito, setFavorito] = useState(false);
   const [pendiente, setPendiente] = useState(false);
   const [localTags, setLocalTags] = useState([]);
-  const [selectingTags, setSelectingTags] = useState(false);
-  const [selectedTags, setSelectedTags] = useState([]);
+  // Estados para gestión de listas
   const [showListasModal, setShowListasModal] = useState(false);
-  const [listas, setListas] = useState([]);
   const [listasDeMedia, setListasDeMedia] = useState([]);
   const [listasFeedback, setListasFeedback] = useState('');
+  // Nuevo diseño de tags: modal + búsqueda
+  const [showTagsManager, setShowTagsManager] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
+  const [tempSelectedTagIds, setTempSelectedTagIds] = useState([]);
+  const [showAllTags, setShowAllTags] = useState(false);
   const { t, currentLanguage } = useLanguage();
 
   // Hook para portada dinámica
   const mediaType = media?.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
   const { posterUrl } = useDynamicPoster(media?.tmdb_id, mediaType, media?.imagen);
-
-  // Hook para portadas dinámicas de similares
-  const postersMap = useDynamicPosters(similares);
 
   // Mapear idioma para TMDb API
   const getTmdbLanguage = (lang) => {
@@ -201,6 +254,8 @@ const scrollLeftRef = useRef(0);
     setFavorito(media.favorito || false);
     setPendiente(media.pendiente || false);
     setLocalTags(Array.isArray(media.tags) ? media.tags : []);
+    setTagSearch('');
+    setShowTagsManager(false);
 
     // Usar media original para operaciones de backend, displayMedia para mostrar
     const tipo = typeof media.tipo === 'string' && media.tipo.toLowerCase() === 'serie' ? 'serie' : 'película';
@@ -222,43 +277,30 @@ const scrollLeftRef = useRef(0);
         .finally(() => setLoading(false));
     }
 
-    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
-fetch(BACKEND_URL + '/listas')
-      .then(res => res.json())
-      .then(data => {
-        setListas(data);
-        setListasDeMedia(
-          data.filter(lista => Array.isArray(lista.medias) && lista.medias.some(m => m.id === media.id)).map(l => l.id)
-        );
-      });
+    // Solo cargar listas de medias si listas están disponibles como prop
+    if (listas && Array.isArray(listas)) {
+      setListasDeMedia(
+        listas.filter(lista => Array.isArray(lista.medias) && lista.medias.some(m => m.id === media.id)).map(l => l.id)
+      );
+    }
   }, [media, currentLanguage]);
 
-useEffect(() => {
-  if (!media || !media.id) {
-    setSimilares([]);
-    return;
-  }
-  setLoadingSimilares(true);
-  setErrorSimilares('');
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
-  fetch(`${BACKEND_URL}/medias/${media.id}/similares`)
-    .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail || 'Error'); }))
-    .then(data => setSimilares(Array.isArray(data) ? data : []))
-    .catch(() => setErrorSimilares('No se pudieron cargar similares.'))
-    .finally(() => setLoadingSimilares(false));
-}, [media]);
-
-  const refreshListas = () => {
+  useEffect(() => {
+    if (!media || !media.id) {
+      setSimilares([]);
+      return;
+    }
+    setLoadingSimilares(true);
+    setErrorSimilares('');
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
-fetch(BACKEND_URL + '/listas')
-      .then(res => res.json())
-      .then(data => {
-        setListas(data);
-        setListasDeMedia(
-          data.filter(lista => lista.medias.some(m => m.id === media.id)).map(l => l.id)
-        );
-      });
-  };
+    fetch(`${BACKEND_URL}/medias/${media.id}/similares`)
+      .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail || 'Error'); }))
+      .then(data => setSimilares(Array.isArray(data) ? data : []))
+      .catch(() => setErrorSimilares('No se pudieron cargar similares.'))
+      .finally(() => setLoadingSimilares(false));
+  }, [media]);
+
+  // refreshListas is now handled by parent component through listas prop
 
   if (!media) return null;
 
@@ -266,21 +308,97 @@ fetch(BACKEND_URL + '/listas')
   
 
   const safeTags = Array.isArray(tags) ? tags : [];
-  const availableTags = safeTags.filter(t => !localTags.some(lt => lt.id === t.id));
 
-  const handleTagChange = (tagId, checked) => {
-    setSelectedTags(prev => checked ? [...prev, tagId] : prev.filter(id => id !== tagId));
+  // Normalizador para búsqueda
+  const normalize = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  // Quitar tag rápidamente desde chip
+  const handleRemoveExistingTag = async (tagId) => {
+    if (!media || !tagId) return;
+    try {
+      if (typeof onRemoveTag === 'function') {
+        await onRemoveTag(media.id, tagId);
+      } else if (typeof onTagToggle === 'function') {
+        onTagToggle(media.id, tagId);
+      }
+      // Actualización optimista
+      setLocalTags(prev => prev.filter(t => t.id !== tagId));
+      // Confirmar con backend y sincronizar estado seleccionado
+      try {
+        const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setLocalTags(Array.isArray(updated.tags) ? updated.tags : []);
+          onUpdate?.(updated);
+        }
+      } catch (_) { /* noop */ }
+    } catch (_) {}
   };
 
-  const addSelectedTags = () => {
-    selectedTags.forEach(id => {
-      onAddTag(media.id, parseInt(id));
-      const tag = availableTags.find(t => t.id === parseInt(id));
-      if (tag) setLocalTags(prev => [...prev, tag]);
-    });
-    setSelectedTags([]);
-    setSelectingTags(false);
+  // Modal de gestión de tags
+  const openTagsManager = () => {
+    setTempSelectedTagIds((Array.isArray(localTags) ? localTags : []).map(t => t.id));
+    setTagSearch('');
+    setShowTagsManager(true);
   };
+
+  const toggleTempTag = (id) => {
+    setTempSelectedTagIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const applyTagsChanges = async () => {
+    const currentIds = new Set((localTags || []).map(t => t.id));
+    const nextIds = new Set(tempSelectedTagIds);
+    const toAdd = [...nextIds].filter(id => !currentIds.has(id));
+    const toRemove = [...currentIds].filter(id => !nextIds.has(id));
+
+    try {
+      for (const id of toAdd) {
+        if (typeof onAddTag === 'function') {
+          // eslint-disable-next-line no-await-in-loop
+          await onAddTag(media.id, id);
+        } else if (typeof onTagToggle === 'function') {
+          onTagToggle(media.id, id);
+        }
+      }
+      for (const id of toRemove) {
+        if (typeof onRemoveTag === 'function') {
+          // eslint-disable-next-line no-await-in-loop
+          await onRemoveTag(media.id, id);
+        } else if (typeof onTagToggle === 'function') {
+          onTagToggle(media.id, id);
+        }
+      }
+
+      // Reconsultar el media para asegurar persistencia y sincronizar selección
+      try {
+        const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setLocalTags(Array.isArray(updated.tags) ? updated.tags : []);
+          onUpdate?.(updated);
+        } else {
+          // Fallback: calcular localmente
+          const finalTags = safeTags.filter(t => nextIds.has(t.id));
+          setLocalTags(finalTags);
+        }
+      } catch (_) {
+        const fallback = safeTags.filter(t => nextIds.has(t.id));
+        setLocalTags(fallback);
+      }
+
+      setShowTagsManager(false);
+    } catch (_) {
+      // En caso de error, no cerrar para reintentar
+    }
+  };
+
+  // Lista filtrada en el modal
+  const filteredAllTags = (tagSearch ? safeTags.filter(t => normalize(t.nombre).includes(normalize(tagSearch))) : safeTags);
 
   return (
     <div>
@@ -309,23 +427,51 @@ fetch(BACKEND_URL + '/listas')
             <div className="detail-modal-poster-container-with-actions">
               <div className="detail-modal-poster-container">
                 <img src={posterUrl} alt={displayMedia.titulo} className="detail-modal-poster" />
-                {displayMedia.nota_imdb && (
-                  <div className="nota-imdb-badge-card">
+                {/* Badges de nota TMDb y personal, igual que en SectionRow */}
+                {displayMedia.nota_imdb !== undefined && displayMedia.nota_imdb !== null && displayMedia.nota_imdb !== '' && (
+                  <div 
+                    className={`nota-imdb-badge-card ${getRatingColors(displayMedia.nota_imdb).isPremium ? 'premium' : ''}`}
+                    style={{ 
+                      '--progress': `${Math.round(parseFloat(displayMedia.nota_imdb) * 10)}%`,
+                      '--rating-color': getRatingColors(displayMedia.nota_imdb).color,
+                      '--rating-color-dark': getRatingColors(displayMedia.nota_imdb).darkColor,
+                      '--text-color': getRatingColors(displayMedia.nota_imdb).textColor,
+                      '--rating-shadow': getRatingColors(displayMedia.nota_imdb).shadow,
+                      '--rating-border': getRatingColors(displayMedia.nota_imdb).border
+                    }}
+                    title={t('tooltips.tmdbRating')}
+                  >
                     <span className="nota-imdb-num-card">{Number(displayMedia.nota_imdb).toFixed(1)}</span>
-                    <span className="nota-imdb-star-card">★</span>
                   </div>
                 )}
-                <div className="nota-personal-badge-card">
-                  <span className="nota-personal-num-card">
-                    {displayMedia.nota_personal > 0 ? displayMedia.nota_personal.toFixed(1) : '-'}
-                  </span>
-                  <span className="nota-personal-star-card">★</span>
-                </div>
+                {displayMedia.nota_personal && displayMedia.nota_personal > 0 ? (
+                  <div 
+                    className={`nota-personal-badge-card ${getRatingColors(displayMedia.nota_personal).isPremium ? 'premium' : ''}`}
+                    style={{ 
+                      '--progress': `${Math.round(parseFloat(displayMedia.nota_personal) * 10)}%`,
+                      '--rating-color': getRatingColors(displayMedia.nota_personal).color,
+                      '--rating-color-dark': getRatingColors(displayMedia.nota_personal).darkColor,
+                      '--text-color': getRatingColors(displayMedia.nota_personal).textColor,
+                      '--rating-shadow': getRatingColors(displayMedia.nota_personal).shadow,
+                      '--rating-border': getRatingColors(displayMedia.nota_personal).border
+                    }}
+                    title={t('tooltips.personalRating')}
+                  >
+                    <span className="nota-personal-num-card">{Number(displayMedia.nota_personal).toFixed(1)}</span>
+                  </div>
+                ) : (
+                  <div 
+                    className="nota-personal-badge-card nota-personal-empty"
+                    title={t('tooltips.noPersonalRating')}
+                  >
+                    <span className="nota-personal-num-card">?</span>
+                  </div>
+                )}
               </div>
 
               <div className="detail-modal-actions-under-poster">
-                <PendingButton isPending={pendiente} onToggle={() => { onTogglePending(media.id); setPendiente(p => !p); }} />
-                <FavoriteButton isFavorite={favorito} onToggle={() => { onToggleFavorite(media.id); setFavorito(f => !f); }} small />
+                <PendingButton isPending={pendiente} onToggle={() => { (onPendiente || onTogglePending)?.(media.id); setPendiente(p => !p); }} />
+                <FavoriteButton isFavorite={favorito} onToggle={() => { (onFavorite || onToggleFavorite)?.(media.id); setFavorito(f => !f); }} small />
                 <button className="mini-action-btn" title={t('detailModal.addToList')} onClick={() => setShowListasModal(true)}>
                   <span role="img" aria-label="listas">📂</span>
                 </button>
@@ -347,47 +493,45 @@ fetch(BACKEND_URL + '/listas')
               <p><strong>{t('detailModal.synopsis')}</strong> {displayMedia.sinopsis}</p>
               <p><strong>{t('detailModal.status')}</strong> {displayMedia.estado}</p>
 
+              {/* TAGS: diseño mejorado */}
               <div className="media-tags-block">
                 <div className="media-tags-header">
-                  <strong>{t('detailModal.tags')}</strong>
-                  <button 
-                    className={`tags-toggle-btn ${selectingTags ? 'active' : ''}`}
-                    onClick={() => { setSelectingTags(!selectingTags); setSelectedTags([]); }}
-                  >
-                    {selectingTags ? t('detailModal.cancel') : t('detailModal.manage')}
+                  <div className="tags-title-row">
+                    <strong className="tags-title">{t('detailModal.tags')}</strong>
+                  </div>
+                  <button className="tags-manage-btn" onClick={openTagsManager}>
+                    <span className="manage-icon">🏷️</span>
+                    {t('detailModal.manage', 'Gestionar')}
                   </button>
                 </div>
-                {localTags.map(tag => (
-                  <span className="media-tag" key={tag.id}>
-                    {tag.nombre}
-                    <button className="remove-tag-btn" onClick={() => {
-                      onRemoveTag(media.id, tag.id);
-                      setLocalTags(prev => prev.filter(t => t.id !== tag.id));
-                    }}>×</button>
-                  </span>
-                ))}
-                {selectingTags && (
-                  <div className="tags-selector">
-                    <div className="available-tags-list">
-                      {availableTags.map(tag => (
-                        <label key={tag.id} className="tag-checkbox">
-                          <input
-                            type="checkbox"
-                            value={tag.id}
-                            checked={selectedTags.includes(tag.id.toString())}
-                            onChange={e => handleTagChange(e.target.value, e.target.checked)}
-                          />
-                          <span>{tag.nombre}</span>
-                        </label>
-                      ))}
+
+                <div className="media-tags-container">
+                  {(!localTags || localTags.length === 0) ? (
+                    <div className="no-tags-placeholder" onClick={openTagsManager}>
+                      <span className="no-tags-icon">➕</span>
+                      <span className="no-tags-text">{t('detailModal.addFirstTag', 'Añadir primer tag')}</span>
                     </div>
-                    {selectedTags.length > 0 && (
-                      <button className="add-tags-btn" onClick={addSelectedTags}>
-                        {t('detailModal.add')} {selectedTags.length} {selectedTags.length === 1 ? t('detailModal.tag') : t('detailModal.tags')}
-                      </button>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div className="media-tags-grid">
+                      {(showAllTags ? localTags : localTags.slice(0, 6)).map(tag => (
+                        <div className="tag-chip" key={tag.id}>
+                          <span className="tag-name">{tag.nombre}</span>
+                        </div>
+                      ))}
+                      {localTags.length > 6 && (
+                        <button 
+                          className="show-more-tags-btn" 
+                          onClick={() => setShowAllTags(!showAllTags)}
+                        >
+                          {showAllTags 
+                            ? `${t('detailModal.showLess', 'Mostrar menos')}`
+                            : `+${localTags.length - 6} ${t('detailModal.more', 'más')}`
+                          }
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="similares-block">
@@ -408,34 +552,31 @@ fetch(BACKEND_URL + '/listas')
                   <div
                     className="similares-carousel"
                     ref={carouselRef}
-                    onMouseDown={e => {
-                      isDraggingRef.current = true;
-                      startXRef.current = e.pageX - (carouselRef.current?.offsetLeft || 0);
-                      scrollLeftRef.current = carouselRef.current?.scrollLeft || 0;
-                    }}
-                    onMouseMove={e => {
-                      if (!isDraggingRef.current) return;
-                      e.preventDefault();
-                      const x = e.pageX - (carouselRef.current?.offsetLeft || 0);
-                      const walk = x - startXRef.current;
-                      if (carouselRef.current) carouselRef.current.scrollLeft = scrollLeftRef.current - walk;
-                    }}
-                    onMouseUp={() => { isDraggingRef.current = false; }}
-                    onMouseLeave={() => { isDraggingRef.current = false; }}
+                    {...(!isMobile && {
+                      onMouseDown: e => {
+                        isDraggingRef.current = true;
+                        startXRef.current = e.pageX - (carouselRef.current?.offsetLeft || 0);
+                        scrollLeftRef.current = carouselRef.current?.scrollLeft || 0;
+                      },
+                      onMouseMove: e => {
+                        if (!isDraggingRef.current) return;
+                        e.preventDefault();
+                        const x = e.pageX - (carouselRef.current?.offsetLeft || 0);
+                        const walk = x - startXRef.current;
+                        if (carouselRef.current) carouselRef.current.scrollLeft = scrollLeftRef.current - walk;
+                      },
+                      onMouseUp: () => { isDraggingRef.current = false; },
+                      onMouseLeave: () => { isDraggingRef.current = false; }
+                    })}
                   >
                     {similares.map(item => (
-                      <div className="similares-item" key={item.id}>
-                        <img
-                          src={getDynamicPosterUrl(item, postersMap)}
-                          alt={item.titulo}
-                          className="similares-img"
-                          onClick={() => {
-                            isDraggingRef.current = false;
-                            onUpdate(item);
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </div>
+                      <SimilarItem 
+                        key={item.id} 
+                        item={item} 
+                        onUpdate={onUpdate}
+                        isDraggingRef={isDraggingRef}
+                        isMobile={isMobile}
+                      />
                     ))}
                   </div>
                 )}
@@ -479,9 +620,7 @@ fetch(BACKEND_URL + '/listas')
             </div>
 
             {/* Apartado de anotaciones personales debajo del bloque avanzado */}
-            <div className="personal-notes-block">
-              <PersonalNotes media={media} onUpdate={onUpdate} onClose={onClose} />
-            </div>
+            <PersonalNotes media={media} onUpdate={onUpdate} onClose={onClose} />
               {/* Apartado de disponibilidad en streaming debajo de las anotaciones */}
                 {media.tmdb_id && media.tipo && (
                 <StreamingAvailability tmdbId={media.tmdb_id} mediaType={media.tipo.toLowerCase() === 'serie' ? 'tv' : 'movie'} country="ES" />
@@ -507,12 +646,86 @@ fetch(BACKEND_URL + '/listas')
                 listasDeMedia={listasDeMedia}
                 onClose={() => setShowListasModal(false)}
                 onListasChange={() => {
-                  refreshListas();
+                  // refreshListas is now handled by parent component
                   setListasFeedback(t('detailModal.listsUpdated'));
                   setTimeout(() => setListasFeedback(''), 1500);
                 }}
               />
             )}
+
+            {/* Modal de gestión de tags mejorado */}
+            {showTagsManager && (
+              <div className="tags-modal-overlay" onClick={(e) => { if (e.target.classList.contains('tags-modal-overlay')) setShowTagsManager(false); }}>
+                <div className="tags-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="tags-modal-header">
+                    <div className="tags-modal-title">
+                      <span className="tags-modal-icon">🏷️</span>
+                      <h3>{t('detailModal.manageTags', 'Gestionar Tags')}</h3>
+                    </div>
+                    <button className="tags-modal-close" onClick={() => setShowTagsManager(false)}>×</button>
+                  </div>
+                  
+                  <div className="tags-modal-content">
+                    <div className="tags-search-section">
+                      <div className="tags-search-container">
+                        <span className="search-icon">🔍</span>
+                        <input
+                          type="text"
+                          value={tagSearch}
+                          onChange={(e) => setTagSearch(e.target.value)}
+                          placeholder={t('detailModal.searchTags', 'Buscar tags...')}
+                          className="tags-search-input"
+                        />
+                        {tagSearch && (
+                          <button className="clear-search-btn" onClick={() => setTagSearch('')}>×</button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="tags-selection-area">
+                      {filteredAllTags.length > 0 ? (
+                        <div className="tags-grid">
+                          {filteredAllTags.map(tg => (
+                            <label key={tg.id} className={`tag-option ${tempSelectedTagIds.includes(tg.id) ? 'selected' : ''}`}>
+                              <input
+                                type="checkbox"
+                                checked={tempSelectedTagIds.includes(tg.id)}
+                                onChange={() => toggleTempTag(tg.id)}
+                                className="tag-checkbox"
+                              />
+                              <span className="tag-option-text">{tg.nombre}</span>
+                              <span className="tag-check-mark">✓</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-tags-found">
+                          <span className="no-results-icon">😕</span>
+                          <p>{t('detailModal.noTagsFound', 'No hay tags que coincidan')}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="tags-modal-footer">
+                    <div className="selected-count">
+                      <span className="count-icon">📊</span>
+                      {t('detailModal.selected', 'Seleccionados')}: <strong>{tempSelectedTagIds.length}</strong>
+                    </div>
+                    <div className="tags-modal-actions">
+                      <button className="tags-cancel-btn" onClick={() => setShowTagsManager(false)}>
+                        {t('actions.cancel')}
+                      </button>
+                      <button className="tags-save-btn" onClick={applyTagsChanges}>
+                        <span className="save-icon">💾</span>
+                        {t('actions.save')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
@@ -520,71 +733,168 @@ fetch(BACKEND_URL + '/listas')
   );
 }
 
-// Componente de anotaciones personales
+// Componente de bloc de notas simple y minimalista
 function PersonalNotes({ media, onUpdate, onClose }) {
   const [editMode, setEditMode] = useState(false);
   const [note, setNote] = useState(media.anotacion_personal || '');
   const [tempNote, setTempNote] = useState(note);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const { t } = useLanguage();
 
+  const handleEdit = () => {
+    setEditMode(true);
+    setTempNote(note);
+    setError('');
+  };
+
+  const handleCancel = () => {
+    setTempNote(note);
+    setEditMode(false);
+    setError('');
+  };
+
   const handleSave = async () => {
+    if (saving) return;
+    
+    setSaving(true);
+    setError('');
+
     try {
-      const response = await fetch(`${BACKEND_URL}/media/${media.id}`, {
-        method: 'PUT',
+      const response = await fetch(`${BACKEND_URL}/medias/${media.id}/anotacion_personal`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...media,
-          nota_personal: media.nota_personal || null, // Asegurar valor nulo si está vacío
-          anotaciones: media.anotaciones || '' // Campo de anotaciones
-        })
+        credentials: 'include',
+        // Backend expects a plain JSON string
+        body: JSON.stringify(tempNote)
       });
       
       if (!response.ok) throw new Error('Error al guardar');
       
       const updatedMedia = await response.json();
+      setNote(tempNote);
+      setEditMode(false);
       onUpdate(updatedMedia);
-      onClose();
     } catch (error) {
-      console.error('Error:', error);
-      setError('Error al guardar los cambios');
+      setError('Error al guardar las notas. Inténtalo de nuevo.');
+    } finally {
+      setSaving(false);
     }
   };
 
+  const hasContent = note && note.trim() !== '';
+  const hasNewContent = tempNote && tempNote.trim() !== '';
+  const wordCount = hasContent ? note.trim().split(/\s+/).length : 0;
+
   return (
-    <div className="personal-notes-container">
-      <div className="personal-notes-header">
-        <span role="img" aria-label="nota">📝</span> <b>{t('detailModal.personalNotes')}</b>
-        {!editMode && (
-          <button className="personal-notes-edit-btn" onClick={() => setEditMode(true)}>{t('detailModal.edit')}</button>
-        )}
-      </div>
-      {editMode ? (
-        <div className="personal-notes-edit-block">
-          <textarea
-            className="personal-notes-textarea"
-            value={tempNote}
-            onChange={e => setTempNote(e.target.value)}
-            rows={4}
-            placeholder={t('detailModal.personalNotesPlaceholder')}
-            autoFocus
-          />
-          <div style={{marginTop: 8, display: 'flex', gap: 10}}>
-            <button className="personal-notes-save-btn" onClick={handleSave}>{t('actions.save')}</button>
-            <button className="personal-notes-cancel-btn" onClick={() => { setTempNote(note); setEditMode(false); }}>{t('actions.cancel')}</button>
-          </div>
-        </div>
-      ) : (
-         <div className="personal-notes-view-block">
-          {note && note.trim() !== '' ? (
-            <ReactMarkdown>{note}</ReactMarkdown>
-          ) : (
-            <span style={{color: '#888'}}>{t('detailModal.noPersonalNotes')}</span>
+    <div className="notes-block">
+      {/* Header */}
+      <div className="notes-header">
+        <div className="notes-title-section">
+          <div className="notes-icon">📝</div>
+          <h3 className="notes-title">{t('detailModal.personalNotes', 'Notas Personales')}</h3>
+          {hasContent && !editMode && (
+            <span className="notes-stats">{wordCount} palabras</span>
           )}
         </div>
-      )}
+        
+        {!editMode && (
+          <button className="notes-action-btn" onClick={handleEdit}>
+            <span className="btn-icon">✏️</span>
+            {hasContent ? t('detailModal.edit', 'Editar') : t('detailModal.addNotes', 'Añadir')}
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="notes-content">
+        {editMode ? (
+          <div className="notes-editor">
+            <textarea
+              className="notes-textarea"
+              value={tempNote}
+              onChange={(e) => setTempNote(e.target.value)}
+              placeholder={t('detailModal.personalNotesPlaceholder', 'Escribe tus pensamientos, reseñas o cualquier detalle que quieras recordar...')}
+              rows={6}
+              autoFocus
+            />
+            
+            <div className="notes-editor-footer">
+              <div className="notes-editor-info">
+                {error && (
+                  <span className="notes-error">
+                    <span className="error-icon">⚠️</span>
+                    {error}
+                  </span>
+                )}
+                {hasNewContent && (
+                  <span className="notes-word-count">
+                    {tempNote.trim().split(/\s+/).length} palabras
+                  </span>
+                )}
+              </div>
+              
+              <div className="notes-editor-actions">
+                <button 
+                  className="notes-btn notes-btn-cancel" 
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  {t('actions.cancel', 'Cancelar')}
+                </button>
+                <button 
+                  className="notes-btn notes-btn-save"
+                  onClick={handleSave}
+                  disabled={!hasNewContent || saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="btn-spinner"></span>
+                      {t('actions.saving', 'Guardando...')}
+                    </>
+                  ) : (
+                    <>
+                      <span className="btn-icon">💾</span>
+                      {t('actions.save', 'Guardar')}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="notes-display">
+            {hasContent ? (
+              <div className="notes-text-content">
+                <div className="notes-text">
+                  {note.split('\n').map((line, index) => (
+                    <p key={index} className="notes-paragraph">
+                      {line || '\u00A0'}
+                    </p>
+                  ))}
+                </div>
+                <div className="notes-metadata">
+                  <span className="notes-updated">
+                    {t('detailModal.lastUpdated', 'Última actualización')}: {new Date().toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="notes-empty" onClick={handleEdit}>
+                <div className="empty-icon">📄</div>
+                <div className="empty-title">
+                  {t('detailModal.noNotesYet', 'Sin notas')}
+                </div>
+                <div className="empty-subtitle">
+                  {t('detailModal.clickToAdd', 'Haz clic para añadir tus primeras notas')}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

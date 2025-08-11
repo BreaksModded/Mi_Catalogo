@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import './ListasView.css';
 import ListaDetalleModal from './ListaDetalleModal';
 import { useLanguage } from '../context/LanguageContext';
-import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
+import { useDynamicPoster } from '../hooks/useDynamicPoster';
+import PosterSkeleton from './PosterSkeleton';
+import { useNotification } from '../context/NotificationContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_URL = BACKEND_URL + '/listas';
@@ -20,8 +22,21 @@ const EyeIcon = () => (
   <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>
 );
 
+// Componente para cada portada individual de la lista
+function ListaCover({ media }) {
+  const mediaType = media.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
+  const { posterUrl, loading } = useDynamicPoster(media.tmdb_id, mediaType, media.imagen);
+
+  if (loading) {
+    return <PosterSkeleton width="100%" height="100%" className="lista-cover" />;
+  }
+
+  return <img src={posterUrl} alt={media.titulo} className="lista-cover" />;
+}
+
 export default function ListasView() {
   const { t } = useLanguage();
+  const { showNotification } = useNotification();
   const [listas, setListas] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [nombre, setNombre] = useState('');
@@ -30,20 +45,6 @@ export default function ListasView() {
   const [detalleLista, setDetalleLista] = useState(null);
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ open: false, lista: null });
-
-  // Obtener todas las medias de todas las listas para el hook de portadas dinámicas
-  const allMedias = React.useMemo(() => {
-    const medias = [];
-    listas.forEach(lista => {
-      if (lista.medias && Array.isArray(lista.medias)) {
-        medias.push(...lista.medias);
-      }
-    });
-    return medias;
-  }, [listas]);
-
-  // Hook para portadas dinámicas
-  const postersMap = useDynamicPosters(allMedias);
 
   const fetchListas = () => {
     setLoading(true);
@@ -88,7 +89,7 @@ export default function ListasView() {
       if (!res.ok) throw new Error();
       setListas(listas => listas.filter(l => l.id !== listaId));
     } catch {
-      alert(t('lists.errorDeleting', 'No se pudo eliminar la lista'));
+      showNotification(t('lists.errorDeleting', 'No se pudo eliminar la lista'), 'error');
     }
   };
 
@@ -139,7 +140,7 @@ export default function ListasView() {
           <div key={lista.id} className="lista-card" style={{cursor: 'pointer', position: 'relative'}} onClick={() => setDetalleLista(lista)}>
             <div className="lista-covers">
               {lista.medias.slice(0, 6).map(media => (
-                <img key={media.id} src={getDynamicPosterUrl(media, postersMap)} alt={media.titulo} className="lista-cover" />
+                <ListaCover key={media.id} media={media} />
               ))}
             </div>
             <div className="lista-nombre">{lista.nombre}</div>

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './ListaDetalleModal.css';
 import { useLanguage } from '../context/LanguageContext';
 import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
+import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import DetailModal from './DetailModal';
 import SectionRow from './SectionRow';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_SEARCH = BACKEND_URL + '/search?q='; // Busca por título, actor o director
 const API_ADD = BACKEND_URL + '/listas';
 
@@ -20,8 +21,31 @@ export default function ListaDetalleModal({ lista, onClose }) {
   const [medias, setMedias] = useState(lista.medias || []);
   const [pageSize, setPageSize] = useState(0);
 
-  // Hook para portadas dinámicas
-  const postersMap = useDynamicPosters(medias);
+  // Hook para contenido traducido
+  const { translatedList: translatedMedias } = useTranslatedMediaList(medias);
+  const { translatedList: translatedResults } = useTranslatedMediaList(results);
+  
+  // Hook para portadas dinámicas - usar datos traducidos
+  const postersMap = useDynamicPosters(translatedMedias || []);
+  const resultsPostersMap = useDynamicPosters(translatedResults || []);
+
+  // Aplicar portadas dinámicas a los medias traducidos
+  const finalMedias = useMemo(() => {
+    if (!translatedMedias || !Array.isArray(translatedMedias) || translatedMedias.length === 0) return [];
+    return translatedMedias.map(media => ({
+      ...media,
+      imagen: getDynamicPosterUrl(media, postersMap)
+    }));
+  }, [translatedMedias, postersMap]);
+
+  // Aplicar portadas dinámicas a los resultados traducidos
+  const finalResults = useMemo(() => {
+    if (!translatedResults || !Array.isArray(translatedResults) || translatedResults.length === 0) return [];
+    return translatedResults.map(media => ({
+      ...media,
+      imagen: getDynamicPosterUrl(media, resultsPostersMap)
+    }));
+  }, [translatedResults, resultsPostersMap]);
 
   // Búsqueda reactiva con debounce y resultados por título, actor o director
   React.useEffect(() => {
@@ -93,19 +117,19 @@ export default function ListaDetalleModal({ lista, onClose }) {
               autoFocus
             />
             <button type="button" className="crear-lista-btn" disabled>
-              Buscar
+              {t('lists.searchButton', 'Buscar')}
             </button>
           </form>
           {searching && <div className="listas-feedback">{t('messages.searchingInList', 'Buscando...')}</div>}
           {error && <div className="listas-error">{error}</div>}
-          {results.length > 0 && (
+          {finalResults.length > 0 && (
             <div className="lista-detalle-busqueda-resultados">
-              {results.map(media => (
+              {finalResults.map(media => (
                 <div key={media.id} className="lista-detalle-busqueda-resultado">
-                  <img src={getDynamicPosterUrl(media, postersMap)} alt={media.titulo} style={{width:40, height:60, borderRadius:6, marginRight:12}} />
+                  <img src={media.imagen} alt={media.titulo} style={{width:40, height:60, borderRadius:6, marginRight:12}} />
                   <span style={{color:'#fff', fontWeight:500}}>{media.titulo}</span>
                   <button className="crear-lista-btn" style={{marginLeft: 'auto'}} onClick={() => handleAdd(media)} disabled={adding || medias.some(m => m.id === media.id)}>
-                    Añadir
+                    {t('lists.addButton', 'Añadir')}
                   </button>
                 </div>
               ))}
@@ -115,7 +139,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
           <div style={{marginTop: 24}}>
             <SectionRow
               title={null}
-              items={pageSize > 0 ? medias.slice(0, pageSize) : medias}
+              items={pageSize > 0 ? finalMedias.slice(0, pageSize) : finalMedias}
               onSelect={media => {
                 // Lógica de abrir detalle igual que antes
                 if (media.sinopsis && media.director && media.genero && media.anio) {
@@ -130,7 +154,7 @@ export default function ListaDetalleModal({ lista, onClose }) {
               carousel={false}
               onPageSizeChange={size => setPageSize(size)}
             />
-            {medias.length === 0 && <div className="lista-detalle-vacio">Esta lista está vacía.</div>}
+            {finalMedias.length === 0 && <div className="lista-detalle-vacio">{t('lists.emptyList', 'Esta lista está vacía.')}</div>}
           </div>
           {detalleMedia && (
             <div className="detail-modal-from-list">

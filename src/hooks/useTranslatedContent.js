@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { contentTranslationService } from '../utils/contentTranslation';
 
@@ -37,14 +37,21 @@ export const useTranslatedContent = (media) => {
 };
 
 // Hook para listas de media
-export const useTranslatedMediaList = (mediaList) => {
+export const useTranslatedMediaList = (mediaList, mode = 'all') => {
   const { currentLanguage } = useLanguage();
-  const safeList = Array.isArray(mediaList) ? mediaList : [];
-  const [translatedList, setTranslatedList] = useState(safeList);
+  const [translatedList, setTranslatedList] = useState([]);
   const [isTranslating, setIsTranslating] = useState(false);
+  
+  // Usar JSON.stringify para una comparación estable de arrays
+  const mediaListKey = useMemo(() => {
+    if (!Array.isArray(mediaList)) return '[]';
+    return JSON.stringify(mediaList.map(item => ({ id: item?.id, titulo: item?.titulo })));
+  }, [mediaList]);
 
   useEffect(() => {
     const translateList = async () => {
+      const safeList = Array.isArray(mediaList) ? mediaList : [];
+      
       if (!safeList.length || currentLanguage === 'es') {
         setTranslatedList(safeList);
         return;
@@ -66,7 +73,7 @@ export const useTranslatedMediaList = (mediaList) => {
     };
 
     translateList();
-  }, [mediaList, currentLanguage]); // Use mediaList instead of safeList
+  }, [mediaListKey, currentLanguage]);
 
   return { 
     translatedList, 

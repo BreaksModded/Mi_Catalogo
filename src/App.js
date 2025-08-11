@@ -1,22 +1,49 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SectionRow from './components/SectionRow';
 import Resumen from './components/Resumen';
 import Filters from './components/Filters';
 import DetailModal from './components/DetailModal';
+import DetailPage from './components/DetailPage';
+import ViewChoiceModal from './components/ViewChoiceModal';
 import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
 import HomeSections from './components/HomeSections';
+import WelcomeScreen from './components/WelcomeScreen';
 import './App.css';
 import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { useTranslatedMediaList } from './hooks/useTranslatedContent';
+import { useDynamicPosters, getDynamicPosterUrl } from './hooks/useDynamicPoster';
 import cacheFetch from './components/cacheFetch';
+import ActorDetailPage from './components/ActorDetailPage';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_URL = BACKEND_URL + '/medias';
+
+// Debug: mostrar qué URL está usando
+
+// Función auxiliar para hacer fetch sin mostrar errores 401 en consola
+const silentFetch = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, options);
+    // Si es 401, retornar null sin error
+    if (response.status === 401) {
+      return null;
+    }
+    // Para otros errores HTTP, arrojar error
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response;
+  } catch (error) {
+    // Si es un error de red o similar, re-arrojar
+    throw error;
+  }
+};
 
 function getAllGenres(medias) {
   const set = new Set();
@@ -24,18 +51,28 @@ function getAllGenres(medias) {
   return Array.from(set).filter(Boolean).sort();
 }
 
-function App() {
+function CatalogPage() {
   
   const { showNotification } = useNotification();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const [medias, setMedias] = useState([]); 
-  const [filteredItems, setFilteredItems] = useState([]); 
+  const [filteredItems, setFilteredItems] = useState([]);
+  
+  // Estados de autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  
   const [section, setSection] = useState(() => {
     // Intenta leer la sección guardada en localStorage
     const saved = localStorage.getItem('catalogo_section');
     return saved || "inicio";
   });
+
+  // Estados para el modal de selección de vista
+  const [showViewChoice, setShowViewChoice] = useState(false);
+  const [selectedMediaForView, setSelectedMediaForView] = useState(null);
 
   // Guardar la sección actual en localStorage cada vez que cambie
   React.useEffect(() => {
@@ -75,6 +112,79 @@ function App() {
   const [orderBy, setOrderBy] = useState(''); // Por defecto vacío, el usuario elige
   const [showDbSleep, setShowDbSleep] = useState(false);
 
+  // Verificar autenticación al cargar la aplicación
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Verificar si hay cookie de autenticación antes de hacer la petición
+        const hasAuthCookie = document.cookie.split(';').some(cookie => 
+          cookie.trim().startsWith('auth=')
+        );
+        
+        if (!hasAuthCookie) {
+          setIsAuthenticated(false);
+          setAuthLoading(false);
+          return;
+        }
+
+        const res = await silentFetch(`${BACKEND_URL}/users/me`, {
+          credentials: 'include'
+        });
+        if (res && res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Función para actualizar el estado de autenticación desde el Navbar
+  const handleAuthChange = useCallback((isAuth) => {
+    setIsAuthenticated(isAuth);
+    
+    // Si el usuario se ha autenticado, cargar el catálogo correspondiente a la sección actual
+    if (isAuth) {
+      // Resetear y cargar datos para la sección actual
+      if (section === 'peliculas') {
+        setPelis([]);
+        setPelisOffset(0);
+        setPelisHasMore(true);
+        setPelisLoadingMore(false);
+        // Llamar fetchPelis después de que el componente se haya renderizado
+        setTimeout(() => fetchPelis(0, true), 0);
+      } else if (section === 'series') {
+        setSeriesList([]);
+        setSeriesOffset(0);
+        setSeriesHasMore(true);
+        setSeriesLoadingMore(false);
+        // Llamar fetchSeries después de que el componente se haya renderizado
+        setTimeout(() => fetchSeries(0, true), 0);
+      } else if (section === 'main') {
+        // Para la sección main, cargar tanto películas como series
+        setPelis([]);
+        setSeriesList([]);
+        setMainOffset(0);
+        setMainHasMore(true);
+        setMainLoadingMore(false);
+        // Cargar datos iniciales para main después de que el componente se haya renderizado
+        setTimeout(() => {
+          fetchPelis(0, true);
+          fetchSeries(0, true);
+        }, 0);
+      }
+    } else {
+      // Si se desautentica, limpiar datos
+      setPelis([]);
+      setSeriesList([]);
+    }
+  }, [section]);
+
 
   // Paginación para la sección principal
   const PAGE_SIZE = 36;
@@ -92,6 +202,25 @@ function App() {
   const [seriesHasMore, setSeriesHasMore] = useState(true);
   const [seriesLoadingMore, setSeriesLoadingMore] = useState(false);
   const [seriesList, setSeriesList] = useState([]);
+
+  // Hook para portadas dinámicas - aplicado a todos los medias
+  const postersMap = useDynamicPosters(medias);
+
+  // Crear clave estable para el postersMap para evitar re-renders innecesarios
+  const postersMapKey = useMemo(() => {
+    if (!postersMap || !postersMap.size) return '{}';
+    const entries = Array.from(postersMap.entries()).sort((a, b) => a[0] - b[0]);
+    return JSON.stringify(entries);
+  }, [postersMap]);
+
+  // Función helper para aplicar portadas dinámicas a cualquier lista de medias
+  const applyDynamicPosters = (mediaList) => {
+    if (!mediaList || !Array.isArray(mediaList)) return [];
+    return mediaList.map(media => ({
+      ...media,
+      imagen: getDynamicPosterUrl(media, postersMap) || media.imagen
+    }));
+  };
 
   // Actualizar paginación cuando cambian los filtros y la sección
   useEffect(() => {
@@ -180,9 +309,17 @@ function App() {
           if (minNota) params.append('min_nota', minNota);
           if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
           if (orderBy) params.append('order_by', orderBy);
-          const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`, { signal: controller.signal });
-          const data = await res.json();
-          setMedias(data);
+          const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, { 
+            signal: controller.signal,
+            credentials: 'include'
+          });
+          if (res) {
+            const data = await res.json();
+            setMedias(data);
+          } else {
+            // Usuario no autenticado, limpiar datos
+            setMedias([]);
+          }
         } catch (err) {
           if (err.name !== 'AbortError') {
             showNotification(t('messages.errorFiltering', 'Error filtrando datos'), 'error');
@@ -201,10 +338,10 @@ function App() {
       try {
         // Carga inicial limitada
         const [medias, favs, pends, tags] = await Promise.all([
-          cacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`),
-          cacheFetch(`${BACKEND_URL}/medias?favorito=true`),
-          cacheFetch(`${BACKEND_URL}/medias?pendiente=true`),
-          cacheFetch(BACKEND_URL + '/tags')
+          cacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`, { credentials: 'include' }),
+          cacheFetch(`${BACKEND_URL}/medias?favorito=true`, { credentials: 'include' }),
+          cacheFetch(`${BACKEND_URL}/medias?pendiente=true`, { credentials: 'include' }),
+          cacheFetch(BACKEND_URL + '/tags', { credentials: 'include' })
         ]);
         setMedias(medias);
 
@@ -215,19 +352,47 @@ function App() {
         clearTimeout(timer); // Cancela el timeout si la carga termina antes
       } catch (error) {
         console.error('Error loading data:', error);
-        showNotification(t('messages.error'), 'error');
+        // Solo mostrar error si el usuario está autenticado
+        if (isAuthenticated) {
+          showNotification(t('messages.error'), 'error');
+        }
         clearTimeout(timer); // Cancela el timeout también si hay error
       }
     };
-    fetchAllData();
+    
+    // Solo cargar datos si el usuario está autenticado
+    if (isAuthenticated) {
+      fetchAllData();
+    }
     return () => clearTimeout(timer);
-  }, [showFavs, showPendings, selectedTags, tipo, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+  }, [showFavs, showPendings, selectedTags, tipo, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy, isAuthenticated]);
 
   // Hooks para traducir las diferentes listas de medios
   const translatedMedias = useTranslatedMediaList(medias, 'all');
   const translatedPelis = useTranslatedMediaList(pelis, 'all');
   const translatedSeries = useTranslatedMediaList(seriesList, 'all');
   const translatedSearchResults = useTranslatedMediaList(searchResults, 'all');
+
+  // Aplicar portadas dinámicas a los datos traducidos
+  const finalMedias = useMemo(() => ({
+    ...translatedMedias,
+    displayData: applyDynamicPosters(translatedMedias.displayData || [])
+  }), [translatedMedias, postersMapKey]);
+
+  const finalPelis = useMemo(() => ({
+    ...translatedPelis,
+    displayData: applyDynamicPosters(translatedPelis.displayData || [])
+  }), [translatedPelis, postersMapKey]);
+
+  const finalSeries = useMemo(() => ({
+    ...translatedSeries,
+    displayData: applyDynamicPosters(translatedSeries.displayData || [])
+  }), [translatedSeries, postersMapKey]);
+
+  const finalSearchResults = useMemo(() => ({
+    ...translatedSearchResults,
+    displayData: applyDynamicPosters(translatedSearchResults.displayData || [])
+  }), [translatedSearchResults, postersMapKey]);
 
   // Sincronizar showFavs y showPendings con section
   useEffect(() => {
@@ -246,28 +411,42 @@ function App() {
   // Función para cargar más en la página principal
   const handleLoadMoreMain = async () => {
     setMainLoadingMore(true);
-    const res = await fetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`);
-    const data = await res.json();
-    
-    // Filtrar duplicados antes de concatenar
-    setMedias(prev => {
-      // Obtener los IDs de los elementos actuales
-      const existingIds = new Set(prev.map(item => item.id));
-      // Filtrar los nuevos elementos para eliminar duplicados
-      const uniqueNewItems = data.filter(item => !existingIds.has(item.id));
+    try {
+      const res = await silentFetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`, {
+        credentials: 'include'
+      });
       
-      // Mostrar notificación si no hay más resultados nuevos
-      if (uniqueNewItems.length === 0) {
-        showNotification(t('messages.noMoreContent'), 'info');
+      if (res) {
+        const data = await res.json();
+        
+        // Filtrar duplicados antes de concatenar
+        setMedias(prev => {
+          // Obtener los IDs de los elementos actuales
+          const existingIds = new Set(prev.map(item => item.id));
+          // Filtrar los nuevos elementos para eliminar duplicados
+          const uniqueNewItems = data.filter(item => !existingIds.has(item.id));
+          
+          // Mostrar notificación si no hay más resultados nuevos
+          if (uniqueNewItems.length === 0) {
+            showNotification(t('messages.noMoreContent'), 'info');
+          }
+          
+          // Concatenar sin duplicados
+          return [...prev, ...uniqueNewItems];
+        });
+        
+        setMainOffset(prev => prev + PAGE_SIZE);
+        setMainHasMore(data.length === PAGE_SIZE);
+      } else {
+        // Usuario no autenticado
+        setMainHasMore(false);
       }
-      
-      // Concatenar sin duplicados
-      return [...prev, ...uniqueNewItems];
-    });
-    
-    setMainOffset(prev => prev + PAGE_SIZE);
-    setMainHasMore(data.length === PAGE_SIZE);
-    setMainLoadingMore(false);
+    } catch (error) {
+      console.error('Error loading more items:', error);
+      setMainHasMore(false);
+    } finally {
+      setMainLoadingMore(false);
+    }
   };
 
   // Paginación para películas con filtros
@@ -316,7 +495,20 @@ function App() {
       
       
       
-      const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+      const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!res) {
+        // Usuario no autenticado
+        if (reset) {
+          setPelis([]);
+        }
+        setPelisHasMore(false);
+        setIsSearching(false);
+        setShowNoResults(false);
+        setPelisLoadingMore(false);
+        return;
+      }
       let data = await res.json();
       
       
@@ -449,7 +641,20 @@ function App() {
       
       
       
-      const res = await fetch(`${BACKEND_URL}/medias?${params.toString()}`);
+      const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, {
+        credentials: 'include'
+      });
+      if (!res) {
+        // Usuario no autenticado
+        if (reset) {
+          setSeriesList([]);
+        }
+        setSeriesHasMore(false);
+        setIsSearching(false);
+        setShowNoResults(false);
+        setSeriesLoadingMore(false);
+        return;
+      }
       let data = await res.json();
       
       
@@ -623,19 +828,25 @@ function App() {
     setFilteredItems(results);
   }, [medias, section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, favorites, pendings, showFavs, showPendings, selectedTags, notaPersonal, orderBy]);
 
+  // Aplicar portadas dinámicas a filteredItems
+  const finalFilteredItems = useMemo(() => 
+    applyDynamicPosters(filteredItems),
+    [filteredItems, postersMapKey]
+  );
+
   useEffect(() => {
-    const tendencias = [...filteredItems].sort((a, b) => b.nota_imdb - a.nota_imdb);
-    const favoritas = filteredItems.filter(m => m.favorito);
+    const tendencias = [...finalFilteredItems].sort((a, b) => b.nota_imdb - a.nota_imdb);
+    const favoritas = finalFilteredItems.filter(m => m.favorito);
     const generos = getAllGenres(medias);
     const porGenero = generos.map(g => ({
       genero: g,
-      items: filteredItems.filter(m => m.genero?.includes(g))
+      items: finalFilteredItems.filter(m => m.genero?.includes(g))
     }));
     
     setTendencias(tendencias);
     setFavoritasInicio(favoritas);
     setPorGeneroInicio(porGenero.filter(g => g.items.length > 0));
-  }, [filteredItems, medias]);
+  }, [finalFilteredItems, medias]);
 
   useEffect(() => {
     if (section === "inicio" && medias.length > 0) {
@@ -700,7 +911,10 @@ function App() {
 
     const nuevo = !currentMedia.pendiente;
     try {
-      const res = await fetch(`${API_URL}/${id}/pendiente?pendiente=${nuevo}`, { method: "PATCH" });
+      const res = await fetch(`${API_URL}/${id}/pendiente?pendiente=${nuevo}`, { 
+        method: "PATCH",
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error("Error al actualizar pendiente");
       const updatedMedia = await res.json();
 
@@ -715,7 +929,10 @@ function App() {
     if (!mediaToDelete || !mediaToDelete.id) return;
     const id = mediaToDelete.id;
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/${id}`, { 
+        method: "DELETE",
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error("No se pudo eliminar");
       setMedias(prevMedias => prevMedias.filter(m => m.id !== id));
       setSelected(null);
@@ -737,7 +954,10 @@ const handleToggleFavorite = async (id) => {
     if (!currentMedia) return;
     const nuevo = !currentMedia.favorito;
     try {
-      const res = await fetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { method: "PATCH" });
+      const res = await fetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { 
+        method: "PATCH",
+        credentials: 'include'
+      });
       if (!res.ok) throw new Error("Error al actualizar favorito");
       const updatedMedia = await res.json();
       setMedias(prevMedias => prevMedias.map(m => m.id === id ? updatedMedia : m));
@@ -762,74 +982,132 @@ const handleToggleFavorite = async (id) => {
   const handleCreateTag = async (nombre) => {
     try {
       const res = await fetch(BACKEND_URL + '/tags', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ nombre })
       });
-      if (res.ok) {
-        const newTag = await res.json();
-        setTags(tags => [...tags, newTag]);
+      if (!res.ok) {
+        let msg = t('tags.createFailed', 'No se pudo crear el tag');
+        try {
+          const data = await res.json();
+          if (data && (data.detail || data.message)) msg = data.detail || data.message;
+        } catch (_) {
+          // Ignorar parseo fallido
+        }
+        showNotification(msg, 'error');
+        throw new Error(msg);
       }
+      const newTag = await res.json();
+      setTags(tags => [...tags, newTag]);
+      return newTag;
     } catch (err) {
-      alert("Error creando tag");
+      const msg = (err && err.message) || t('tags.createFailed', 'No se pudo crear el tag');
+      showNotification(msg, 'error');
+      throw err;
     }
   };
 
   const handleDeleteTag = async (tagId) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/tags/${tagId}`, { method: "DELETE" });
-      if (res.ok) {
-        setTags(tags => tags.filter(t => t.id !== tagId));
-        setSelectedTags(selected => selected.filter(id => id !== String(tagId)));
-        // Actualizar medias para quitar la tag eliminada
-        const updateMediaTags = (mediaList) => mediaList.map(m => ({
-          ...m,
-          tags: Array.isArray(m.tags) ? m.tags.filter(t => t.id !== tagId) : m.tags
-        }));
-        setMedias(updateMediaTags);
+      const res = await fetch(`${BACKEND_URL}/tags/${tagId}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        let msg = t('tags.deleteFailed', 'No se pudo eliminar el tag');
+        try {
+          const data = await res.json();
+          if (data && (data.detail || data.message)) msg = data.detail || data.message;
+        } catch (_) {}
+        showNotification(msg, 'error');
+        throw new Error(msg);
       }
+      setTags(tags => tags.filter(t => t.id !== tagId));
+      setSelectedTags(selected => selected.filter(id => id !== String(tagId)));
+      const updateMediaTags = (mediaList) => mediaList.map(m => ({
+        ...m,
+        tags: Array.isArray(m.tags) ? m.tags.filter(t => t.id !== tagId) : m.tags
+      }));
+      setMedias(updateMediaTags);
     } catch (err) {
-      alert("Error eliminando tag");
+      const msg = (err && err.message) || t('tags.deleteFailed', 'No se pudo eliminar el tag');
+      showNotification(msg, 'error');
+      throw err;
     }
   };
 
   const handleAddTag = async (mediaId, tagId) => {
     try {
-      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { method: "POST" });
-      if (res.ok) {
-        const updated = await res.json();
-        setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
+      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        let msg = t('tags.addFailed', 'No se pudo añadir el tag');
+        try {
+          const data = await res.json();
+          if (data && (data.detail || data.message)) msg = data.detail || data.message;
+        } catch (_) {}
+        showNotification(msg, 'error');
+        throw new Error(msg);
       }
+      const updated = await res.json();
+      setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
     } catch (err) {
-      alert("Error añadiendo tag");
+      const msg = (err && err.message) || t('tags.addFailed', 'No se pudo añadir el tag');
+      showNotification(msg, 'error');
+      throw err;
     }
   };
 
   const handleRemoveTag = async (mediaId, tagId) => {
     try {
-      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { method: "DELETE" });
-      if (res.ok) {
-        const updated = await res.json();
-        setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
+      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        let msg = t('tags.removeFailed', 'No se pudo quitar el tag');
+        try {
+          const data = await res.json();
+          if (data && (data.detail || data.message)) msg = data.detail || data.message;
+        } catch (_) {}
+        showNotification(msg, 'error');
+        throw new Error(msg);
       }
+      const updated = await res.json();
+      setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
     } catch (err) {
-      alert("Error quitando tag");
+      const msg = (err && err.message) || t('tags.removeFailed', 'No se pudo quitar el tag');
+      showNotification(msg, 'error');
+      throw err;
     }
   };
 
   const handleUpdateNota = async (mediaId, nota) => {
     try {
       const res = await fetch(`${API_URL}/${mediaId}/nota`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ nota })
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
+      if (!res.ok) {
+        let msg = t('messages.errorUpdatingRating', 'No se pudo actualizar la nota');
+        try {
+          const data = await res.json();
+          if (data && (data.detail || data.message)) msg = data.detail || data.message;
+        } catch (_) {}
+        showNotification(msg, 'error');
+        throw new Error(msg);
       }
+      const updated = await res.json();
+      setMedias(medias => medias.map(m => m.id === updated.id ? updated : m));
     } catch (err) {
-      alert("Error actualizando nota");
+      const msg = (err && err.message) || t('messages.errorUpdatingRating', 'No se pudo actualizar la nota');
+      showNotification(msg, 'error');
+      throw err;
     }
   };
 
@@ -864,12 +1142,80 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
     }
   };
 
+  // Funciones para manejar la selección de vista
+  const handleMediaClick = (media) => {
+    setSelectedMediaForView(media);
+    setShowViewChoice(true);
+  };
+
+  const handleSelectModal = () => {
+    setSelected(selectedMediaForView);
+    setShowViewChoice(false);
+    setSelectedMediaForView(null);
+  };
+
+  const handleSelectPage = () => {
+    navigate(`/detail/${selectedMediaForView.id}`);
+    setShowViewChoice(false);
+    setSelectedMediaForView(null);
+  };
+
+  const handleCloseViewChoice = () => {
+    setShowViewChoice(false);
+    setSelectedMediaForView(null);
+  };
+
+  // Si estamos cargando la autenticación, mostrar spinner
+  if (authLoading) {
+    return (
+      <>
+        <Navbar 
+          onSection={(section) => { setSection(section); setSearchQuery(''); }} 
+          onSearch={setSearchQuery} 
+          searchValue={searchQuery}
+          onAuthChange={handleAuthChange}
+        />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid rgba(255, 255, 255, 0.1)',
+            borderTop: '3px solid #667eea',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+        </div>
+      </>
+    );
+  }
+
+  // Si no está autenticado, mostrar pantalla de bienvenida
+  if (!isAuthenticated) {
+    return (
+      <>
+        <Navbar 
+          onSection={(section) => { setSection(section); setSearchQuery(''); }} 
+          onSearch={setSearchQuery} 
+          searchValue={searchQuery}
+          onAuthChange={handleAuthChange}
+        />
+        <WelcomeScreen />
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar 
         onSection={(section) => { setSection(section); setSearchQuery(''); }} 
         onSearch={setSearchQuery} 
-        searchValue={searchQuery} 
+        searchValue={searchQuery}
+        onAuthChange={handleAuthChange}
       />
       {section === 'add' ? (
         <AddMediaForm onAdded={handleMediaAdded} />
@@ -1017,8 +1363,8 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
               searchResults.length > 0 ? (
                 <SectionRow 
                   title={`Resultados de "${searchQuery}"`}
-                  items={translatedSearchResults.displayData || []}
-                  onSelect={setSelected}
+                  items={finalSearchResults.displayData || []}
+                  onSelect={handleMediaClick}
                 />
               ) : (
                 <div
@@ -1053,15 +1399,15 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
            {!searchQuery && section === "inicio" && (
             <>
               {/* Las secciones especiales ahora se generan en HomeSections */}
-              <HomeSections medias={medias} />
+              <HomeSections medias={medias} onMediaClick={handleMediaClick} />
             </>
           )}
            {!searchQuery && section === "peliculas" && (
   <>
     <SectionRow 
       title={t('sections.movies')}
-      items={(showFavs || showPendings || selectedTags.length > 0) ? (translatedMedias.displayData || []) : (translatedPelis.displayData || [])}
-      onSelect={setSelected}
+      items={(showFavs || showPendings || selectedTags.length > 0) ? (finalMedias.displayData || []) : (finalPelis.displayData || [])}
+      onSelect={handleMediaClick}
     />
     {!(showFavs || showPendings || selectedTags.length > 0) && pelis.length > 0 && pelisHasMore && (
       <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
@@ -1091,8 +1437,8 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
   <>
     <SectionRow 
       title={t('sections.series')}
-      items={(showFavs || showPendings || selectedTags.length > 0) ? (translatedMedias.displayData || []) : (translatedSeries.displayData || [])}
-      onSelect={setSelected}
+      items={(showFavs || showPendings || selectedTags.length > 0) ? (finalMedias.displayData || []) : (finalSeries.displayData || [])}
+      onSelect={handleMediaClick}
     />
     {!(showFavs || showPendings || selectedTags.length > 0) && seriesList.length > 0 && seriesHasMore && (
       <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
@@ -1123,17 +1469,39 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
                title={section === 'favoritos' ? t('sections.favorites') : 
                       section === 'pendientes' ? t('sections.pending') : 
                       section.charAt(0).toUpperCase() + section.slice(1)}
-               items={translatedMedias.displayData || []}
-               onSelect={setSelected}
+               items={finalMedias.displayData || []}
+               onSelect={handleMediaClick}
              />
            )}
            {/* Renderizado anterior para secciones no paginadas (si fuera necesario, pero ahora todas las principales son paginadas o inicio) */}
            {/* {section !== "inicio" && !isPaginatedSection && ( ... )} */}
          </>
        )}
+
+      {/* Modal de selección de vista */}
+      <ViewChoiceModal
+        isOpen={showViewChoice}
+        onClose={handleCloseViewChoice}
+        onSelectModal={handleSelectModal}
+        onSelectPage={handleSelectPage}
+        mediaTitle={selectedMediaForView?.titulo || ''}
+      />
      </>
    );
  }
+
+// Componente principal con rutas
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<CatalogPage />} />
+        <Route path="/detail/:id" element={<DetailPage />} />
+        <Route path="/actor/:personId" element={<ActorDetailPage />} />
+      </Routes>
+    </Router>
+  );
+}
 
 function AppWrapper() {
   return (

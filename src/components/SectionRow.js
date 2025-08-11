@@ -1,7 +1,129 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useDynamicPoster } from '../hooks/useDynamicPoster';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
+import PosterSkeleton from './PosterSkeleton';
 import './SectionRow.css';
+
+// Función para obtener colores según la puntuación
+export const getRatingColors = (rating) => {
+  const numRating = parseFloat(rating);
+  if (numRating >= 9.0) {
+    return { 
+      color: '#FFD60A', 
+      darkColor: '#996300', 
+      textColor: '#FFD60A',
+      isPremium: true,
+      shadow: `
+        0 0 8px #FFD60A,
+        0 0 16px #FFD60A,
+        0 0 24px #FFD60A,
+        0 2px 6px rgba(0,0,0,0.5)
+      `,
+      border: '2px solid #FFF'
+    };
+  } else if (numRating >= 7.0) {
+    return { 
+      color: '#21d07a', 
+      darkColor: '#204529', 
+      textColor: '#fff',
+      isPremium: false,
+      shadow: '0 2px 6px rgba(0,0,0,0.5)',
+      border: 'none'
+    };
+  } else if (numRating >= 5.0) {
+    return { 
+      color: '#FFC107', 
+      darkColor: '#FF8F00', 
+      textColor: '#fff',
+      isPremium: false,
+      shadow: '0 2px 6px rgba(0,0,0,0.5)',
+      border: 'none'
+    };
+  } else {
+    return { 
+      color: '#F44336', 
+      darkColor: '#C62828', 
+      textColor: '#fff',
+      isPremium: false,
+      shadow: '0 2px 6px rgba(0,0,0,0.5)',
+      border: 'none'
+    };
+  }
+};
+
+// Componente individual para cada card con su propia portada dinámica
+function SectionRowCard({ item, onSelect, t }) {
+  const mediaType = item.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
+  const { posterUrl, loading } = useDynamicPoster(item.tmdb_id, mediaType, item.imagen);
+
+  return (
+    <div
+      className="section-row-card"
+      onClick={() => onSelect(item)}
+      title={item.titulo}
+    >
+      <div className="section-row-poster-container">
+        {loading ? (
+          <PosterSkeleton size="normal" className="section-row-poster" />
+        ) : (
+          <img 
+            src={posterUrl} 
+            alt={item.titulo} 
+            className={`section-row-poster poster-transition ${loading ? 'poster-loading' : 'poster-loaded'}`}
+            loading="lazy"
+          />
+        )}
+        {item.favorito && (
+          <span className="favorite-badge">{t('detailModal.favorite')}</span>
+        )}
+        {item.pendiente && (
+          <span className="pending-badge">{t('detailModal.pending')}</span>
+        )}
+        {item.nota_imdb !== undefined && item.nota_imdb !== null && item.nota_imdb !== '' && (
+          <div 
+            className={`nota-imdb-badge-card ${getRatingColors(item.nota_imdb).isPremium ? 'premium' : ''}`}
+            style={{ 
+              '--progress': `${Math.round(parseFloat(item.nota_imdb) * 10)}%`,
+              '--rating-color': getRatingColors(item.nota_imdb).color,
+              '--rating-color-dark': getRatingColors(item.nota_imdb).darkColor,
+              '--text-color': getRatingColors(item.nota_imdb).textColor,
+              '--rating-shadow': getRatingColors(item.nota_imdb).shadow,
+              '--rating-border': getRatingColors(item.nota_imdb).border
+            }}
+            title={t('tooltips.tmdbRating')}
+          >
+            <span className="nota-imdb-num-card">{Number(item.nota_imdb).toFixed(1)}</span>
+          </div>
+        )}
+        {item.nota_personal && item.nota_personal > 0 ? (
+          <div 
+            className={`nota-personal-badge-card ${getRatingColors(item.nota_personal).isPremium ? 'premium' : ''}`}
+            style={{ 
+              '--progress': `${Math.round(parseFloat(item.nota_personal) * 10)}%`,
+              '--rating-color': getRatingColors(item.nota_personal).color,
+              '--rating-color-dark': getRatingColors(item.nota_personal).darkColor,
+              '--text-color': getRatingColors(item.nota_personal).textColor,
+              '--rating-shadow': getRatingColors(item.nota_personal).shadow,
+              '--rating-border': getRatingColors(item.nota_personal).border
+            }}
+            title={t('tooltips.personalRating')}
+          >
+            <span className="nota-personal-num-card">{Number(item.nota_personal).toFixed(1)}</span>
+          </div>
+        ) : (
+          <div 
+            className="nota-personal-badge-card nota-personal-empty"
+            title={t('tooltips.noPersonalRating')}
+          >
+            <span className="nota-personal-num-card">?</span>
+          </div>
+        )}
+      </div>
+      <div className="section-row-name">{item.titulo}</div>
+    </div>
+  );
+}
 
 function SectionRow({ title, items, onSelect, carousel = false }) {
   const scrollContainerRef = useRef(null);
@@ -14,7 +136,6 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
 
   // ✨ NUEVO: Usar contenido traducido automáticamente para la lista de items
   const { translatedList, isTranslating } = useTranslatedMediaList(safeItems);
-  
   // Usar translatedList en lugar de items directamente, con fallback seguro
   const displayItems = Array.isArray(translatedList) ? translatedList : safeItems;
 
@@ -68,43 +189,13 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
           className={carousel ? "section-row-list" : "section-row-list-vertical"}
           ref={carousel ? scrollContainerRef : null}
         >
-          {items.map(item => (
-            <div
-              key={item.id}
-              className="section-row-card"
-              onClick={() => onSelect(item)}
-              title={item.titulo}
-            >
-              <div className="section-row-poster-container">
-                <img 
-                  src={item.imagen} 
-                  alt={item.titulo} 
-                  className="section-row-poster"
-                  loading="lazy"
-                />
-                {item.favorito && (
-                  <span className="favorite-badge">{t('detailModal.favorite')}</span>
-                )}
-                {item.pendiente && (
-                  <span className="pending-badge">{t('detailModal.pending')}</span>
-                )}
-                {item.nota_imdb !== undefined && item.nota_imdb !== null && item.nota_imdb !== '' && (
-                  <div className="nota-imdb-badge-card">
-                    <span className="nota-imdb-num-card">{parseFloat(item.nota_imdb).toFixed(1)}</span>
-                    <span className="nota-imdb-star-card">★</span>
-                  </div>
-                )}
-                <div className="nota-personal-badge-card">
-                  {item.nota_personal && item.nota_personal > 0 ? (
-                    <span className="nota-personal-num-card">{parseFloat(item.nota_personal).toFixed(1)}</span>
-                  ) : (
-                    <span className="nota-personal-num-card">-</span>
-                  )}
-                  <span className="nota-personal-star-card">★</span>
-                </div>
-              </div>
-              <div className="section-row-name">{item.titulo}</div>
-            </div>
+          {displayItems.map((item, idx) => (
+            <SectionRowCard
+              key={`${item.id || ''}-${item.tipo || item.mediaType || ''}-${idx}`}
+              item={item}
+              onSelect={onSelect}
+              t={t}
+            />
           ))}
         </div>
         {carousel && showRightButton && (

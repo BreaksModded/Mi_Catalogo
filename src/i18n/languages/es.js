@@ -4,6 +4,37 @@ export const es = {
     title: 'Mi Catálogo',
     movies: 'Películas',
     series: 'Series',
+    tag: 'Etiqueta',
+    tags: 'etiquetas',
+    addFirstTag: 'Añadir primer tag',
+  streaming: {
+    errorLoading: 'No se pudo obtener la disponibilidad de streaming.',
+    platform: 'plataforma',
+    platforms: 'plataformas',
+    noLink: 'Sin enlace',
+    showLess: 'Mostrar menos',
+    seeMore: 'Ver {{count}} más',
+    availabilityByRegion: 'Disponibilidad por región',
+    notAvailableOnPlatforms: 'No disponible en plataformas',
+    notAvailableInRegion: 'Este contenido no está disponible en plataformas de streaming en {{region}}.',
+    thisRegion: 'esta región',
+    tryChangingRegion: 'Prueba cambiando a otra región arriba',
+    notAvailable: 'No disponible',
+    noStreamingInfoFound: 'No se encontró información de streaming para {{region}}.',
+    pricesEstimated: 'Los precios son estimados y pueden variar',
+    directLinksOpen: 'Los enlaces directos abren en la plataforma correspondiente',
+    availabilityUpdated: 'Disponibilidad actualizada desde TMDb',
+    priceNotAvailable: 'Precio no disponible'
+  },anageTags: 'Gestionar Tags',
+    searchTags: 'Buscar tags...',
+    noTagsFound: 'No hay tags que coincidan',
+    selected: 'Seleccionados',
+    showLess: 'Mostrar menos',
+    more: 'más',
+    rating: 'Valoración',
+    personalRating: 'Mi nota',
+    imdbRating: 'TMDb',
+    notAvailable: 'No disponible',
     summary: 'Resumen',
     favorites: 'Favoritos',
     pending: 'Pendientes',
@@ -83,6 +114,7 @@ export const es = {
     removeFromPending: 'Quitar de pendientes',
     addToList: 'Añadir a lista',
     delete: 'Eliminar',
+    rate: 'Valorar',
     personalNote: 'Nota personal',
     editNote: 'Editar nota',
     saveNote: 'Guardar',
@@ -128,13 +160,88 @@ export const es = {
     deleteFromDatabase: 'de la base de datos?',
     tag: 'etiqueta',
     tags: 'etiquetas',
+    addFirstTag: 'Añadir primer tag',
+    manageTags: 'Gestionar Tags',
+    searchTags: 'Buscar tags...',
+    noTagsFound: 'No hay tags que coincidan',
+    selected: 'Seleccionados',
+    showLess: 'Mostrar menos',
+    more: 'más',
     rating: 'Valoración',
     personalRating: 'Mi nota',
     imdbRating: 'TMDb',
-    notAvailable: 'No disponible'
+    notAvailable: 'No disponible',
+    additionalInfo: 'Información adicional'
   },
 
-  // Buttons and actions
+  // Actions
+  actions: {
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    add: 'Añadir',
+    create: 'Crear',
+    close: 'Cerrar',
+    loadMore: 'Cargar más',
+    showMore: 'Mostrar más',
+    loading: 'Cargando...',
+    search: 'Buscar',
+    filter: 'Filtrar',
+    clear: 'Limpiar',
+    confirm: 'Confirmar',
+    backToHome: 'Volver al inicio'
+  },
+
+  // Countries
+  countries: {
+    spain: 'España',
+    unitedStates: 'Estados Unidos',
+    unitedKingdom: 'Reino Unido',
+    france: 'Francia',
+    germany: 'Alemania',
+    italy: 'Italia',
+    portugal: 'Portugal',
+    brazil: 'Brasil',
+    mexico: 'México',
+    argentina: 'Argentina',
+    canada: 'Canadá',
+    australia: 'Australia',
+    japan: 'Japón',
+    southKorea: 'Corea del Sur'
+  },
+
+  // Streaming
+  streaming: {
+    errorLoading: 'No se pudo obtener disponibilidad en streaming.',
+    platform: 'plataforma',
+    platforms: 'plataformas',
+    noLink: 'Sin enlace',
+    showLess: 'Mostrar menos',
+    seeMore: 'Ver {{count}} más',
+    availabilityByRegion: 'Disponibilidad por región',
+    notAvailableOnPlatforms: 'No disponible en plataformas',
+    notAvailableInRegion: 'Este contenido no está disponible en plataformas de streaming en {{region}}.',
+    thisRegion: 'esta región',
+    tryChangingRegion: 'Prueba cambiando a otra región arriba',
+    notAvailable: 'No disponible',
+    noStreamingInfoFound: 'No se encontró información de streaming para {{region}}.',
+    pricesEstimated: 'Los precios son estimados y pueden variar',
+    directLinksOpen: 'Los enlaces directos abren en la plataforma correspondiente',
+    availabilityUpdated: 'Disponibilidad actualizada desde TMDb',
+    priceNotAvailable: 'Precio no disponible'
+  },
+
+  // Errors
+  errors: {
+    mediaNotFound: 'Media no encontrado',
+    couldNotLoadTmdbDetails: 'No se pudo cargar detalles avanzados TMDb',
+    couldNotLoadSimilar: 'No se pudieron cargar similares.',
+    errorSaving: 'Error al guardar',
+    errorSavingNotes: 'Error al guardar las notas. Inténtalo de nuevo.'
+  },
+
+  // Buttons and actions (kept for backward compatibility)
   actions: {
     save: 'Guardar',
     cancel: 'Cancelar',
@@ -147,7 +254,16 @@ export const es = {
     loading: 'Cargando...',
     search: 'Buscar',
     filter: 'Filtrar',
-    clear: 'Limpiar'
+    clear: 'Limpiar',
+    confirm: 'Confirmar',
+    backToHome: 'Volver al inicio'
+  },
+
+  // Tooltips
+  tooltips: {
+    tmdbRating: 'Nota TMDb',
+    personalRating: 'Mi nota',
+    noPersonalRating: 'Sin nota personal'
   },
 
   // Database sleep notice
@@ -255,6 +371,9 @@ export const es = {
     errorCreatingGeneric: 'Error al crear la lista',
     // List details modal
     searchPlaceholder: 'Buscar película o serie para añadir...',
+    searchButton: 'Buscar',
+    addButton: 'Añadir',
+    emptyList: 'Esta lista está vacía.',
     searchError: 'Error en la búsqueda',
     noResultsInCatalog: 'No se encontraron resultados en tu catálogo',
     searchCatalogError: 'No se pudo buscar en tu catálogo',
@@ -267,7 +386,19 @@ export const es = {
     deleteMode: 'Modo Borrado',
     deleteSelected: 'Eliminar Seleccionados',
     confirmDelete: 'Se eliminarán',
-    permanently: 'tags permanentemente.'
+    permanently: 'tags permanentemente.',
+    nameRequired: 'El nombre del tag no puede estar vacío',
+    nameExists: 'Ya existe un tag con ese nombre',
+    tagNamePlaceholder: 'Nombre del nuevo tag',
+    existingTags: 'Tags Existentes',
+    selected: 'Seleccionados',
+    confirmTitle: '¿Estás seguro?',
+    // Nuevos mensajes de resultado de operaciones
+    created: 'Tag creado correctamente',
+    createFailed: 'No se pudo crear el tag',
+    deleteFailed: 'No se pudieron eliminar los tags',
+    addFailed: 'No se pudo añadir el tag',
+    removeFailed: 'No se pudo quitar el tag'
   },
 
   // Add Media Form
@@ -345,6 +476,9 @@ export const es = {
   },
 
   // General terms
+  person: {
+    full_filmography: 'Filmografía completa'
+  },
   general: {
     title: 'título',
     titles: 'títulos',
@@ -409,5 +543,19 @@ export const es = {
     'sport': 'Deporte',
     'música': 'Música',
     'music': 'Música'
+  },
+
+  // Welcome screen
+  welcome: {
+    title: 'Bienvenido a tu Catálogo Personal',
+    subtitle: 'Crea y gestiona tu colección personal de películas y series',
+    feature1: 'Catálogo Personal',
+    feature1Desc: 'Organiza tus películas y series favoritas',
+    feature2: 'Tags Personalizados',
+    feature2Desc: 'Etiqueta y categoriza tu contenido',
+    feature3: 'Favoritos y Notas',
+    feature3Desc: 'Marca favoritos y añade anotaciones',
+    getStarted: '¡Comienza ahora!',
+    loginPrompt: 'Inicia sesión para acceder a tu catálogo personal y comenzar a añadir películas y series'
   }
 };

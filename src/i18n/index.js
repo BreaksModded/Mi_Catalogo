@@ -1,14 +1,23 @@
 import { es } from './languages/es';
 import { en } from './languages/en';
+import { pt } from './languages/pt';
+import { fr } from './languages/fr';
+import { de } from './languages/de';
 
 export const languages = {
   es,
-  en
+  en,
+  pt,
+  fr,
+  de
 };
 
 export const getLanguageList = () => [
   { code: 'es', name: 'Español', flag: 'ES' },
-  { code: 'en', name: 'English', flag: 'US' }
+  { code: 'en', name: 'English', flag: 'US' },
+  { code: 'pt', name: 'Português', flag: 'PT' },
+  { code: 'fr', name: 'Français', flag: 'FR' },
+  { code: 'de', name: 'Deutsch', flag: 'DE' }
 ];
 
 export const defaultLanguage = 'es';

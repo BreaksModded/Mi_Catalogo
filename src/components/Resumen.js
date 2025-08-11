@@ -51,7 +51,7 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
   const [loadingPeor, setLoadingPeor] = useState(true);
   const [errorPeor, setErrorPeor] = useState(null);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 
   // Definir fetchCounts fuera de useEffect y con useCallback
   const fetchCounts = useCallback(async () => {
@@ -59,8 +59,8 @@ function Resumen({ medias }) { // Eliminamos 'pendientes' si no se usa directame
     setError(null);
     try {
       const [resPelis, resSeries] = await Promise.all([
-        fetch(`${BACKEND_URL}/medias/count?pendiente=false&tipo=pelicula`),
-        fetch(`${BACKEND_URL}/medias/count?pendiente=false&tipo=serie`),
+        fetch(`${BACKEND_URL}/medias/count?pendiente=false&tipo=pelicula`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/medias/count?pendiente=false&tipo=serie`, { credentials: 'include' }),
       ]);
 
       if (!resPelis.ok || !resSeries.ok) {
@@ -206,7 +206,9 @@ useEffect(() => {
     const fetchFavoritosGlobales = async () => {
       try {
         // Puedes ajustar el endpoint según tu backend
-        const res = await fetch(`${BACKEND_URL}/medias?favorito=true&limit=5&order_by=nota_personal_desc`);
+        const res = await fetch(`${BACKEND_URL}/medias?favorito=true&limit=5&order_by=nota_personal_desc`, {
+          credentials: 'include'
+        });
         if (res.ok) setFavoritosGlobales(await res.json());
       } catch {}
     };

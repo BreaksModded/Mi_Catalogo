@@ -1,0 +1,361 @@
+/* Estilos para la página de detalle del actor: sobrios, modernos y consistentes con la app */
+
+.actor-page {
+  color: #fff;
+  padding-bottom: 40px;
+  position: relative;
+}
+
+.actor-hero {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 0 36px;
+  margin-top: 50px;
+  margin-bottom: 12px;
+}
+
+
+
+.actor-photo {
+  width: 200px;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #00e2c7;
+  box-shadow: 0 6px 32px 0 #00e2c755, 0 1.5px 0 #00e2c7;
+  position: relative;
+  transition: box-shadow 0.25s, transform 0.22s;
+}
+.actor-photo:hover {
+  box-shadow: 0 12px 48px 0 #00e2c799, 0 2.5px 0 #00e2c7;
+  transform: translateY(-2px) scale(1.025);
+}
+
+.actor-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.actor-photo .placeholder { font-size: 64px; opacity: 0.8; }
+
+.actor-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Scoped to actor page to avoid overriding cast list styles */
+.actor-page .actor-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.actor-meta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 20px 20px 8px 20px;
+  padding: 0;
+  font-size: 0.95rem;
+  align-items: center;
+}
+
+.badge {
+  background: rgba(0, 226, 199, 0.12);
+  color: #00e2c7;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  letter-spacing: 0.025em;
+  border: 1px solid rgba(0, 226, 199, 0.3);
+  transition: all 0.2s ease;
+  position: relative;
+  backdrop-filter: blur(2px);
+}
+.badge:hover {
+  background: rgba(0, 226, 199, 0.18);
+  border-color: rgba(0, 226, 199, 0.5);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 226, 199, 0.25);
+}
+
+.actor-biography {
+  position: relative;
+  margin: 32px 20px 0 20px;
+  padding: 32px 36px 22px 36px;
+  background: rgba(18, 24, 27, 0.72);
+  border-radius: 22px;
+  border: 1.8px solid rgba(0,226,199,0.22);
+  box-shadow: 0 6px 32px 0 #00e2c71a, 0 1.5px 0 #00e2c7;
+  color: #eafcfa;
+  font-size: 1.13rem;
+  line-height: 1.8;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0.012em;
+  transition: box-shadow 0.22s, border-color 0.22s;
+  overflow: hidden;
+  backdrop-filter: blur(7px) saturate(1.2);
+}
+.actor-biography::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, #00e2c7 0%, #00b3e2 100%);
+  opacity: 0.18;
+  border-radius: 22px 22px 0 0;
+  pointer-events: none;
+}
+.actor-biography::after {
+  content: '\201C'; /* Cita inicial */
+  font-family: serif;
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  font-size: 2.7rem;
+  color: #00e2c7cc;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 1;
+}
+.actor-biography:hover {
+  box-shadow: 0 8px 48px 0 #00e2c744, 0 2px 0 #00e2c7;
+  border-color: #00e2c7;
+}
+.actor-biography .bio-toggle {
+  margin-top: 18px;
+  color: #00e2c7;
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1.04rem;
+  letter-spacing: 0.01em;
+  transition: color 0.15s;
+  z-index: 2;
+  position: relative;
+}
+.actor-biography .bio-toggle:hover {
+  color: #fff;
+}
+
+.bio-toggle {
+  margin-top: 8px;
+  color: #00e2c7;
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actor-social {
+  margin-top: 22px;
+  padding: 6px 20px 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.actor-social a {
+  text-decoration: none;
+  color: #00e2c7;
+  background: rgba(0,226,199,0.12);
+  border: 1px solid rgba(0,226,199,0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actor-social a .social-icon {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 2px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+.actor-social a:hover .social-icon {
+  opacity: 1;
+}
+
+.section-title {
+  margin: 18px 20px 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.known-for-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  padding: 8px 20px 0;
+}
+
+.known-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.22s, transform 0.18s;
+  cursor: pointer;
+}
+.known-card:hover {
+  box-shadow: 0 6px 24px #00e2c733;
+  transform: translateY(-2px) scale(1.03);
+}
+
+/* Skeleton loaders */
+.skeleton {
+  background: linear-gradient(90deg, #222 25%, #333 37%, #222 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.2s infinite linear;
+  border-radius: 8px;
+}
+.skeleton-photo {
+  width: 200px;
+  height: 200px;
+  border-radius: 16px;
+}
+.skeleton-card {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 12px;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Badge destacado para premios */
+.badge-award {
+  background: linear-gradient(90deg, #ffd700 0%, #fffbe6 100%);
+  color: #7a5c00;
+  border: 1.5px solid #ffe066;
+  font-weight: 800;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  margin-left: 8px;
+  box-shadow: 0 2px 8px #ffd70033;
+  letter-spacing: 0.03em;
+}
+
+.known-poster { width: 100%; aspect-ratio: 2/3; object-fit: cover; display:block; }
+.known-meta { padding: 8px; display:flex; flex-direction:column; gap:4px; }
+.known-title { font-size: 0.95rem; font-weight: 700; }
+.known-role { font-size: 0.8rem; opacity: 0.85; }
+
+
+/* Filmografía colapsable/rediseñada */
+.filmography-collapsible {
+  padding: 4px 20px 0;
+}
+.filmography-toggle {
+  background: none;
+  border: none;
+  color: #00e2c7;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 8px;
+  padding: 6px 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s;
+}
+.filmography-toggle:hover {
+  color: #fff;
+}
+.filmography-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.filmography-item.redesigned {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.filmography-item.redesigned:hover {
+  background: rgba(0,226,199,0.10);
+  box-shadow: 0 2px 12px #00e2c733;
+}
+.filmography-poster {
+  width: 44px;
+  height: 66px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.filmography-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.filmography-poster-placeholder {
+  font-size: 1.7rem;
+  color: #888;
+}
+.filmography-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.filmography-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filmography-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.93em;
+  color: #b6f3ec;
+  align-items: center;
+}
+.filmography-year {
+  opacity: 0.8;
+}
+.filmography-role {
+  opacity: 0.95;
+  font-style: italic;
+}
+
+.loading-actor { padding: 40px 20px; display:flex; gap:10px; align-items:center; }
+.loading-spinner-small { width: 16px; height: 16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#00e2c7; border-radius:50%; animation:spin 1s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg);} }
+
+@media (max-width: 768px) {
+  .actor-hero { grid-template-columns: 120px 1fr; }
+  .actor-photo { width: 120px; height: 120px; }
+}

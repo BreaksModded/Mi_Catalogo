@@ -7,7 +7,7 @@ import TagsModal from './TagsModal';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
 import RelatedMedia from './RelatedMedia';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_URL = BACKEND_URL + '/medias';
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
