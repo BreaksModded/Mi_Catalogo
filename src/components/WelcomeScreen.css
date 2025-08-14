@@ -21,12 +21,19 @@
 .welcome-title {
   font-size: 2.5rem;
   margin-bottom: 1rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.welcome-text {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-weight: bold;
-  line-height: 1.2;
+}
+
+.welcome-emoji {
+  color: initial;
 }
 
 .welcome-subtitle {

@@ -29,8 +29,13 @@ export default function AddMediaForm({ onAdded }) {
     setExistStatus(null);
     setExistMsg('');
     try {
+      const jwtToken = localStorage.getItem('jwt_token');
+      const headers = jwtToken ? {
+        'Authorization': `Bearer ${jwtToken}`
+      } : {};
+      
       const url = `${API_URL}?tmdb_id=${encodeURIComponent(tmdb_id)}&tipo=${encodeURIComponent(tipo)}`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers });
       if (!res.ok) throw new Error('Error al comprobar existencia');
       const data = await res.json();
       // Se espera que el backend devuelva un array de medias
@@ -100,7 +105,12 @@ const [existMsg, setExistMsg] = useState('');
 
   useEffect(() => {
     // Cargar etiquetas al montar el componente
-    fetch(BACKEND_URL + '/tags')
+    const jwtToken = localStorage.getItem('jwt_token');
+    const headers = jwtToken ? {
+      'Authorization': `Bearer ${jwtToken}`
+    } : {};
+    
+    fetch(BACKEND_URL + '/tags', { headers })
       .then(res => res.json())
       .then(data => setTags(data))
       .catch(err => console.error('Error cargando etiquetas:', err));
@@ -157,9 +167,19 @@ const [existMsg, setExistMsg] = useState('');
     };
 
     try {
+      const jwtToken = localStorage.getItem('jwt_token');
+      if (!jwtToken) {
+        setResultMsg(t('auth.loginRequired', 'Debes iniciar sesión para añadir contenido'));
+        showNotification(t('auth.loginRequired', 'Debes iniciar sesión para añadir contenido'), 'error');
+        return;
+      }
+
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
         body: JSON.stringify(body)
       });
       if (response.ok) {
@@ -494,7 +514,7 @@ const [existMsg, setExistMsg] = useState('');
                 <input name="tmdb_id" value={form.tmdb_id} onChange={handleChange} placeholder={t('addMedia.tmdbIdField', 'ID de TMDb')} className="addmedia-field" />
                 <input name="temporadas" value={form.temporadas} onChange={handleChange} placeholder={t('addMedia.seasonsField', 'Temporadas (solo series)')} type="number" className="addmedia-field" />
                 <input name="episodios" value={form.episodios} onChange={handleChange} placeholder={t('addMedia.episodesField', 'Episodios (solo series)')} type="number" className="addmedia-field" />
-                <input name="nota_personal" value={form.nota_personal} onChange={handleChange} placeholder={t('addMedia.personalRatingField', 'Nota personal (0-10)')} type="number" step="0.1" className="addmedia-field" />
+                <input name="nota_personal" value={form.nota_personal} onChange={handleChange} placeholder={t('addMedia.personalRatingField', 'Nota personal (0-10)')} type="number" step="0.1" min="0" max="10" className="addmedia-field" />
                 {tmdbDetails && tmdbDetails.nota_tmdb && (
                   <div className="addmedia-tmdb-rating">
                     {t('addMedia.tmdbRatingLabel', 'Nota TMDb:')} <strong>{tmdbDetails.nota_tmdb.toFixed(1)}</strong>

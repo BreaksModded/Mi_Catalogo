@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "./LanguageSelector";
 import AuthModal from "./AuthModal";
@@ -12,18 +12,19 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
   const [isLogin, setIsLogin] = useState(true);
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  // Evita que el onClick navegue tras un clic medio
+  const skipNextClickRef = useRef(false);
   const { t } = useLanguage();
 
-  // Comprobar si hay sesión activa (cookie)
+  // Comprobar si hay sesión activa (JWT token)
   useEffect(() => {
     async function fetchUser() {
       try {
-        // Verificar si hay cookie de autenticación antes de hacer la petición
-        const hasAuthCookie = document.cookie.split(';').some(cookie => 
-          cookie.trim().startsWith('auth=')
-        );
+        // Verificar si hay JWT token antes de hacer la petición
+        const jwtToken = localStorage.getItem('jwt_token');
         
-        if (!hasAuthCookie) {
+        if (!jwtToken) {
           setUser(null);
           if (onAuthChange) {
             onAuthChange(false);
@@ -32,7 +33,9 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
         }
 
         const res = await fetch(`${BACKEND_URL}/users/me`, {
-          credentials: "include",
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`
+          }
         });
         if (res.ok) {
           const data = await res.json();
@@ -42,7 +45,8 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
             onAuthChange(true);
           }
         } else {
-          // Usuario no autenticado, sin mostrar error en consola
+          // Token inválido o expirado, limpiar localStorage
+          localStorage.removeItem('jwt_token');
           setUser(null);
           if (onAuthChange) {
             onAuthChange(false);
@@ -59,11 +63,25 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
     fetchUser();
   }, []); // Solo ejecutar una vez al montar el componente
 
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [dropdownOpen]);
+
   const handleLogout = async () => {
-    await fetch(`${BACKEND_URL}/auth/jwt/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    // Simplemente eliminar el JWT token del localStorage
+    localStorage.removeItem('jwt_token');
     setUser(null);
     setDropdownOpen(false);
     // Notificar al componente padre que el usuario se ha desautenticado
@@ -74,18 +92,25 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
 
   const handleAuthSuccess = () => {
     // Refrescar usuario tras login/registro
-    fetch(`${BACKEND_URL}/users/me`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setUser(data);
-        // Notificar al componente padre que el usuario se ha autenticado
-        if (data && onAuthChange) {
-          onAuthChange(true);
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      fetch(`${BACKEND_URL}/users/me`, { 
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
         }
       })
-      .catch((error) => {
-        console.error("Error obteniendo usuario:", error);
-      });
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          setUser(data);
+          // Notificar al componente padre que el usuario se ha autenticado
+          if (data && onAuthChange) {
+            onAuthChange(true);
+          }
+        })
+        .catch((error) => {
+          console.error("Error obteniendo usuario:", error);
+        });
+    }
     setShowAuth(false);
   };
 
@@ -95,22 +120,76 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
     setMenuOpen(false);
   };
 
+  // Maneja click: intercepta solo click izquierdo simple; deja nativo ctrl/shift/alt/middle
+  const handleNavClick = (e, section) => {
+    // Permitir comportamiento nativo para abrir nueva pestaña/ventana
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    // Interceptar solo click normal izquierdo
+    e.preventDefault();
+    handleNav(section);
+  };
+
+  const sectionToHref = (section) => {
+    // Todas las secciones viven en la página principal '/', el estado lo maneja onSection
+    return '/';
+  };
+
   return (
     <nav className="navbar">
-      <div className="navbar-logo" onClick={() => handleNav("inicio")}>
+      <a 
+        href={sectionToHref('inicio')}
+        className="navbar-logo" 
+        onClick={(e) => handleNavClick(e, "inicio")}
+        style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
+        rel="noopener noreferrer"
+      >
         <span className="cinema-icon">🎬</span>{" "}
         <span className="navbar-title">{t("navbar.title")}</span>
-      </div>
+      </a>
       <div className="navbar-links">
-        <button onClick={() => handleNav("peliculas")}>{t("navbar.movies")}</button>
-        <button onClick={() => handleNav("series")}>{t("navbar.series")}</button>
-        <button onClick={() => handleNav("resumen")}>{t("navbar.summary")}</button>
-        <button onClick={() => handleNav("favoritos")}>{t("navbar.favorites")}</button>
-        <button onClick={() => handleNav("pendientes")}>{t("navbar.pending")}</button>
-        <button onClick={() => handleNav("listas")}>{t("navbar.lists")}</button>
-        <button className="navbar-add-btn" onClick={() => handleNav("add")}>
+        <a 
+          href={sectionToHref('catalogo')}
+          onClick={(e) => handleNavClick(e, "catalogo")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.catalog")}
+        </a>
+        <a 
+          href={sectionToHref('resumen')}
+          onClick={(e) => handleNavClick(e, "resumen")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.summary")}
+        </a>
+        <a 
+          href={sectionToHref('favoritos')}
+          onClick={(e) => handleNavClick(e, "favoritos")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.favorites")}
+        </a>
+        <a 
+          href={sectionToHref('pendientes')}
+          onClick={(e) => handleNavClick(e, "pendientes")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.pending")}
+        </a>
+        <a 
+          href={sectionToHref('listas')}
+          onClick={(e) => handleNavClick(e, "listas")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.lists")}
+        </a>
+        <a 
+          href={sectionToHref('add')}
+          className="navbar-add-btn" 
+          onClick={(e) => handleNavClick(e, "add")}
+          rel="noopener noreferrer"
+        >
           {t("navbar.add")}
-        </button>
+        </a>
       </div>
       <div className="navbar-right">
         <LanguageSelector />
@@ -122,6 +201,139 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
             onChange={(e) => onSearch(e.target.value)}
           />
         </div>
+        {/* Moved user-dropdown here, right next to search */}
+        <div className="user-dropdown" ref={dropdownRef}>
+          <button
+            className="user-dropdown-trigger"
+            onClick={() => setDropdownOpen((v) => !v)}
+          >
+            <div className="user-info">
+              <div className="user-avatar">
+                {user ? (
+                  user.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path 
+                      d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                    <circle 
+                      cx="12" 
+                      cy="7" 
+                      r="4" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </div>
+              <span className="user-name">
+                {user ? (user.username || user.email) : t('navbar.account')}
+              </span>
+              <svg 
+                className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`} 
+                width="12" 
+                height="12" 
+                viewBox="0 0 12 12" 
+                fill="none"
+              >
+                <path 
+                  d="M3 4.5L6 7.5L9 4.5" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </button>
+          {dropdownOpen && (
+            <div className="dropdown-menu">
+              {user ? (
+                <>
+                  <div className="dropdown-header">
+                    <div className="user-avatar-large">
+                      {user.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="user-details">
+                      <div className="user-display-name">
+                        {user.nombre && user.apellidos 
+                          ? `${user.nombre} ${user.apellidos}` 
+                          : user.username || user.email
+                        }
+                      </div>
+                      <div className="user-email">{user.email}</div>
+                    </div>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <button className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {t('navbar.profile')}
+                  </button>
+                  <button className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M19.4 15A1.65 1.65 0 0 0 20.6 13.07L21.16 11.33A1.65 1.65 0 0 0 19.73 9.1L18.9 9.38A10.6 10.6 0 0 0 17.1 7.62L17.38 6.8A1.65 1.65 0 0 0 15.15 5.37L13.41 5.93A1.65 1.65 0 0 0 12 7.58A1.65 1.65 0 0 0 10.59 5.93L8.85 5.37A1.65 1.65 0 0 0 6.62 6.8L6.9 7.62A10.6 10.6 0 0 0 5.1 9.38L4.27 9.1A1.65 1.65 0 0 0 2.84 11.33L3.4 13.07A1.65 1.65 0 0 0 4.6 15L5.1 14.62A10.6 10.6 0 0 0 6.9 16.38L6.62 17.2A1.65 1.65 0 0 0 8.85 18.63L10.59 18.07A1.65 1.65 0 0 0 12 16.42A1.65 1.65 0 0 0 13.41 18.07L15.15 18.63A1.65 1.65 0 0 0 17.38 17.2L17.1 16.38A10.6 10.6 0 0 0 18.9 14.62L19.4 15Z" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    {t('navbar.settings')}
+                  </button>
+                  <div className="dropdown-divider"></div>
+                  <button className="dropdown-item logout-item" onClick={handleLogout}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {t('navbar.logout')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setIsLogin(true);
+                      setShowAuth(true);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <polyline points="10,17 15,12 10,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {t('navbar.login')}
+                  </button>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setIsLogin(false);
+                      setShowAuth(true);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="8.5" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="20" y1="8" x2="20" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="23" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {t('navbar.register')}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        {/* Keep hamburger at the end */}
         <button
           className="navbar-hamburger"
           aria-label={t("navbar.openMenu")}
@@ -129,84 +341,6 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
         >
           ☰
         </button>
-      </div>
-      <div className="user-dropdown" style={{ position: "relative", marginLeft: 16 }}>
-        <button
-          className="add-btn"
-          onClick={() => setDropdownOpen((v) => !v)}
-          style={{ minWidth: 120 }}
-        >
-          {user ? user.email : "Cuenta"} &#x25BC;
-        </button>
-        {dropdownOpen && (
-          <div
-            className="dropdown-menu"
-            style={{
-              position: "absolute",
-              right: 0,
-              top: "100%",
-              background: "#fff",
-              border: "1px solid #ccc",
-              borderRadius: 6,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              minWidth: 180,
-              zIndex: 1000,
-            }}
-          >
-            {user ? (
-              <button
-                className="dropdown-item"
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  padding: 12,
-                  border: "none",
-                  background: "none",
-                }}
-                onClick={handleLogout}
-              >
-                Cerrar sesión
-              </button>
-            ) : (
-              <>
-                <button
-                  className="dropdown-item"
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    padding: 12,
-                    border: "none",
-                    background: "none",
-                  }}
-                  onClick={() => {
-                    setIsLogin(true);
-                    setShowAuth(true);
-                    setDropdownOpen(false);
-                  }}
-                >
-                  Iniciar sesión
-                </button>
-                <button
-                  className="dropdown-item"
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    padding: 12,
-                    border: "none",
-                    background: "none",
-                  }}
-                  onClick={() => {
-                    setIsLogin(false);
-                    setShowAuth(true);
-                    setDropdownOpen(false);
-                  }}
-                >
-                  Registrarse
-                </button>
-              </>
-            )}
-          </div>
-        )}
       </div>
       <AuthModal
         show={showAuth}
@@ -216,15 +350,49 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
       />
       {/* Menú móvil */}
       <div className={`navbar-mobile-menu${menuOpen ? " open" : ""}`}>
-        <button onClick={() => handleNav("peliculas")}>{t("navbar.movies")}</button>
-        <button onClick={() => handleNav("series")}>{t("navbar.series")}</button>
-        <button onClick={() => handleNav("resumen")}>{t("navbar.summary")}</button>
-        <button onClick={() => handleNav("favoritos")}>{t("navbar.favorites")}</button>
-        <button onClick={() => handleNav("pendientes")}>{t("navbar.pending")}</button>
-        <button onClick={() => handleNav("listas")}>{t("navbar.lists")}</button>
-        <button className="navbar-add-btn" onClick={() => handleNav("add")}>
+        <a 
+          href={sectionToHref('catalogo')}
+          onClick={(e) => handleNavClick(e, "catalogo")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.catalog")}
+        </a>
+        <a 
+          href={sectionToHref('resumen')}
+          onClick={(e) => handleNavClick(e, "resumen")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.summary")}
+        </a>
+        <a 
+          href={sectionToHref('favoritos')}
+          onClick={(e) => handleNavClick(e, "favoritos")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.favorites")}
+        </a>
+        <a 
+          href={sectionToHref('pendientes')}
+          onClick={(e) => handleNavClick(e, "pendientes")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.pending")}
+        </a>
+        <a 
+          href={sectionToHref('listas')}
+          onClick={(e) => handleNavClick(e, "listas")}
+          rel="noopener noreferrer"
+        >
+          {t("navbar.lists")}
+        </a>
+        <a 
+          href={sectionToHref('add')}
+          className="navbar-add-btn" 
+          onClick={(e) => handleNavClick(e, "add")}
+          rel="noopener noreferrer"
+        >
           {t("navbar.add")}
-        </button>
+        </a>
       </div>
     </nav>
   );

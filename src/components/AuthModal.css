@@ -1,80 +1,571 @@
+/* Auth Modal - Diseño profesional y moderno */
 .auth-modal-overlay {
-  background: rgba(45,55,72,0.65);
-  z-index: 2000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 3000; /* por encima de navbar y otros modales */
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  display: flex;
+  align-items: center; /* centrar verticalmente el modal */
+  justify-content: center;
+  /* espacio superior seguro teniendo en cuenta barras del navegador y notches */
+  padding: 20px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto; /* permitir scroll si el contenido es alto */
+  animation: fadeIn 0.3s ease-out;
+  isolation: isolate; /* evita que transform/filters padres afecten el stacking */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.auth-modal-content {
+  max-width: 600px;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 226, 199, 0.1);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+  /* limitar altura usando svh para móviles y contemplar paddings/barras */
+  max-height: calc(100svh - 48px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  margin: 0 auto; /* centrar horizontal en overlay */
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+/* Header del modal */
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 20px;
+  color: #888;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  cursor: pointer;
+  z-index: 15;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
-.auth-modal-content {
-  max-width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  padding: 32px;
+
+.close-btn:hover {
+  background: rgba(0, 226, 199, 0.2);
+  color: #00e2c7;
+  transform: scale(1.1);
+}
+
+/* Barra de progreso */
+.progress-bar {
+  padding: 40px 40px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 10px;
+}
+
+.progress-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
   position: relative;
-  width: 90vw;
 }
-.auth-modal-content h2 {
+
+.progress-track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.progress-step {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: linear-gradient(135deg, #00e2c7, #00b8a9);
+  color: #1a1a1a;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 226, 199, 0.3);
+}
+
+.progress-text {
   text-align: center;
-  color: #2d3748;
+  color: #888;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Formulario */
+.auth-form {
+  padding: 30px 40px 40px;
+}
+
+.auth-form-step {
+  min-height: 300px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fff, #00e2c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 30px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* Grupos de formulario */
+.form-group {
   margin-bottom: 24px;
 }
-.auth-modal-content label {
-  color: #4a5568;
-  font-weight: 500;
+
+.form-group.half {
+  flex: 1;
 }
-.auth-modal-content input[type="email"],
-.auth-modal-content input[type="password"] {
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  padding: 10px;
-  margin-bottom: 12px;
-  width: 100%;
-  font-size: 1rem;
+
+.form-row {
+  display: flex;
+  gap: 20px;
 }
-.auth-modal-content .form-error {
-  color: #e53e3e;
-  background: #fff5f5;
-  border: 1px solid #feb2b2;
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 10px;
-  margin-top: 4px;
-}
-.auth-modal-content .add-btn {
-  margin-top: 16px;
-  width: 100%;
-  background: #2d3748;
+
+.form-label {
+  display: block;
   color: #fff;
-  border-radius: 6px;
   font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Inputs */
+.form-input, .form-select {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
   font-size: 16px;
-  padding: 12px;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
-.auth-modal-content .add-btn:disabled {
-  background: #a0aec0;
-  cursor: not-allowed;
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: #00e2c7;
+  background: rgba(0, 226, 199, 0.05);
+  box-shadow: 0 0 0 4px rgba(0, 226, 199, 0.1);
 }
-.auth-modal-content .link-btn {
-  color: #3182ce;
-  background: none;
-  border: none;
+
+.form-input.error, .form-select.error {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.form-input.success {
+  border-color: #2ed573;
+  background: rgba(46, 213, 115, 0.05);
+}
+
+.form-input::placeholder {
+  color: #666;
+}
+
+/* Estados del username */
+.username-status {
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.status-checking {
+  color: #ffa502;
+  font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  margin-top: 18px;
 }
-.auth-modal-content .close-btn {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  font-size: 28px;
-  color: #2d3748;
+
+.status-success {
+  color: #2ed573;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status-error {
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-help {
+  display: block;
+  color: #888;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.form-select option {
+  background: #2d2d2d;
+  color: #fff;
+  padding: 10px;
+}
+
+/* Texto de error */
+.error-text {
+  color: #ff6b6b;
+  font-size: 12px;
+  margin-top: 6px;
+  display: block;
+  font-weight: 500;
+}
+
+.form-error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 20px 0;
+  font-weight: 500;
+  text-align: center;
+}
+
+.success-message {
+  background: rgba(46, 213, 115, 0.1);
+  border: 1px solid rgba(46, 213, 115, 0.3);
+  color: #2ed573;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 20px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.success-icon {
+  background: #2ed573;
+  color: #1a1a1a;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.success-message p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Checkboxes y radios en grid */
+.checkbox-grid, .radio-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.checkbox-item, .radio-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkbox-item:hover, .radio-item:hover {
+  background: rgba(0, 226, 199, 0.05);
+  border-color: rgba(0, 226, 199, 0.3);
+}
+
+.checkbox-item input, .radio-item input {
+  margin-right: 10px;
+  accent-color: #00e2c7;
+  transform: scale(1.2);
+}
+
+.checkbox-label, .radio-label {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Configuración de privacidad */
+.privacy-title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  border-bottom: 2px solid rgba(0, 226, 199, 0.3);
+  padding-bottom: 8px;
+}
+
+.privacy-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.privacy-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.privacy-item:hover {
+  background: rgba(0, 226, 199, 0.05);
+  border-color: rgba(0, 226, 199, 0.3);
+}
+
+.privacy-item input {
+  margin-right: 12px;
+  margin-top: 2px;
+  accent-color: #00e2c7;
+  transform: scale(1.2);
+}
+
+.privacy-label {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Botones de acción */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-primary, .btn-secondary {
+  flex: 1;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00e2c7, #00b8a9);
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(0, 226, 199, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 226, 199, 0.4);
+}
+
+.btn-primary:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Switch entre login/registro */
+.auth-switch {
+  text-align: center;
+  padding: 20px 40px 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.link-btn {
+  color: #00e2c7;
   background: none;
   border: none;
+  font-weight: 600;
   cursor: pointer;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: all 0.2s ease;
+}
+
+.link-btn:hover {
+  color: #fff;
+  text-decoration: none;
+  transform: scale(1.02);
+}
+
+.forgot-link {
+  font-size: 14px;
+  color: #888;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  color: #00e2c7;
+}
+
+/* Scrollbar personalizada */
+.auth-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 226, 199, 0.5);
+  border-radius: 3px;
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 226, 199, 0.8);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-modal-content {
+    max-width: 95vw;
+    border-radius: 16px;
+    max-height: 95vh;
+  }
+  
+  .auth-form {
+    padding: 20px 24px 30px;
+  }
+  
+  .progress-bar {
+    padding: 20px 24px 15px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .checkbox-grid, .radio-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .auth-title {
+    font-size: 24px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .progress-step {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-modal-overlay {
+    padding: 10px;
+  }
+  
+  .auth-modal-content {
+    border-radius: 12px;
+  }
+  
+  .auth-form {
+    padding: 16px 20px 24px;
+  }
+  
+  .progress-bar {
+    padding: 16px 20px 12px;
+  }
+  
+  .auth-switch {
+    padding: 16px 20px 24px;
+  }
 }

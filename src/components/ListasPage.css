@@ -217,81 +217,28 @@
 
 .nota-editor {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  justify-content: center;
-  background: rgba(25, 25, 25, 0.8);
-  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 226, 199, 0.3);
-  transition: all 0.2s ease;
-}
-
-.nota-editor:hover {
-  border-color: rgba(0, 226, 199, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nota-input {
-  background: rgba(15, 15, 15, 0.9);
-  border: 1px solid rgba(0, 226, 199, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  color: #ffffff;
-  padding: 10px 14px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 0.9em;
   text-align: center;
-  width: 70px;
-  transition: all 0.2s ease;
-}
-
-.nota-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  width: 60px;
 }
 
 .nota-input:focus {
   outline: none;
-  border-color: #00e2c7;
-  background: rgba(15, 15, 15, 1);
-  box-shadow: 0 0 0 2px rgba(0, 226, 199, 0.2);
-}
-
-.nota-input:hover:not(:focus) {
-  border-color: rgba(0, 226, 199, 0.6);
-}
-
-/* Botones específicos del editor de nota */
-.nota-editor .action-btn {
-  min-width: 40px;
-  height: 40px;
-  padding: 0;
-  border-radius: 8px;
-  background: rgba(0, 226, 199, 0.1);
-  border: 1px solid rgba(0, 226, 199, 0.4);
-  color: #00e2c7;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.nota-editor .action-btn:hover {
-  background: rgba(0, 226, 199, 0.2);
-  border-color: #00e2c7;
-  color: #ffffff;
-}
-
-.nota-editor .action-btn:active {
-  transform: scale(0.95);
-}
-
-.nota-editor .action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.nota-editor .action-btn:disabled:hover {
-  background: rgba(0, 226, 199, 0.1);
-  border-color: rgba(0, 226, 199, 0.4);
-  color: #00e2c7;
-  transform: none;
+  border-color: #1976d2;
 }
 
 /* Información del media - Estilo unificado como DetailModal */
@@ -2239,43 +2186,7 @@
 /* ===== SEASONS AND EPISODES ===== */
 
 .tmdb-seasons-block-page {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 15px;
-  padding: 18px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-}
-
-.tmdb-seasons-block-page:hover {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-}
-
-.tmdb-seasons-block-page h4 {
-  margin: 0 0 20px 0;
-  color: #00e2c7;
-  font-size: 1.2em;
-  font-weight: 600;
-}
-
-.tmdb-seasons-block-page .info-item {
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin-bottom: 12px;
-}
-
-.tmdb-seasons-block-page .info-item .label {
-  font-size: 0.85em;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 6px;
-}
-
-.tmdb-seasons-block-page .info-item .value {
-  color: #ffffff;
-  font-weight: 500;
+  margin-top: 15px;
 }
 
 .seasons-list {

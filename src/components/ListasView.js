@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './ListasView.css';
 import ListaDetalleModal from './ListaDetalleModal';
+import ListaViewChoiceModal from './ListaViewChoiceModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useDynamicPoster } from '../hooks/useDynamicPoster';
 import PosterSkeleton from './PosterSkeleton';
@@ -10,13 +11,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-ba
 const API_URL = BACKEND_URL + '/listas';
 
 const ListaIcon = () => (
-  <span style={{fontSize:'2.5em',color:'#2d6da3',marginRight:12,verticalAlign:'middle'}}>📚</span>
+  <span style={{fontSize:'2.5em',color:'#00e2c7',marginRight:12,verticalAlign:'middle'}}>📚</span>
 );
 const EmptyIcon = () => (
-  <span style={{fontSize:'2.7em',color:'#444'}}>🗂️</span>
+  <span style={{fontSize:'2.7em',color:'rgba(255,255,255,0.3)'}}>🗂️</span>
 );
 const DeleteIcon = () => (
-  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6"/></svg>
+  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6"/>
+  </svg>
 );
 const EyeIcon = () => (
   <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>
@@ -45,13 +48,25 @@ export default function ListasView() {
   const [detalleLista, setDetalleLista] = useState(null);
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ open: false, lista: null });
+  const [viewChoiceModal, setViewChoiceModal] = useState({ open: false, lista: null });
 
   const fetchListas = () => {
     setLoading(true);
-    fetch(API_URL)
+    const jwtToken = localStorage.getItem('jwt_token');
+    
+    fetch(API_URL, {
+      headers: {
+        ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+      }
+    })
       .then(res => res.json())
-      .then(data => setListas(data))
-      .catch(() => setListas([]))
+      .then(data => {
+        setListas(data);
+      })
+      .catch(error => {
+        console.error('Error fetching listas:', error);
+        setListas([]);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -67,9 +82,13 @@ export default function ListasView() {
       return;
     }
     try {
+      const jwtToken = localStorage.getItem('jwt_token');
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+        },
         body: JSON.stringify({ nombre, descripcion })
       });
       if (!res.ok) throw new Error(t('lists.errorCreatingGeneric', 'Error al crear la lista'));
@@ -85,7 +104,13 @@ export default function ListasView() {
 
   const handleEliminarLista = async (listaId) => {
     try {
-      const res = await fetch(`${API_URL}/${listaId}`, { method: 'DELETE' });
+      const jwtToken = localStorage.getItem('jwt_token');
+      const res = await fetch(`${API_URL}/${listaId}`, { 
+        method: 'DELETE',
+        headers: {
+          ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+        }
+      });
       if (!res.ok) throw new Error();
       setListas(listas => listas.filter(l => l.id !== listaId));
     } catch {
@@ -99,6 +124,9 @@ export default function ListasView() {
     if (confirmDelete.lista) handleEliminarLista(confirmDelete.lista.id);
     closeDeleteModal();
   };
+
+  const openViewChoice = (lista) => setViewChoiceModal({ open: true, lista });
+  const closeViewChoice = () => setViewChoiceModal({ open: false, lista: null });
 
   return (
     <div className="listas-view">
@@ -136,10 +164,10 @@ export default function ListasView() {
         <div className="listas-vacio">{t('lists.noLists', 'No tienes ninguna lista creada todavía.')}</div>
       )} 
       <div className="listas-galeria">
-        {listas.filter(lista => lista && lista.nombre && Array.isArray(lista.medias)).map(lista => (
-          <div key={lista.id} className="lista-card" style={{cursor: 'pointer', position: 'relative'}} onClick={() => setDetalleLista(lista)}>
+        {listas.filter(lista => lista && lista.nombre).map(lista => (
+          <div key={lista.id} className="lista-card" style={{cursor: 'pointer', position: 'relative'}} onClick={() => openViewChoice(lista)}>
             <div className="lista-covers">
-              {lista.medias.slice(0, 6).map(media => (
+              {(lista.medias || []).slice(0, 6).map(media => (
                 <ListaCover key={media.id} media={media} />
               ))}
             </div>
@@ -148,14 +176,24 @@ export default function ListasView() {
             <button 
               className="mini-action-btn delete-btn" 
               title={t('lists.deleteTitle', 'Eliminar lista')} 
-              style={{position: 'absolute', top: 10, right: 10}} 
+              style={{position: 'absolute', top: 16, right: 16}} 
               onClick={e => { e.stopPropagation(); openDeleteModal(lista); }}
-            >🗑️</button>
+            >
+              <DeleteIcon />
+            </button>
           </div>
         ))}
       </div> 
       {detalleLista && (
         <ListaDetalleModal lista={detalleLista} onClose={() => setDetalleLista(null)} />
+      )}
+      {viewChoiceModal.open && (
+        <ListaViewChoiceModal
+          isOpen={viewChoiceModal.open}
+          onClose={closeViewChoice}
+          onSelectModal={setDetalleLista}
+          lista={viewChoiceModal.lista}
+        />
       )}
       {confirmDelete.open && (
         <div className="listas-modal-bg" style={{zIndex: 50}}>

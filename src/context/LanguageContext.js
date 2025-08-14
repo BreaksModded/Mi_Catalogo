@@ -26,14 +26,26 @@ export const LanguageProvider = ({ children }) => {
     }
   };
 
-  const t = (path, fallback = '') => {
+  const t = (path, params = {}, fallback = '') => {
     const currentTranslations = languages[currentLanguage];
     if (!currentTranslations) {
       return fallback || path;
     }
 
-    const translation = getNestedTranslation(currentTranslations, path);
-    return translation || fallback || path;
+    let translation = getNestedTranslation(currentTranslations, path);
+    if (!translation) {
+      return fallback || path;
+    }
+
+    // Reemplazar variables en el formato {variable}
+    if (typeof params === 'object' && params !== null) {
+      Object.keys(params).forEach(key => {
+        const placeholder = `{${key}}`;
+        translation = translation.replace(new RegExp(placeholder, 'g'), params[key]);
+      });
+    }
+
+    return translation;
   };
 
   const value = {

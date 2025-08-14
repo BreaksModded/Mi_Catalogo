@@ -56,12 +56,24 @@ export const getRatingColors = (rating) => {
 function SectionRowCard({ item, onSelect, t }) {
   const mediaType = item.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
   const { posterUrl, loading } = useDynamicPoster(item.tmdb_id, mediaType, item.imagen);
+  const href = `/detail/${item.id}`;
+
+  const handleClick = (e) => {
+    // Permitir gestos de nueva pestaña (Ctrl/Cmd/Shift/Alt o no-left click)
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    // Interceptar solo clic normal izquierdo para abrir modal interno
+    e.preventDefault();
+    onSelect(item);
+  };
 
   return (
-    <div
+    <a
+      href={href}
       className="section-row-card"
-      onClick={() => onSelect(item)}
+      onClick={handleClick}
       title={item.titulo}
+      style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit', display: 'block' }}
+      rel="noopener noreferrer"
     >
       <div className="section-row-poster-container">
         {loading ? (
@@ -121,7 +133,7 @@ function SectionRowCard({ item, onSelect, t }) {
         )}
       </div>
       <div className="section-row-name">{item.titulo}</div>
-    </div>
+  </a>
   );
 }
 
@@ -159,11 +171,36 @@ function SectionRow({ title, items, onSelect, carousel = false }) {
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
-      const scrollAmount = scrollContainerRef.current.clientWidth * 0.8;
-      scrollContainerRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
+      const container = scrollContainerRef.current;
+      const scrollAmount = container.clientWidth * 0.75; // Reducir un poco para mejor control
+      
+      // Animación más suave y lenta
+      const startPosition = container.scrollLeft;
+      const targetPosition = startPosition + (direction === 'left' ? -scrollAmount : scrollAmount);
+      const distance = Math.abs(targetPosition - startPosition);
+      
+      // Duración basada en la distancia, pero más lenta que antes
+      const duration = Math.min(800, Math.max(400, distance * 0.8));
+      
+      let startTime = null;
+      
+      const animateScroll = (currentTime) => {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const progress = Math.min(timeElapsed / duration, 1);
+        
+        // Función de easing suave (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        const currentPosition = startPosition + (targetPosition - startPosition) * easeOut;
+        container.scrollLeft = currentPosition;
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateScroll);
+        }
+      };
+      
+      requestAnimationFrame(animateScroll);
     }
   };
 

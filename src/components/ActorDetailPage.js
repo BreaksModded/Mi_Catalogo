@@ -251,7 +251,7 @@ export default function ActorDetailPage() {
             <SectionRow
               title={t('person.yourWatchedTitles', 'Tus títulos vistos con este actor')}
               items={userMedias}
-              onSelect={item => navigate(`/detalle/${item.id}`)}
+              onSelect={item => navigate(`/detail/${item.id}`)}
               carousel={true}
             />
             {loadingUserMedias && <div style={{ color: '#00e2c7', marginTop: 8 }}>{t('detailModal.loading')}</div>}

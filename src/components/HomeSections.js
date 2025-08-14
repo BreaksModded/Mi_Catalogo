@@ -4,8 +4,13 @@ import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 import SectionRow from './SectionRow';
 import DetailModal from './DetailModal';
+import './HomeSections.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || (
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost')
+    ? 'http://localhost:8000'
+    : 'https://mi-catalogo-backend.onrender.com'
+);
 
 function rotateArray(arr, shift) {
   const n = arr.length;
@@ -23,7 +28,15 @@ export default function HomeSections({ medias, onMediaClick }) {
   // Hook para portadas dinámicas
   const postersMap = useDynamicPosters(translatedMedias.displayData || []);
   
-  // Definir las secciones de forma dinámica para poder traducirlas
+  // Función para normalizar géneros usando el sistema de traducción existente
+  const normalizeGenre = (genero) => {
+    if (!genero) return '';
+    const generoLower = genero.toLowerCase().trim();
+    // Usar el sistema de traducción para normalizar
+    const translated = t(`genres.${generoLower}`);
+    // Si no encuentra traducción, devolver el género original
+    return translated === `genres.${generoLower}` ? genero : translated;
+  };  // Definir las secciones de forma dinámica para poder traducirlas
   const getSections = () => [
     { titleKey: 'homeSections.trends', especial: 'tendencias' },
     { titleKey: 'homeSections.recentlyAdded', especial: 'recientes' },
@@ -38,17 +51,19 @@ export default function HomeSections({ medias, onMediaClick }) {
   ];
   // Estado para medias extra por género
   const [extraMediasPorGenero, setExtraMediasPorGenero] = useState({});
-  // Agrupación de medias por género individual (usando datos traducidos)
+  // Agrupación de medias por género individual usando normalización consistente
   const mediasPorGenero = useMemo(() => {
     const agrupado = {};
     const displayData = translatedMedias.displayData || [];
     if (!displayData.length) return agrupado;
+    
     displayData.forEach(media => {
       if (!media.genero) return;
-      // Divide por coma y quita espacios
+      // Divide por coma y quita espacios, luego normaliza cada género
       media.genero.split(',').map(g => g.trim()).forEach(genero => {
-        if (!agrupado[genero]) agrupado[genero] = [];
-        agrupado[genero].push(media);
+        const normalizedGenre = normalizeGenre(genero);
+        if (!agrupado[normalizedGenre]) agrupado[normalizedGenre] = [];
+        agrupado[normalizedGenre].push(media);
       });
     });
     return agrupado;
@@ -56,47 +71,114 @@ export default function HomeSections({ medias, onMediaClick }) {
 
   // Efecto para cargar más títulos si faltan en cada género
   useEffect(() => {
-    getSections().forEach(section => {
-      if (!section.genero) return;
-      const base = mediasPorGenero[section.genero] || [];
-      const extra = extraMediasPorGenero[section.genero]?.items || [];
-      const total = base.length + extra.length;
-      if (
-        base.length > 0 &&
-        total < ITEMS_PER_ROW &&
-        !(extraMediasPorGenero[section.genero]?.loading) &&
-        !(extraMediasPorGenero[section.genero]?.allLoaded)
-      ) {
-        setExtraMediasPorGenero(prev => ({
-          ...prev,
-          [section.genero]: { loading: true, items: extra, allLoaded: false }
-        }));
-        fetch(`${BACKEND_URL}/medias?genero=${encodeURIComponent(section.genero)}&skip=${total}&limit=${ITEMS_PER_ROW - total}`, {
-          credentials: 'include'
-        })
-          .then(res => res.json())
-          .then(nuevos => setExtraMediasPorGenero(prev => ({
+    const loadMoreTitles = async () => {
+      for (const section of getSections()) {
+        if (!section.genero) continue;
+        const normalizedGenre = normalizeGenre(section.genero);
+        const base = mediasPorGenero[normalizedGenre] || [];
+        const extra = extraMediasPorGenero[normalizedGenre]?.items || [];
+        const total = base.length + extra.length;
+        
+    // Cargar más películas si:
+    // 1. No hemos llegado a 20 películas (aunque base sea 0, intentamos rellenar desde backend)
+    // 2. No estamos cargando actualmente
+    // 3. No hemos marcado como "todas cargadas"
+        if (
+          total < ITEMS_PER_ROW &&
+          !(extraMediasPorGenero[normalizedGenre]?.loading) &&
+          !(extraMediasPorGenero[normalizedGenre]?.allLoaded)
+        ) {
+          setExtraMediasPorGenero(prev => ({
             ...prev,
-            [section.genero]: {
-              loading: false,
-              items: [...extra, ...nuevos],
-              allLoaded: nuevos.length === 0
+            [normalizedGenre]: { loading: true, items: extra, allLoaded: false }
+          }));
+          
+          // Cargar chunks más grandes para completar hasta 20 rápidamente
+    const chunkSize = Math.min(ITEMS_PER_ROW - total, 20);
+    const extraSkip = extra.length; // paginar por extras ya cargados, no por base+extra
+          
+          const jwtToken = localStorage.getItem('jwt_token');
+          const excludeIds = [...(base || []), ...(extra || [])].map(m => m.id).filter(Boolean);
+          const qs = new URLSearchParams({
+            genero: normalizedGenre,
+            skip: String(extraSkip),
+            limit: String(chunkSize),
+            ...(excludeIds.length ? { exclude_ids: excludeIds.join(',') } : {})
+          }).toString();
+          
+          try {
+            const response = await fetch(`${BACKEND_URL}/medias?${qs}`, {
+              credentials: 'include',
+              headers: {
+                ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
             }
-          })))
-          .catch(() => setExtraMediasPorGenero(prev => ({
-            ...prev,
-            [section.genero]: { loading: false, items: extra, allLoaded: true }
-          })));
+            
+            const nuevos = await response.json();
+            // Deduplicar por id contra extras existentes y base del género
+            const baseIds = new Set((base || []).map(m => m.id));
+            const seen = new Set((extra || []).map(m => m.id));
+            const dedupNuevos = [];
+            for (const m of (nuevos || [])) {
+              if (m && !seen.has(m.id) && !baseIds.has(m.id)) { seen.add(m.id); dedupNuevos.push(m); }
+            }
+            const merged = [...extra, ...dedupNuevos];
+            const reached = (base.length + merged.length) >= ITEMS_PER_ROW;
+            // Solo marcamos allLoaded si no añadimos ningún único nuevo; si hubo duplicados, seguiremos pidiendo más
+            const noMore = (dedupNuevos.length === 0);
+            setExtraMediasPorGenero(prev => ({
+              ...prev,
+              [normalizedGenre]: {
+                loading: false,
+                items: merged,
+                allLoaded: reached || noMore
+              }
+            }));
+          } catch (error) {
+            setExtraMediasPorGenero(prev => ({
+              ...prev,
+              [normalizedGenre]: { loading: false, items: extra, allLoaded: true }
+            }));
+          }
+        }
       }
-    });
+    };
+    
+    loadMoreTitles();
     // eslint-disable-next-line
-  }, [mediasPorGenero, BACKEND_URL]);
+  }, [mediasPorGenero, BACKEND_URL, extraMediasPorGenero]);
 
   // Combina medias locales y extra para cada sección
   function getItemsForSection(genero) {
-    const base = mediasPorGenero[genero] || [];
-    const extra = extraMediasPorGenero[genero]?.items || [];
-    const items = [...base, ...extra].slice(0, ITEMS_PER_ROW);
+    const normalizedGenre = normalizeGenre(genero);
+    const base = mediasPorGenero[normalizedGenre] || [];
+    const extra = extraMediasPorGenero[normalizedGenre]?.items || [];
+    
+    // Deduplicar por ID antes de combinar
+    const seen = new Set();
+    const deduplicatedItems = [];
+    
+    // Primero agregar las medias base (del prop)
+    for (const item of base) {
+      if (item && item.id && !seen.has(item.id)) {
+        seen.add(item.id);
+        deduplicatedItems.push(item);
+      }
+    }
+    
+    // Luego agregar las medias extra (del backend) que no estén duplicadas
+    for (const item of extra) {
+      if (item && item.id && !seen.has(item.id)) {
+        seen.add(item.id);
+        deduplicatedItems.push(item);
+      }
+    }
+    
+    const items = deduplicatedItems.slice(0, ITEMS_PER_ROW);
     
     // Aplicar portadas dinámicas
     return items.map(item => ({
@@ -120,7 +202,9 @@ export default function HomeSections({ medias, onMediaClick }) {
 
   return (
     <>
-      {rotatedSections.map(section => {
+      {rotatedSections
+        .slice(0, visibleCount) // Limitar secciones visibles
+        .map((section, index) => {
         // Secciones especiales: tendencias y recientes
         if (section.especial === 'tendencias') {
           // Tendencias: combinación de favorita, nota y reciente
@@ -135,7 +219,7 @@ export default function HomeSections({ medias, onMediaClick }) {
                 (m.favorito ? 15 : 0) +
                 (m.nota_personal ? m.nota_personal * 2 : 0) +
                 (m.nota_imdb ? m.nota_imdb : 0) +
-                (m.fecha_creacion && new Date(m.fecha_creacion) > haceUnMes ? 5 : 0),
+                (m.fecha_agregado && new Date(m.fecha_agregado) > haceUnMes ? 5 : 0),
               imagen: getDynamicPosterUrl(m, postersMap)
             }))
             .sort((a, b) => b.tendenciaScore - a.tendenciaScore)
@@ -152,14 +236,14 @@ export default function HomeSections({ medias, onMediaClick }) {
           );
         }
         if (section.especial === 'recientes') {
-          // Ordena por fecha_creacion descendente, mismo límite
+          // Ordena por fecha_agregado descendente, mismo límite
           const items = (translatedMedias.displayData || [])
             .slice()
             .map(m => ({
               ...m,
               imagen: getDynamicPosterUrl(m, postersMap)
             }))
-            .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+            .sort((a, b) => new Date(b.fecha_agregado || 0) - new Date(a.fecha_agregado || 0))
             .slice(0, ITEMS_PER_ROW);
           if (!items.length) return null;
           return (
@@ -174,11 +258,15 @@ export default function HomeSections({ medias, onMediaClick }) {
         }
         // Secciones normales por género
         if (section.genero) {
+          const items = getItemsForSection(section.genero);
+          // No mostrar la sección si tiene menos de 3 películas
+          if (items.length < 3) return null;
+          
           return (
             <SectionRow
               key={section.genero}
               title={t(section.titleKey)}
-              items={getItemsForSection(section.genero)}
+              items={items}
               carousel={true}
               loading={false}
               error={false}
@@ -186,7 +274,19 @@ export default function HomeSections({ medias, onMediaClick }) {
             />
           );
         }
-      })}
+        return null;
+      }).filter(Boolean)} {/* Filtrar elementos null */}
+      
+      {visibleCount < rotatedSections.length && (
+        <div style={{ textAlign: 'center', margin: '2rem 0' }}>
+          <button 
+            onClick={() => setVisibleCount(prev => Math.min(prev + 3, rotatedSections.length))}
+            className="load-more-sections-btn"
+          >
+            {t('common.loadMore')}
+          </button>
+        </div>
+      )}
     </>
   );
 }

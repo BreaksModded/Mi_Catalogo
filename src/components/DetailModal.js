@@ -293,7 +293,12 @@ const scrollLeftRef = useRef(0);
     setLoadingSimilares(true);
     setErrorSimilares('');
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
-    fetch(`${BACKEND_URL}/medias/${media.id}/similares`)
+    const jwtToken = localStorage.getItem('jwt_token');
+    fetch(`${BACKEND_URL}/medias/${media.id}/similares`, {
+      headers: {
+        ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+      }
+    })
       .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail || 'Error'); }))
       .then(data => setSimilares(Array.isArray(data) ? data : []))
       .catch(() => setErrorSimilares('No se pudieron cargar similares.'))
@@ -325,8 +330,11 @@ const scrollLeftRef = useRef(0);
       setLocalTags(prev => prev.filter(t => t.id !== tagId));
       // Confirmar con backend y sincronizar estado seleccionado
       try {
+        const jwtToken = localStorage.getItem('jwt_token');
         const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
-          credentials: 'include'
+          headers: {
+            ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+          }
         });
         if (res.ok) {
           const updated = await res.json();
@@ -374,8 +382,11 @@ const scrollLeftRef = useRef(0);
 
       // Reconsultar el media para asegurar persistencia y sincronizar selección
       try {
+        const jwtToken = localStorage.getItem('jwt_token');
         const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
-          credentials: 'include'
+          headers: {
+            ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+          }
         });
         if (res.ok) {
           const updated = await res.json();
@@ -761,12 +772,13 @@ function PersonalNotes({ media, onUpdate, onClose }) {
     setError('');
 
     try {
+      const jwtToken = localStorage.getItem('jwt_token');
       const response = await fetch(`${BACKEND_URL}/medias/${media.id}/anotacion_personal`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
         },
-        credentials: 'include',
         // Backend expects a plain JSON string
         body: JSON.stringify(tempNote)
       });

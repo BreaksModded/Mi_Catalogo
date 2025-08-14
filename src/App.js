@@ -9,9 +9,12 @@ import DetailPage from './components/DetailPage';
 import ViewChoiceModal from './components/ViewChoiceModal';
 import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
+import ListasPage from './components/ListasPage';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
 import HomeSections from './components/HomeSections';
 import WelcomeScreen from './components/WelcomeScreen';
+import EmptyStateWelcome from './components/EmptyStateWelcome';
+import PasswordReset from './components/PasswordReset';
 import './App.css';
 import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
@@ -43,6 +46,73 @@ const silentFetch = async (url, options = {}) => {
     // Si es un error de red o similar, re-arrojar
     throw error;
   }
+};
+
+// Función auxiliar para hacer fetch con autenticación JWT
+const authenticatedFetch = (url, options = {}) => {
+  const jwtToken = localStorage.getItem('jwt_token');
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+    }
+  });
+};
+
+// Función auxiliar para hacer fetch silencioso con autenticación JWT
+const authenticatedSilentFetch = async (url, options = {}) => {
+  try {
+    const jwtToken = localStorage.getItem('jwt_token');
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+      }
+    });
+    // Si es 401, retornar null sin error
+    if (response.status === 401) {
+      return null;
+    }
+    // Para otros errores HTTP, arrojar error
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response;
+  } catch (error) {
+    // Si es un error de red o similar, re-arrojar
+    throw error;
+  }
+};
+
+// Función auxiliar para cacheFetch con autenticación JWT
+const authenticatedCacheFetch = async (url, ttlMs = 60000) => {
+  const cache = authenticatedCacheFetch.cache || (authenticatedCacheFetch.cache = {});
+  const now = Date.now();
+  
+  if (cache[url] && (now - cache[url].ts < ttlMs)) {
+    return cache[url].response;
+  }
+  
+  const jwtToken = localStorage.getItem('jwt_token');
+  const response = await fetch(url, {
+    headers: jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {}
+  });
+  
+  // Si es 401 (no autenticado), retornar array vacío sin error
+  if (response.status === 401) {
+    return [];
+  }
+  
+  // Para otros errores, arrojar error
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  cache[url] = { response: data, ts: now };
+  return data;
 };
 
 function getAllGenres(medias) {
@@ -94,6 +164,7 @@ function CatalogPage() {
   const [minNota, setMinNota] = useState("");
   const [maxNota, setMaxNota] = useState("");
   const [minNotaPersonal, setMinNotaPersonal] = useState("");
+  const [maxNotaPersonal, setMaxNotaPersonal] = useState("");
   const [notaPersonal, setNotaPersonal] = useState(null); // Nuevo estado para nota personal
   const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -116,23 +187,21 @@ function CatalogPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Verificar si hay cookie de autenticación antes de hacer la petición
-        const hasAuthCookie = document.cookie.split(';').some(cookie => 
-          cookie.trim().startsWith('auth=')
-        );
+        // Verificar si hay JWT token antes de hacer la petición
+        const jwtToken = localStorage.getItem('jwt_token');
         
-        if (!hasAuthCookie) {
+        if (!jwtToken) {
           setIsAuthenticated(false);
           setAuthLoading(false);
           return;
         }
 
-        const res = await silentFetch(`${BACKEND_URL}/users/me`, {
-          credentials: 'include'
-        });
+        const res = await authenticatedSilentFetch(`${BACKEND_URL}/users/me`);
         if (res && res.ok) {
           setIsAuthenticated(true);
         } else {
+          // Token inválido o expirado, limpiar localStorage
+          localStorage.removeItem('jwt_token');
           setIsAuthenticated(false);
         }
       } catch (error) {
@@ -151,24 +220,21 @@ function CatalogPage() {
     // Si el usuario se ha autenticado, cargar el catálogo correspondiente a la sección actual
     if (isAuth) {
       // Resetear y cargar datos para la sección actual
-      if (section === 'peliculas') {
+      if (section === 'catalogo') {
+        // Para catálogo, cargar tanto películas como series juntas
         setPelis([]);
-        setPelisOffset(0);
-        setPelisHasMore(true);
-        setPelisLoadingMore(false);
-        // Llamar fetchPelis después de que el componente se haya renderizado
-        setTimeout(() => fetchPelis(0, true), 0);
-      } else if (section === 'series') {
         setSeriesList([]);
-        setSeriesOffset(0);
-        setSeriesHasMore(true);
-        setSeriesLoadingMore(false);
-        // Llamar fetchSeries después de que el componente se haya renderizado
-        setTimeout(() => fetchSeries(0, true), 0);
+        setMainList([]);
+        setMainOffset(0);
+        setMainHasMore(true);
+        setMainLoadingMore(false);
+        // Llamar fetchMain después de que el componente se haya renderizado
+        setTimeout(() => fetchMain(0, true), 0);
       } else if (section === 'main') {
         // Para la sección main, cargar tanto películas como series
         setPelis([]);
         setSeriesList([]);
+        setMainList([]);
         setMainOffset(0);
         setMainHasMore(true);
         setMainLoadingMore(false);
@@ -182,6 +248,7 @@ function CatalogPage() {
       // Si se desautentica, limpiar datos
       setPelis([]);
       setSeriesList([]);
+      setMainList([]);
     }
   }, [section]);
 
@@ -192,6 +259,7 @@ function CatalogPage() {
   const [mainOffset, setMainOffset] = useState(0);
   const [mainHasMore, setMainHasMore] = useState(true);
   const [mainLoadingMore, setMainLoadingMore] = useState(false);
+  const [mainList, setMainList] = useState([]);
   // Películas
   const [pelisOffset, setPelisOffset] = useState(0);
   const [pelisHasMore, setPelisHasMore] = useState(true);
@@ -230,7 +298,9 @@ function CatalogPage() {
       minYear || 
       maxYear || 
       minNota || 
+      maxNota ||
       minNotaPersonal || 
+      maxNotaPersonal ||
       orderBy;
     
     // Establecer el estado de filtrado basado en si hay filtros activos
@@ -248,26 +318,15 @@ function CatalogPage() {
       setIsSearching(true); // Indicar que se está realizando una búsqueda
     }
     
-    if (section === 'peliculas') {
+    if (section === 'catalogo') {
+      // Para catálogo, usar fetchMain que carga películas y series juntas
       setPelis([]);
-      setPelisOffset(0);
-      setPelisHasMore(true);
-      setPelisLoadingMore(false);
-      fetchPelis(0, true).finally(() => {
-        setIsFiltering(false);
-        // Solo ocultar el mensaje si no hay filtros activos o si la búsqueda ha terminado
-        if (!hayFiltrosActivos) {
-          setShowNoResults(false);
-          setIsSearching(false);
-        }
-      });
-    }
-    else if (section === 'series') {
       setSeriesList([]);
-      setSeriesOffset(0);
-      setSeriesHasMore(true);
-      setSeriesLoadingMore(false);
-      fetchSeries(0, true).finally(() => {
+      setMainList([]);
+      setMainOffset(0);
+      setMainHasMore(true);
+      setMainLoadingMore(false);
+      fetchMain(0, true).finally(() => {
         setIsFiltering(false);
         // Solo ocultar el mensaje si no hay filtros activos o si la búsqueda ha terminado
         if (!hayFiltrosActivos) {
@@ -280,13 +339,19 @@ function CatalogPage() {
       setIsFiltering(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
+  }, [section, selectedGeneros, minYear, maxYear, minNota, maxNota, minNotaPersonal, maxNotaPersonal, orderBy, tipo, showFavs, showPendings, selectedTags]);
 
   // Nuevo efecto para filtrar favoritos/pendientes/tags usando el backend
   useEffect(() => {
     // Si hay filtros activos, nunca mostrar el aviso de base de datos dormida
     if (showFavs || showPendings || selectedTags.length > 0) {
       setShowDbSleep(false);
+      
+      // Si estamos en el catálogo, no manejar aquí - se maneja en el useEffect principal
+      if (section === 'catalogo') {
+        return;
+      }
+      
       let controller = new AbortController();
       const fetchFiltered = async () => {
         setLoading(true);
@@ -298,20 +363,22 @@ function CatalogPage() {
           if (showPendings) params.append('pendiente', 'true');
           if (selectedTags.length === 1) params.append('tag_id', selectedTags[0]);
           // Si estamos en sección películas o series y hay filtro activo, forzar tipo
-          if ((showFavs || showPendings || selectedTags.length > 0) && (section === 'peliculas' || section === 'series')) {
-            params.append('tipo', section === 'peliculas' ? 'película' : 'serie');
+          if ((showFavs || showPendings || selectedTags.length > 0) && section === 'catalogo') {
+            // Para catálogo no añadimos filtro de tipo - queremos ambos
+            // El filtro de tipo se manejará desde los filtros de UI si el usuario lo selecciona
           } else if (tipo) {
             params.append('tipo', tipo);
           }
           if (selectedGeneros && selectedGeneros.length > 0) params.append('genero', selectedGeneros.join(','));
-          if (minYear) params.append('min_year', minYear);
-          if (maxYear) params.append('max_year', maxYear);
-          if (minNota) params.append('min_nota', minNota);
-          if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+          if (minYear !== "") params.append('min_year', minYear);
+          if (maxYear !== "") params.append('max_year', maxYear);
+          if (minNota !== "") params.append('min_nota', minNota);
+          if (maxNota !== "") params.append('max_nota', maxNota);
+          if (minNotaPersonal !== "") params.append('min_nota_personal', minNotaPersonal);
+          if (maxNotaPersonal !== "") params.append('max_nota_personal', maxNotaPersonal);
           if (orderBy) params.append('order_by', orderBy);
-          const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, { 
-            signal: controller.signal,
-            credentials: 'include'
+          const res = await authenticatedSilentFetch(`${BACKEND_URL}/medias?${params.toString()}`, { 
+            signal: controller.signal
           });
           if (res) {
             const data = await res.json();
@@ -338,10 +405,10 @@ function CatalogPage() {
       try {
         // Carga inicial limitada
         const [medias, favs, pends, tags] = await Promise.all([
-          cacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`, { credentials: 'include' }),
-          cacheFetch(`${BACKEND_URL}/medias?favorito=true`, { credentials: 'include' }),
-          cacheFetch(`${BACKEND_URL}/medias?pendiente=true`, { credentials: 'include' }),
-          cacheFetch(BACKEND_URL + '/tags', { credentials: 'include' })
+          authenticatedCacheFetch(`${BACKEND_URL}/medias?skip=0&limit=${PAGE_SIZE}`),
+          authenticatedCacheFetch(`${BACKEND_URL}/medias?favorito=true`),
+          authenticatedCacheFetch(`${BACKEND_URL}/medias?pendiente=true`),
+          authenticatedCacheFetch(BACKEND_URL + '/tags')
         ]);
         setMedias(medias);
 
@@ -371,6 +438,7 @@ function CatalogPage() {
   const translatedMedias = useTranslatedMediaList(medias, 'all');
   const translatedPelis = useTranslatedMediaList(pelis, 'all');
   const translatedSeries = useTranslatedMediaList(seriesList, 'all');
+  const translatedMainList = useTranslatedMediaList(mainList, 'all');
   const translatedSearchResults = useTranslatedMediaList(searchResults, 'all');
 
   // Aplicar portadas dinámicas a los datos traducidos
@@ -388,6 +456,11 @@ function CatalogPage() {
     ...translatedSeries,
     displayData: applyDynamicPosters(translatedSeries.displayData || [])
   }), [translatedSeries, postersMapKey]);
+
+  const finalMain = useMemo(() => ({
+    ...translatedMainList,
+    displayData: applyDynamicPosters(translatedMainList.displayData || [])
+  }), [translatedMainList, postersMapKey]);
 
   const finalSearchResults = useMemo(() => ({
     ...translatedSearchResults,
@@ -412,15 +485,13 @@ function CatalogPage() {
   const handleLoadMoreMain = async () => {
     setMainLoadingMore(true);
     try {
-      const res = await silentFetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedSilentFetch(`${BACKEND_URL}/medias?skip=${mainOffset + PAGE_SIZE}&limit=${PAGE_SIZE}`);
       
       if (res) {
         const data = await res.json();
         
         // Filtrar duplicados antes de concatenar
-        setMedias(prev => {
+        setMainList(prev => {
           // Obtener los IDs de los elementos actuales
           const existingIds = new Set(prev.map(item => item.id));
           // Filtrar los nuevos elementos para eliminar duplicados
@@ -462,6 +533,81 @@ function CatalogPage() {
   //   // eslint-disable-next-line
   // }, [section, selectedGeneros, minYear, maxYear, minNota, minNotaPersonal, orderBy]);
 
+  const fetchMain = async (offset, reset = false) => {
+    if (mainLoadingMore && !reset) return;
+    
+    setMainLoadingMore(true);
+    setIsSearching(true);
+    if (offset === 0) {
+      setIsFiltering(true);
+      setShowNoResults(false);
+    }
+
+    try {
+      // Construir query string con filtros
+      const params = new URLSearchParams();
+      params.append('skip', offset);
+      params.append('limit', PAGE_SIZE);
+      
+      // Para el catálogo, incluir ambos tipos si no hay filtro específico
+      if (tipo && tipo !== 'all' && tipo !== '') {
+        params.append('tipo', tipo);
+      }
+      
+      // Mejora en el manejo de géneros seleccionados
+      if (selectedGeneros && selectedGeneros.length > 0) {
+        // Enviamos los géneros como un parámetro separado por comas
+        params.append('genero', selectedGeneros.join(','));
+      }
+      
+  if (minYear !== "") params.append('min_year', minYear);
+  if (maxYear !== "") params.append('max_year', maxYear);
+  if (minNota !== "") params.append('min_nota', minNota);
+  if (maxNota !== "") params.append('max_nota', maxNota);
+  if (minNotaPersonal !== "") params.append('min_nota_personal', minNotaPersonal);
+  if (maxNotaPersonal !== "") params.append('max_nota_personal', maxNotaPersonal);
+      if (orderBy) params.append('order_by', orderBy);
+      
+      // Añadir filtros de favoritos y pendientes
+      if (showFavs) params.append('favorito', 'true');
+      if (showPendings) params.append('pendiente', 'true');
+      
+      // Añadir filtros de tags si están seleccionados
+      if (selectedTags && selectedTags.length > 0) {
+        params.append('tags', selectedTags.join(','));
+      }
+
+      const res = await authenticatedSilentFetch(`${BACKEND_URL}/medias?${params.toString()}`);
+      
+      if (res && res.ok) {
+        const data = await res.json();
+        
+        if (reset) {
+          setMainList(data);
+          // Si hay filtros activos, también actualizar medias para finalMedias
+          if (showFavs || showPendings || selectedTags.length > 0) {
+            setMedias(data);
+          }
+        } else {
+          setMainList(prev => [...prev, ...data]);
+          // Para paginación, no actualizar medias ya que se usa solo mainList
+        }
+        
+        setMainOffset(offset);
+        setMainHasMore(data.length === PAGE_SIZE);
+      } else {
+        setMainHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error fetching main data:', error);
+      setMainHasMore(false);
+    } finally {
+      setMainLoadingMore(false);
+      setIsSearching(false);
+      setIsFiltering(false);
+    }
+  };
+
   const fetchPelis = async (offset, reset = false) => {
     if (pelisLoadingMore && !reset) return;
     
@@ -487,17 +633,17 @@ function CatalogPage() {
         params.append('genero', selectedGeneros.join(','));
       }
       
-      if (minYear) params.append('min_year', minYear);
-      if (maxYear) params.append('max_year', maxYear);
-      if (minNota) params.append('min_nota', minNota);
-      if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+  if (minYear !== "") params.append('min_year', minYear);
+  if (maxYear !== "") params.append('max_year', maxYear);
+  if (minNota !== "") params.append('min_nota', minNota);
+  if (maxNota !== "") params.append('max_nota', maxNota);
+  if (minNotaPersonal !== "") params.append('min_nota_personal', minNotaPersonal);
+  if (maxNotaPersonal !== "") params.append('max_nota_personal', maxNotaPersonal);
       if (orderBy) params.append('order_by', orderBy);
       
       
       
-      const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedSilentFetch(`${BACKEND_URL}/medias?${params.toString()}`);
       if (!res) {
         // Usuario no autenticado
         if (reset) {
@@ -636,14 +782,14 @@ function CatalogPage() {
       if (minYear) params.append('min_year', minYear);
       if (maxYear) params.append('max_year', maxYear);
       if (minNota) params.append('min_nota', minNota);
+      if (maxNota) params.append('max_nota', maxNota);
       if (minNotaPersonal) params.append('min_nota_personal', minNotaPersonal);
+      if (maxNotaPersonal) params.append('max_nota_personal', maxNotaPersonal);
       if (orderBy) params.append('order_by', orderBy);
       
       
       
-      const res = await silentFetch(`${BACKEND_URL}/medias?${params.toString()}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedSilentFetch(`${BACKEND_URL}/medias?${params.toString()}`);
       if (!res) {
         // Usuario no autenticado
         if (reset) {
@@ -719,10 +865,14 @@ function CatalogPage() {
       if (searchQuery.length > 0) {
         setIsSearching(true);
         try {
-          const res = await fetch(`${BACKEND_URL}/search?q=${encodeURIComponent(searchQuery)}`);
-          const data = await res.json();
+          const response = await authenticatedFetch(`${BACKEND_URL}/search?q=${encodeURIComponent(searchQuery)}`);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const data = await response.json();
           if (!abort) setSearchResults(data);
         } catch (e) {
+          console.error('Search error:', e);
           if (!abort) setSearchResults([]);
         }
         // Ocultar el mensaje de búsqueda después de un breve retraso
@@ -750,13 +900,12 @@ function CatalogPage() {
       });
     }
     
-    // Filtrado por sección
-    if (section === 'peliculas') results = results.filter(m => m.tipo === 'película');
-    if (section === 'series') results = results.filter(m => m.tipo === 'serie');
+    // Para la sección catálogo, no filtramos por tipo - mostramos películas y series juntas
+    // El filtrado por tipo se puede hacer desde los filtros de UI
     // El filtrado por favoritos, pendientes y tags ahora se hace en el backend
     // if (section === 'favoritos') results = results.filter(m => favorites.includes(m.id));
     // if (section === 'pendientes') results = results.filter(m => pendings.includes(m.id));
-    // ¡Sin límite! Se muestran todas las películas y series en sus respectivas secciones.
+    // ¡Sin límite! Se muestran todas las películas y series en el catálogo.
     
     // Normalización para búsqueda
     function normalize(str) {
@@ -852,7 +1001,7 @@ function CatalogPage() {
     if (section === "inicio" && medias.length > 0) {
       // 1. Recientes (últimos 10 añadidos)
       const recientes = [...medias]
-        .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+        .sort((a, b) => new Date(b.fecha_agregado || 0) - new Date(a.fecha_agregado || 0))
         .slice(0, 10);
       
       // 2. Tendencias (mejor valoradas)
@@ -887,6 +1036,7 @@ function CatalogPage() {
     setMaxNota('');
     setNotaPersonal(null); // Resetear nota personal
     setMinNotaPersonal('');
+    setMaxNotaPersonal('');
     setOrderBy(''); // Resetear orden
   }, [section]);
 
@@ -911,9 +1061,8 @@ function CatalogPage() {
 
     const nuevo = !currentMedia.pendiente;
     try {
-      const res = await fetch(`${API_URL}/${id}/pendiente?pendiente=${nuevo}`, { 
-        method: "PATCH",
-        credentials: 'include'
+      const res = await authenticatedFetch(`${API_URL}/${id}/pendiente?pendiente=${nuevo}`, { 
+        method: "PATCH"
       });
       if (!res.ok) throw new Error("Error al actualizar pendiente");
       const updatedMedia = await res.json();
@@ -929,9 +1078,8 @@ function CatalogPage() {
     if (!mediaToDelete || !mediaToDelete.id) return;
     const id = mediaToDelete.id;
     try {
-      const res = await fetch(`${API_URL}/${id}`, { 
-        method: "DELETE",
-        credentials: 'include'
+      const res = await authenticatedFetch(`${API_URL}/${id}`, { 
+        method: "DELETE"
       });
       if (!res.ok) throw new Error("No se pudo eliminar");
       setMedias(prevMedias => prevMedias.filter(m => m.id !== id));
@@ -954,15 +1102,14 @@ const handleToggleFavorite = async (id) => {
     if (!currentMedia) return;
     const nuevo = !currentMedia.favorito;
     try {
-      const res = await fetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { 
-        method: "PATCH",
-        credentials: 'include'
+      const res = await authenticatedFetch(`${API_URL}/${id}/favorito?favorito=${nuevo}`, { 
+        method: "PATCH"
       });
       if (!res.ok) throw new Error("Error al actualizar favorito");
       const updatedMedia = await res.json();
       setMedias(prevMedias => prevMedias.map(m => m.id === id ? updatedMedia : m));
       // Recargar lista de favoritos
-      const favs = await cacheFetch(BACKEND_URL + '/favoritos');
+      const favs = await authenticatedCacheFetch(BACKEND_URL + '/favoritos');
       setFavorites(favs.map(m => m.id));
       // Si hay filtro de favoritos activo, recargar lista filtrada
       if (showFavs) {
@@ -981,10 +1128,9 @@ const handleToggleFavorite = async (id) => {
 
   const handleCreateTag = async (nombre) => {
     try {
-      const res = await fetch(BACKEND_URL + '/tags', {
+      const res = await authenticatedFetch(BACKEND_URL + '/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ nombre })
       });
       if (!res.ok) {
@@ -1010,9 +1156,8 @@ const handleToggleFavorite = async (id) => {
 
   const handleDeleteTag = async (tagId) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/tags/${tagId}`, { 
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await authenticatedFetch(`${BACKEND_URL}/tags/${tagId}`, { 
+        method: 'DELETE'
       });
       if (!res.ok) {
         let msg = t('tags.deleteFailed', 'No se pudo eliminar el tag');
@@ -1039,9 +1184,8 @@ const handleToggleFavorite = async (id) => {
 
   const handleAddTag = async (mediaId, tagId) => {
     try {
-      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
-        method: 'POST',
-        credentials: 'include'
+      const res = await authenticatedFetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
+        method: 'POST'
       });
       if (!res.ok) {
         let msg = t('tags.addFailed', 'No se pudo añadir el tag');
@@ -1063,9 +1207,8 @@ const handleToggleFavorite = async (id) => {
 
   const handleRemoveTag = async (mediaId, tagId) => {
     try {
-      const res = await fetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
-        method: 'DELETE',
-        credentials: 'include'
+      const res = await authenticatedFetch(`${API_URL}/${mediaId}/tags/${tagId}`, { 
+        method: 'DELETE'
       });
       if (!res.ok) {
         let msg = t('tags.removeFailed', 'No se pudo quitar el tag');
@@ -1087,10 +1230,9 @@ const handleToggleFavorite = async (id) => {
 
   const handleUpdateNota = async (mediaId, nota) => {
     try {
-      const res = await fetch(`${API_URL}/${mediaId}/nota`, {
+      const res = await authenticatedFetch(`${API_URL}/${mediaId}/nota`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ nota })
       });
       if (!res.ok) {
@@ -1217,6 +1359,7 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
         searchValue={searchQuery}
         onAuthChange={handleAuthChange}
       />
+      <div className="main-content">
       {section === 'add' ? (
         <AddMediaForm onAdded={handleMediaAdded} />
       ) : section === 'resumen' ? (
@@ -1225,32 +1368,36 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
         <ListasView />
       ) : (
         <>
-          <Filters
-            tipos={tipos}
-            generos={getAllGenres(medias)}
-            selectedTipo={tipo}
-            selectedGeneros={selectedGeneros}
-            onTipo={setTipo}
-            onGeneros={setSelectedGeneros}
-            minYear={minYear}
-            maxYear={maxYear}
-            onYear={(min, max) => { setMinYear(min); setMaxYear(max); }}
-            minNota={minNota}
-            onNota={min => setMinNota(min)}
-            minNotaPersonal={minNotaPersonal}
-            onNotaPersonal={setMinNotaPersonal}
-            showFavs={showFavs}
-            showPendings={showPendings}
-            onShowFavs={() => setShowFavs(f => !f)}
-            onShowPendings={() => setShowPendings(p => !p)}
-            tags={tags}
-            selectedTags={selectedTags}
-            onTagChange={handleTagChange}
-            onCreateTag={handleCreateTag}
-            onDeleteTag={handleDeleteTag}
-            orderBy={orderBy}
-            onOrder={setOrderBy}
-          />
+          {section === 'catalogo' && (
+            <Filters
+              tipos={tipos}
+              generos={getAllGenres(medias)}
+              selectedTipo={tipo}
+              selectedGeneros={selectedGeneros}
+              onTipo={setTipo}
+              onGeneros={setSelectedGeneros}
+              minYear={minYear}
+              maxYear={maxYear}
+              onYear={(min, max) => { setMinYear(min); setMaxYear(max); }}
+              minNota={minNota}
+              maxNota={maxNota}
+              onNota={(min, max) => { setMinNota(min); setMaxNota(max); }}
+              minNotaPersonal={minNotaPersonal}
+              maxNotaPersonal={maxNotaPersonal}
+              onNotaPersonal={(min, max) => { setMinNotaPersonal(min); setMaxNotaPersonal(max); }}
+              showFavs={showFavs}
+              showPendings={showPendings}
+              onShowFavs={() => setShowFavs(f => !f)}
+              onShowPendings={() => setShowPendings(p => !p)}
+              tags={tags}
+              selectedTags={selectedTags}
+              onTagChange={handleTagChange}
+              onCreateTag={handleCreateTag}
+              onDeleteTag={handleDeleteTag}
+              orderBy={orderBy}
+              onOrder={setOrderBy}
+            />
+          )}
           <DatabaseSleepNotice visible={showDbSleep} />
           {/* Mensaje permanente de no resultados o carga */}
           {showNoResults && (
@@ -1398,73 +1545,37 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
             )}
            {!searchQuery && section === "inicio" && (
             <>
-              {/* Las secciones especiales ahora se generan en HomeSections */}
-              <HomeSections medias={medias} onMediaClick={handleMediaClick} />
+              {medias.length === 0 ? (
+                <EmptyStateWelcome onAddClick={() => setSection('add')} />
+              ) : (
+                <>
+                  {/* Las secciones especiales ahora se generan en HomeSections */}
+                  <HomeSections medias={medias} onMediaClick={handleMediaClick} />
+                </>
+              )}
             </>
           )}
-           {!searchQuery && section === "peliculas" && (
+           {!searchQuery && section === "catalogo" && (
   <>
     <SectionRow 
-      title={t('sections.movies')}
-      items={(showFavs || showPendings || selectedTags.length > 0) ? (finalMedias.displayData || []) : (finalPelis.displayData || [])}
+      title={t('sections.catalog')}
+      items={(showFavs || showPendings || selectedTags.length > 0) ? (finalMedias.displayData || []) : (finalMain.displayData || [])}
       onSelect={handleMediaClick}
     />
-    {!(showFavs || showPendings || selectedTags.length > 0) && pelis.length > 0 && pelisHasMore && (
+    {!(showFavs || showPendings || selectedTags.length > 0) && mainList.length > 0 && mainHasMore && (
       <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
         <button
           className="btn-cargar-mas"
-          onClick={handleLoadMorePelis}
-          disabled={pelisLoadingMore}
-          style={{
-            background: '#00e2c7',
-            color: '#181818',
-            fontWeight: 'bold',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 32px',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }}
+          onClick={handleLoadMoreMain}
+          disabled={mainLoadingMore}
         >
-          {pelisLoadingMore ? t('actions.loading') : t('actions.loadMore')}
+          {mainLoadingMore ? t('actions.loading') : t('actions.loadMore')}
         </button>
       </div>
     )}
   </>
 )}
-           {!searchQuery && section === "series" && (
-  <>
-    <SectionRow 
-      title={t('sections.series')}
-      items={(showFavs || showPendings || selectedTags.length > 0) ? (finalMedias.displayData || []) : (finalSeries.displayData || [])}
-      onSelect={handleMediaClick}
-    />
-    {!(showFavs || showPendings || selectedTags.length > 0) && seriesList.length > 0 && seriesHasMore && (
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
-        <button
-          className="btn-cargar-mas"
-          onClick={handleLoadMoreSeries}
-          disabled={seriesLoadingMore}
-          style={{
-            background: '#00e2c7',
-            color: '#181818',
-            fontWeight: 'bold',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 32px',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }}
-        >
-          {seriesLoadingMore ? t('actions.loading') : t('actions.loadMore')}
-        </button>
-      </div>
-    )}
-  </>
-)}
-           {!searchQuery && section !== "inicio" && section !== "peliculas" && section !== "series" && (
+           {!searchQuery && section !== "inicio" && section !== "peliculas" && section !== "series" && section !== "catalogo" && (
              <SectionRow 
                title={section === 'favoritos' ? t('sections.favorites') : 
                       section === 'pendientes' ? t('sections.pending') : 
@@ -1486,6 +1597,7 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
         onSelectPage={handleSelectPage}
         mediaTitle={selectedMediaForView?.titulo || ''}
       />
+      </div>
      </>
    );
  }
@@ -1498,6 +1610,8 @@ function App() {
         <Route path="/" element={<CatalogPage />} />
         <Route path="/detail/:id" element={<DetailPage />} />
         <Route path="/actor/:personId" element={<ActorDetailPage />} />
+        <Route path="/lista/:id" element={<ListasPage />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
       </Routes>
     </Router>
   );

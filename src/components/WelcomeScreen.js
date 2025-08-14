@@ -9,7 +9,7 @@ const WelcomeScreen = () => {
     <div className="welcome-screen">
       <div className="welcome-container">
         <h1 className="welcome-title">
-          🎬 {t('welcome.title')}
+          <span className="welcome-emoji">🎬</span> <span className="welcome-text">{t('welcome.title')}</span>
         </h1>
         
         <p className="welcome-subtitle">

@@ -58,7 +58,12 @@ export default function ListaDetalleModal({ lista, onClose }) {
     setError('');
     const handler = setTimeout(async () => {
       try {
-        const res = await fetch(API_SEARCH + encodeURIComponent(search));
+        const jwtToken = localStorage.getItem('jwt_token');
+        const res = await fetch(API_SEARCH + encodeURIComponent(search), {
+          headers: {
+            ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+          }
+        });
         if (!res.ok) throw new Error(t('lists.searchError', 'Error en la búsqueda'));
         let data = await res.json();
         // data[] puede tener un campo match_type: ["title", "actor", "director"]
@@ -87,7 +92,13 @@ export default function ListaDetalleModal({ lista, onClose }) {
     setAdding(true);
     setError('');
     try {
-      const res = await fetch(`${API_ADD}/${lista.id}/add_media/${media.id}`, { method: 'POST' });
+      const jwtToken = localStorage.getItem('jwt_token');
+      const res = await fetch(`${API_ADD}/${lista.id}/medias/${media.id}`, { 
+        method: 'POST',
+        headers: {
+          ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+        }
+      });
       if (!res.ok) throw new Error();
       setMedias(prev => [...prev, media]);
     } catch {
@@ -136,7 +147,9 @@ export default function ListaDetalleModal({ lista, onClose }) {
             </div>
           )}
           {/* Grid de carátulas de la lista usando SectionRow para filas completas */}
-          <div style={{marginTop: 24}}>
+          <div style={{
+            margin: window.innerWidth <= 600 ? '24px 20px 0 20px' : '32px 40px 0 40px'
+          }}>
             <SectionRow
               title={null}
               items={pageSize > 0 ? finalMedias.slice(0, pageSize) : finalMedias}
@@ -145,7 +158,12 @@ export default function ListaDetalleModal({ lista, onClose }) {
                 if (media.sinopsis && media.director && media.genero && media.anio) {
                   setDetalleMedia(media);
                 } else {
-                  fetch(`${BACKEND_URL}/medias/${media.id}`)
+                  const jwtToken = localStorage.getItem('jwt_token');
+                  fetch(`${BACKEND_URL}/medias/${media.id}`, {
+                    headers: {
+                      ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+                    }
+                  })
                     .then(res => res.ok ? res.json() : media)
                     .then(fullMedia => setDetalleMedia(fullMedia))
                     .catch(() => setDetalleMedia(media));

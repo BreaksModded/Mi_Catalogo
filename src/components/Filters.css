@@ -1,11 +1,47 @@
 .filters-bar {
-  padding: 20px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 1px solid rgba(0, 226, 199, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px 0;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
-  background: #232323;
   overflow-x: auto;
   flex-wrap: wrap;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.filters-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 226, 199, 0.5), transparent);
+  border-radius: 16px 16px 0 0;
+}
+
+.filters-bar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.filters-bar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.filters-bar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #00e2c7, #00b8a5);
+  border-radius: 3px;
+}
+
+.filters-bar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #00b8a5, #008f7a);
 }
 
 /* Responsive: barra de filtros adaptada a móvil */
@@ -13,10 +49,13 @@
   .filters-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 10px 4px 12px 4px;
+    gap: 12px;
+    padding: 20px 16px;
+    margin: 8px;
+    border-radius: 12px;
     overflow-x: visible;
   }
+  
   .filters-bar select,
   .filters-bar button,
   .filter-btn,
@@ -24,22 +63,57 @@
     width: 100%;
     min-width: 0;
     font-size: 1em;
-    margin: 0 0 6px 0;
+    margin: 0;
   }
+  
+  .react-select__control {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  
   .input-group {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-    padding: 8px 10px;
+    gap: 8px;
+    padding: 16px;
   }
+  
+  .input-group label {
+    font-size: 0.9em;
+    margin-bottom: 4px;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1em;
+  }
+  
   .filter-btn,
   .filters-bar button {
-    padding: 12px 0;
-    font-size: 1.07em;
-    border-radius: 7px;
+    padding: 16px 20px;
+    font-size: 1.05em;
+    border-radius: 12px;
+    margin-bottom: 4px;
   }
+  
+  .filters-bar select {
+    padding: 16px 20px;
+    font-size: 1em;
+    background-position: right 16px center;
+  }
+  
   .filters-bar::-webkit-scrollbar {
     display: none;
+  }
+  
+  .filters-toggle-btn {
+    backdrop-filter: blur(10px);
+  }
+  
+  .filters-toggle-btn:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(0, 226, 199, 0.4) !important;
   }
 }
 
@@ -48,33 +122,59 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #2a2a2a;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #444;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .input-group label {
-  color: #999;
-  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85em;
+  font-weight: 500;
   white-space: nowrap;
+  margin-right: 4px;
 }
 
 .input-group input {
-  width: 70px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  width: 60px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%);
+  border: 1px solid rgba(0, 226, 199, 0.15);
   color: #fff;
-  padding: 6px 8px;
-  border-radius: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
   font-size: 0.9em;
-  transition: all 0.2s;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.input-group input:hover {
+  border-color: rgba(0, 226, 199, 0.3);
+  background: linear-gradient(135deg, #353535 0%, #404040 100%);
+  box-shadow: 
+    0 2px 8px rgba(0, 226, 199, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #2d6da3;
-  box-shadow: 0 0 0 1px #2d6da3;
+  border-color: #00e2c7;
+  background: linear-gradient(135deg, #353535 0%, #404040 100%);
+  box-shadow: 
+    0 0 0 2px rgba(0, 226, 199, 0.2),
+    0 4px 12px rgba(0, 226, 199, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
 }
 
 .input-group input::-webkit-outer-spin-button,
@@ -92,87 +192,226 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: #2a2a2a;
+  background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%);
   color: #fff;
-  border: 1px solid #444;
-  padding: 8px 2em 8px 12px; /* padding-right reducido */
-  border-radius: 6px;
+  border: 1px solid rgba(0, 226, 199, 0.15);
+  padding: 8px 28px 8px 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 125px;
-  font-size: 0.95em;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23fff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  transition: all 0.3s ease;
+  min-width: 90px;
+  font-size: 0.85em;
+  font-weight: 500;
+  position: relative;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%2300e2c7" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
   background-repeat: no-repeat;
-  background-position: right 0.7em center;
+  background-position: right 12px center;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-
 .filters-bar select:hover {
-  background: #333;
-  border-color: #666;
+  background: linear-gradient(135deg, #353535 0%, #404040 100%);
+  border-color: rgba(0, 226, 199, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(0, 226, 199, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .filters-bar select:focus {
   outline: none;
-  border-color: #2d6da3;
-  box-shadow: 0 0 0 1px #2d6da3;
+  border-color: #00e2c7;
+  box-shadow: 
+    0 0 0 2px rgba(0, 226, 199, 0.2),
+    0 8px 24px rgba(0, 226, 199, 0.15);
+  transform: translateY(-2px);
+}
+
+.filters-bar select option {
+  background: #2a2a2a;
+  color: #fff;
+  padding: 8px 12px;
+  border: none;
 }
 
 .filter-btn {
-  background: #2a2a2a;
-  color: #999;
-  border: 1px solid #444;
-  padding: 8px 16px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 226, 199, 0.15);
+  padding: 10px 16px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.95em;
-  min-width: 100px;
+  transition: all 0.3s ease;
+  font-size: 0.9em;
+  font-weight: 600;
+  min-width: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.filter-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 226, 199, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
 .filter-btn:hover {
-  background: linear-gradient(90deg, #1976d2 60%, #1356a2 100%);
-  color: #fff;
-  border: 1.5px solid #1356a2;
-  transform: translateY(-2px) scale(1.04);
+  background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%);
+  color: #181818;
+  border-color: #00e2c7;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 8px 24px rgba(0, 226, 199, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
+
+.filter-btn:hover::before {
+  left: 100%;
+}
+
 .filter-btn.filter-btn-active {
-  background: linear-gradient(90deg, #1976d2 60%, #1356a2 100%);
-  color: #fff;
-  border: 2.2px solid #e50914;
-  box-shadow: 0 4px 18px rgba(229,9,20,0.18);
-  transform: translateY(-2px) scale(1.06);
+  background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%);
+  color: #181818;
+  border: 2px solid #00e2c7;
+  box-shadow: 
+    0 0 0 3px rgba(0, 226, 199, 0.3),
+    0 8px 24px rgba(0, 226, 199, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px) scale(1.08);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+}
+
+.filter-btn.filter-btn-active::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 /* --- Estilos específicos para react-select --- */
 .react-select__menu {
   z-index: 9999 !important;
   position: absolute !important;
+  background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%) !important;
+  border: 1px solid rgba(0, 226, 199, 0.2) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(20px) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
 }
+
+.react-select__menu-list {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 .react-select__control {
-  background: #2a2a2a !important;
-  border-color: #444 !important;
+  background: linear-gradient(135deg, #2a2a2a 0%, #353535 100%) !important;
+  border: 1px solid rgba(0, 226, 199, 0.15) !important;
+  border-radius: 12px !important;
   color: #fff !important;
-  min-width: 140px;
+  min-width: 90px;
+  transition: all 0.3s ease !important;
+  backdrop-filter: blur(10px) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
+
+.react-select__control:hover {
+  border-color: rgba(0, 226, 199, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(0, 226, 199, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+.react-select__control--is-focused {
+  border-color: #00e2c7 !important;
+  box-shadow: 0 0 0 2px rgba(0, 226, 199, 0.2) !important;
+}
+
 .react-select__option {
-  background: #232323 !important;
+  background: transparent !important;
   color: #fff !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  border: none !important;
 }
+
+.react-select__option:first-child {
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+}
+
+.react-select__option:last-child {
+  border-bottom-left-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+}
+
+.react-select__option:hover,
 .react-select__option--is-focused {
-  background: #1976d2 !important;
+  background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%) !important;
+  color: #181818 !important;
 }
+
 .react-select__multi-value {
-  background: #1976d2 !important;
-  color: #fff !important;
+  background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0, 226, 199, 0.3) !important;
 }
+
 .react-select__multi-value__label {
-  color: #fff !important;
+  color: #181818 !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
 }
+
+.react-select__multi-value__remove {
+  color: #181818 !important;
+  opacity: 0.7;
+  transition: opacity 0.2s ease !important;
+}
+
+.react-select__multi-value__remove:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  opacity: 1 !important;
+}
+
 .react-select__placeholder {
-  color: #aaa !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+.react-select__single-value {
+  color: #fff !important;
+  font-weight: 500 !important;
+}
+
+.react-select__dropdown-indicator {
+  color: #00e2c7 !important;
+  transition: color 0.3s ease !important;
+}
+
+.react-select__dropdown-indicator:hover {
+  color: #00b8a5 !important;
 }
 /* --- Fin estilos react-select --- */

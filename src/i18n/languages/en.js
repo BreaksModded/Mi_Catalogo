@@ -1,4 +1,39 @@
 export const en = {
+  // Common/Global
+  common: {
+    loading: 'Loading...',
+    appName: 'My Catalog',
+    backToHome: 'Back to home',
+    loadMore: 'Load more sections',
+    error: 'Error',
+    goBack: 'Back to home',
+    searching: 'Searching...',
+    remove: 'Remove',
+    clear: 'Clear',
+    sortByRecent: 'Recently added',
+    sortByTitle: 'Title A-Z',
+    sortByYear: 'Year',
+    sortByRating: 'Rating',
+    close: 'Close',
+    cancel: 'Cancel',
+    creating: 'Creating...',
+    optional: 'Optional'
+  },
+
+  // Status (from TMDb API)
+  status: {
+    released: 'Released',
+    'in production': 'In Production',
+    'post production': 'Post Production',
+    planned: 'Planned',
+    rumored: 'Rumored',
+    canceled: 'Canceled',
+    cancelled: 'Cancelled',
+    ended: 'Ended',
+    'returning series': 'Returning Series',
+    'pilot': 'Pilot'
+  },
+
   person: {
     full_filmography: 'Full filmography',
     knownFor: 'Known for',
@@ -10,6 +45,7 @@ export const en = {
     title: 'My Catalog',
     movies: 'Movies',
     series: 'Series',
+    catalog: 'Catalog',
     summary: 'Summary',
     favorites: 'Favorites',
     streaming: {
@@ -35,7 +71,13 @@ export const en = {
     lists: 'Lists',
     add: '+ Add',
     search: 'Search...',
-    openMenu: 'Open menu'
+    openMenu: 'Open menu',
+    account: 'Account',
+    profile: 'Profile',
+    settings: 'Settings',
+    logout: 'Logout',
+    login: 'Login',
+    register: 'Register'
   },
 
   // Filters
@@ -56,6 +98,7 @@ export const en = {
     tmdbRating: 'TMDb Rating',
     myRating: 'My rating',
     min: 'Min',
+    max: 'Max',
     date: 'Date',
     myScore: 'My rating',
     tmdbScore: 'TMDb Rating',
@@ -78,6 +121,7 @@ export const en = {
     home: 'Home',
     movies: 'Movies',
     series: 'Series',
+    catalog: 'Catalog',
     favorites: 'Favorites',
     pending: 'Pending',
     lists: 'Lists',
@@ -144,13 +188,16 @@ export const en = {
     rental: 'Rental:',
     purchase: 'Purchase:',
     notAvailableOnPlatforms: 'Not available on known platforms.',
+    trailer: 'Trailer',
+    youtubeTrailer: 'YouTube Trailer',
     noTrailerAvailable: 'No trailer available for this title.',
     couldNotExtractVideo: 'Could not extract YouTube video.',
     searchingMatches: 'Searching for matches in database…',
-    noSimilarTitles: 'No similar titles found.',
+    noSimilarTitles: 'No similar titles found in your personal catalog. This carousel will update automatically when you add more movies and series with similar genres or themes.',
     couldNotLoadSimilar: 'Could not load similar titles.',
     listsUpdated: 'Lists updated!',
     deleteConfirmTitle: 'Are you sure you want to delete this',
+    deleteConfirmMessage: 'Are you sure you want to delete this {tipo} from your catalog?',
     deleteFromDatabase: 'from the database?',
     tag: 'Tag',
     addFirstTag: 'Add first tag',
@@ -230,6 +277,7 @@ export const en = {
     loadMore: 'Load more',
     showMore: 'Show more',
     loading: 'Loading...',
+    loadingWorstRated: 'Loading worst rated content...',
     search: 'Search',
     filter: 'Filter',
     clear: 'Clear',
@@ -310,6 +358,10 @@ export const en = {
     worstRated: 'Worst rated',
     noRatedMovies: 'No rated movies.',
     noRatedSeries: 'No rated series.',
+    collaboration: 'collaboration',
+    collaborations: 'collaborations',
+    work: 'work',
+    works: 'works',
     recentActivity: 'Recent activity',
     genreDistribution: 'Genre distribution',
     yearlyChart: 'Titles watched by release year',
@@ -327,7 +379,7 @@ export const en = {
   lists: {
     title: 'Lists',
     createNew: 'Create new list',
-    createList: '+ Create list',
+    createList: 'Create list',
     name: 'List name',
     description: 'Description (optional)',
     placeholder: 'List name',
@@ -346,15 +398,69 @@ export const en = {
     errorCreating: 'Could not create the list',
     errorDeleting: 'Could not delete the list',
     errorCreatingGeneric: 'Error creating the list',
+    // Modal específico
+    manageListsTitle: 'Manage Lists',
+    yourLists: 'Your Lists',
+    errorLoadingLists: 'Error loading lists',
+    addedToList: 'Added to list',
+    removedFromList: 'Removed from list',
+    errorUpdatingList: 'Error updating list',
+    listCreated: 'List created successfully!',
+    errorCreatingList: 'Error creating list',
+    titles: 'titles',
+    addToList: 'Add to list',
+    removeFromList: 'Remove from list',
+    add: 'Add',
+    remove: 'Remove',
+    noListsYet: 'No lists yet',
+    createFirstList: 'Create your first list to organize your catalog',
+    createNewList: 'Create New List',
+    listName: 'List name',
+    listNamePlaceholder: 'E.g. Favorite movies',
+    listDescription: 'Description',
+    listDescriptionPlaceholder: 'Optional list description',
     // List details modal
-    searchPlaceholder: 'Search movie or series to add...',
+    searchPlaceholder: 'Search your catalog to add...',
     searchButton: 'Search',
     addButton: 'Add',
     emptyList: 'This list is empty.',
     searchError: 'Search error',
     noResultsInCatalog: 'No results found in your catalog',
     searchCatalogError: 'Could not search your catalog',
-    errorAddingToList: 'Could not add to list'
+    errorAddingToList: 'Could not add to list',
+    // View choice modal
+    howToView: 'How would you like to view this list?',
+    viewAsPage: 'View as Page',
+    pageDescription: 'Full page experience with search and content management',
+    viewAsModal: 'View as Modal',
+    modalDescription: 'Quick view overlay for browsing',
+    viewTip: 'You can change this preference anytime',
+    // List page
+    searchResults: 'Available to add',
+    alreadyAdded: 'Already in list',
+    emptyListDesc: 'This list is empty. Use the search above to add movies and TV shows.',
+    // List page specific
+    backToCatalog: 'Back to lists',
+    breadcrumbCatalog: 'Catalog',
+    breadcrumbLists: 'Lists',
+    titles: 'Titles',
+    created: 'Created',
+    addToList: 'Add to list',
+    alreadyInList: 'Already in list',
+    sortBy: 'Sort by',
+    searching: 'Searching...',
+    noResults: 'No titles found in your catalog',
+    emptyList: 'This list is empty',
+    contentOfList: 'List content',
+    // Edit mode
+    editList: 'Edit list',
+    finishEditing: 'Finish editing',
+    enterEditMode: 'Enter edit mode',
+    exitEditMode: 'Exit edit mode',
+    editingList: 'Editing list',
+    editInstructions: 'Drag items to reorder and use the delete button to remove titles',
+    removeFromList: 'Remove from list',
+    sortByPersonal: 'Custom order'
   },
 
   // Tags
@@ -531,5 +637,293 @@ export const en = {
     feature3Desc: 'Mark favorites and add annotations',
     getStarted: 'Get Started!',
     loginPrompt: 'Sign in to access your personal catalog and start adding movies and series'
+  },
+
+  // Empty state for authenticated users with no content
+  emptyState: {
+    title: 'Welcome to your personal catalog!',
+    subtitle: 'You\'re about to create your perfect collection of movies and series. We\'ll guide you step by step.',
+    guideTitle: 'How to get started? It\'s very easy:',
+    
+    step1Title: 'Add your first movie or series',
+    step1Desc: 'Click the green "Add" button in the top bar and search for any title you\'ve watched or want to watch.',
+    
+    step2Title: 'Customize your experience',
+    step2Desc: 'Mark as favorite, give it a personal rating, add custom tags and organize your content as you prefer.',
+    
+    step3Title: 'Enjoy your catalog',
+    step3Desc: 'Explore statistics, discover trends, manage your watchlist and never forget what you\'ve watched.',
+    
+    feature1Title: 'Advanced Statistics',
+    feature1Desc: 'Detailed charts of your favorite genres, average ratings and viewing trends.',
+    
+    feature2Title: 'Smart Tags',
+    feature2Desc: 'Create custom tags to organize your content: "Classics", "Weekend movies", etc.',
+    
+    feature3Title: 'Favorites System',
+    feature3Desc: 'Mark your favorite titles and give them personal ratings to remember what you liked most.',
+    
+    feature4Title: 'Cross-platform',
+    feature4Desc: 'Access your catalog from any device. Your data always synced and secure.',
+    
+    addFirstTitle: 'Add my first movie/series',
+    addFirstHint: 'It will only take a few seconds and you\'ll immediately see how your personal catalog works.',
+    
+    tipsTitle: 'Professional tips:',
+    tip1: 'You can import lists from other services or add content in bulk.',
+    tip2: 'Use advanced search with filters by genre, year, rating or custom tags.',
+    tip3: 'Your catalog automatically updates with information from TMDb.'
+  },
+
+  // Authentication
+  auth: {
+    // Títulos y subtítulos
+    loginTitle: 'Sign In',
+    registerTitle: 'Create Account',
+    forgotPasswordTitle: 'Reset Password',
+    loginSubtitle: 'Access your personal catalog',
+    registerSubtitle: 'Join our film community',
+    forgotPasswordSubtitle: 'Enter your email or username and we\'ll send you a link to reset your password',
+    
+    // Pasos del registro
+    step1Title: 'Basic Information',
+    step2Title: 'Personal Information',
+    step2Subtitle: 'Tell us a bit about yourself',
+    step3Title: 'Entertainment Preferences',
+    step3Subtitle: 'Help us personalize your experience',
+    step4Title: 'Additional Information',
+    step4Subtitle: 'This data helps us create better statistics',
+    
+    // Campos del formulario
+    email: 'Email',
+    emailOrUsername: 'Email or username',
+    username: 'Username',
+    password: 'Password',
+    repeatPassword: 'Repeat password',
+    name: 'First Name',
+    lastName: 'Last Name',
+    birthDate: 'Date of birth',
+    country: 'Country',
+    preferredLanguage: 'Preferred language',
+    favoriteGenres: 'Favorite genres',
+    streamingPlatforms: 'Streaming platforms you use',
+    contentType: 'Preferred content type',
+    occupation: 'Occupation',
+    educationLevel: 'Education level',
+    
+    // Opciones
+    movies: 'Movies',
+    series: 'Series',
+    both: 'Both',
+    
+    // Placeholders
+    emailPlaceholder: 'you@email.com',
+    emailOrUsernamePlaceholder: 'you@email.com or your_username',
+    usernamePlaceholder: 'username',
+    passwordPlaceholder: '••••••••',
+    namePlaceholder: 'Your first name',
+    lastNamePlaceholder: 'Your last name',
+    
+    // Botones
+    login: 'Sign In',
+    register: 'Create Account',
+    next: 'Next',
+    previous: 'Previous',
+    sendRecoveryLink: 'Send recovery link',
+    sending: 'Sending...',
+    loading: 'Loading...',
+    
+    // Enlaces
+    noAccount: 'Don\'t have an account? Sign up',
+    hasAccount: 'Already have an account? Sign in',
+    forgotPassword: 'Forgot your password?',
+    backToLogin: '← Back to sign in',
+    
+    // Estados del username
+    usernameChecking: 'Checking availability...',
+    usernameAvailable: '✓ Username available',
+    usernameNotAvailable: '✗ Username not available',
+    usernameHelp: 'This will be your public name. Only letters, numbers, hyphens, dots and underscores.',
+    
+    // Privacidad
+    privacyTitle: 'Privacy Settings',
+    shareStats: 'Share my statistics anonymously to improve the platform',
+    publicProfile: 'Make my profile public (other users can see my lists and ratings)',
+    
+    // Mensajes de error
+    emailRequired: 'Email or username is required',
+    emailInvalid: 'Valid email is required',
+    usernameRequired: 'Username must be at least 3 characters',
+    usernameTooLong: 'Username cannot be more than 50 characters',
+    usernameInvalidChars: 'Username can only contain letters, numbers, hyphens, underscores and dots',
+    usernameNotAvailableError: 'This username is already taken',
+    usernameVerifying: 'Checking availability...',
+    passwordRequired: 'Password must be at least 6 characters',
+    passwordMismatch: 'Passwords do not match',
+    nameRequired: 'First name is required',
+    lastNameRequired: 'Last name is required',
+    birthDateRequired: 'Date of birth is required',
+    tooYoung: 'You must be at least 13 years old',
+    countryRequired: 'Country is required',
+    genresRequired: 'You must select at least one favorite genre',
+    contentTypeRequired: 'You must select a preferred content type',
+    usernameCheckError: 'Error checking username',
+    invalidCredentials: 'Invalid credentials',
+    userNotFound: 'User not found',
+    registerError: 'Registration error',
+    recoveryError: 'Error sending recovery request',
+    
+    // Mensajes de éxito
+    registerSuccess: 'Registration successful! You can now sign in.',
+    
+    // Progreso
+    step: 'Step {{current}} of {{total}}',
+    
+    // Selectores
+    selectCountry: 'Select your country',
+    selectOccupation: 'Select your occupation',
+    selectEducation: 'Select your education level',
+    
+    // Países
+    countries: {
+      spain: 'Spain',
+      mexico: 'Mexico',
+      argentina: 'Argentina',
+      colombia: 'Colombia',
+      chile: 'Chile',
+      peru: 'Peru',
+      venezuela: 'Venezuela',
+      ecuador: 'Ecuador',
+      bolivia: 'Bolivia',
+      paraguay: 'Paraguay',
+      uruguay: 'Uruguay',
+      costaRica: 'Costa Rica',
+      panama: 'Panama',
+      guatemala: 'Guatemala',
+      honduras: 'Honduras',
+      elSalvador: 'El Salvador',
+      nicaragua: 'Nicaragua',
+      dominicanRepublic: 'Dominican Republic',
+      cuba: 'Cuba',
+      puertoRico: 'Puerto Rico',
+      usa: 'United States',
+      canada: 'Canada',
+      brazil: 'Brazil',
+      france: 'France',
+      italy: 'Italy',
+      germany: 'Germany',
+      uk: 'United Kingdom',
+      portugal: 'Portugal',
+      other: 'Other'
+    },
+    
+    // Géneros
+    genres: {
+      action: 'Action',
+      adventure: 'Adventure',
+      animation: 'Animation',
+      biography: 'Biography',
+      comedy: 'Comedy',
+      crime: 'Crime',
+      documentary: 'Documentary',
+      drama: 'Drama',
+      family: 'Family',
+      fantasy: 'Fantasy',
+      history: 'History',
+      horror: 'Horror',
+      music: 'Music',
+      mystery: 'Mystery',
+      romance: 'Romance',
+      sciFi: 'Science Fiction',
+      sport: 'Sport',
+      thriller: 'Thriller',
+      war: 'War',
+      western: 'Western',
+      musical: 'Musical',
+      noir: 'Noir'
+    },
+    
+    // Plataformas
+    platforms: {
+      netflix: 'Netflix',
+      primeVideo: 'Prime Video',
+      disneyPlus: 'Disney+',
+      hboMax: 'HBO Max',
+      appleTv: 'Apple TV+',
+      paramount: 'Paramount+',
+      hulu: 'Hulu',
+      peacock: 'Peacock',
+      discovery: 'Discovery+',
+      crunchyroll: 'Crunchyroll',
+      filmin: 'Filmin',
+      movistar: 'Movistar+',
+      skyShowtime: 'SkyShowtime',
+      other: 'Other'
+    },
+    
+    // Ocupaciones
+    occupations: {
+      student: 'Student',
+      employee: 'Employee',
+      entrepreneur: 'Entrepreneur',
+      freelancer: 'Freelancer',
+      retired: 'Retired',
+      unemployed: 'Unemployed',
+      homemaker: 'Homemaker',
+      healthcare: 'Healthcare Professional',
+      educator: 'Educator',
+      engineer: 'Engineer',
+      artist: 'Artist',
+      technology: 'Technology',
+      services: 'Services',
+      commerce: 'Commerce',
+      industry: 'Industry',
+      other: 'Other'
+    },
+    
+    // Niveles de educación
+    education: {
+      primary: 'Primary Education',
+      secondary: 'Secondary Education',
+      highSchool: 'High School',
+      vocational: 'Vocational Training',
+      university: 'University Studies',
+      masters: 'Master\'s Degree',
+      doctorate: 'Doctorate',
+      other: 'Other'
+    },
+    
+    // Password reset
+    invalidToken: 'Invalid or missing recovery token',
+    passwordMinLength: 'Password must be at least 6 characters',
+    passwordMismatch: 'Passwords do not match',
+    resetError: 'Error resetting password',
+    passwordResetSuccess: 'Password reset successful!',
+    passwordUpdateSuccess: 'Your password has been updated successfully.',
+    redirectingMessage: 'You will be redirected to home in a few seconds...',
+    resetPasswordTitle: 'Reset Password',
+    resetPasswordSubtitle: 'Enter your new password',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm password',
+    resetPasswordButton: 'Reset Password',
+    updating: 'Updating...'
+  },
+
+  // Email templates
+  email: {
+    passwordReset: {
+      subject: 'Password Recovery - My Catalog',
+      title: '🎬 My Catalog',
+      subtitle: 'Password Recovery',
+      greeting: 'Hello {username}',
+      message: 'We have received a request to reset the password for your My Catalog account.',
+      instruction: 'To create a new password, click on the following link:',
+      buttonText: 'Reset Password',
+      alternativeText: 'If you cannot click the button, copy and paste the following link into your browser:',
+      expirationWarning: 'This link will expire in 24 hours for security.',
+      noRequestWarning: 'If you did not request this change, you can ignore this email. Your password will not be modified.',
+      thanks: 'Thank you for using My Catalog!',
+      footer: 'This is an automated email, please do not reply to this message.'
+    }
   }
 };

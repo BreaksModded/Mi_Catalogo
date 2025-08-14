@@ -1,4 +1,39 @@
 export const fr = {
+  // Common/Global
+  common: {
+    loading: 'Chargement...',
+    appName: 'Mon Catalogue',
+    backToHome: 'Retour à l\'accueil',
+    loadMore: 'Charger plus de sections',
+    error: 'Erreur',
+    goBack: 'Retour à l\'accueil',
+    searching: 'Recherche...',
+    remove: 'Supprimer',
+    clear: 'Effacer',
+    sortByRecent: 'Ajouté récemment',
+    sortByTitle: 'Titre A-Z',
+    sortByYear: 'Année',
+    sortByRating: 'Note',
+    close: 'Fermer',
+    cancel: 'Annuler',
+    creating: 'Création...',
+    optional: 'Optionnel'
+  },
+
+  // Status (from TMDb API)
+  status: {
+    released: 'Sorti',
+    'in production': 'En production',
+    'post production': 'Post-production',
+    planned: 'Planifié',
+    rumored: 'Rumeur',
+    canceled: 'Annulé',
+    cancelled: 'Annulé',
+    ended: 'Terminé',
+    'returning series': 'Série renouvelée',
+    'pilot': 'Pilote'
+  },
+
   person: {
     full_filmography: 'Filmographie complète',
     knownFor: 'Connu pour',
@@ -9,13 +44,20 @@ export const fr = {
     title: 'Mon Catalogue',
     movies: 'Films',
     series: 'Séries',
+    catalog: 'Catalogue',
     summary: 'Résumé',
     favorites: 'Favoris',
     pending: 'En attente',
     lists: 'Listes',
     add: '+ Ajouter',
     search: 'Rechercher...',
-    openMenu: 'Ouvrir le menu'
+    openMenu: 'Ouvrir le menu',
+    account: 'Compte',
+    profile: 'Profil',
+    settings: 'Paramètres',
+    logout: 'Déconnexion',
+    login: 'Connexion',
+    register: 'S\'inscrire'
   },
   filters: {
     genres: 'Genres...',
@@ -34,6 +76,7 @@ export const fr = {
     tmdbRating: 'Note TMDb',
     myRating: 'Ma note',
     min: 'Min',
+    max: 'Max',
     date: 'Date',
     myScore: 'Ma note',
     tmdbScore: 'Note TMDb',
@@ -54,6 +97,7 @@ export const fr = {
     home: 'Accueil',
     movies: 'Films',
     series: 'Séries',
+    catalog: 'Catalogue',
     favorites: 'Favoris',
     pending: 'En attente',
     lists: 'Listes',
@@ -116,13 +160,16 @@ export const fr = {
     rental: 'Location :',
     purchase: 'Achat :',
     notAvailableOnPlatforms: 'Non disponible sur les plateformes connues.',
+    trailer: 'Bande-annonce',
+    youtubeTrailer: 'Bande-annonce YouTube',
     noTrailerAvailable: 'Pas de bande-annonce.',
     couldNotExtractVideo: 'Extraction vidéo impossible.',
     searchingMatches: 'Recherche dans la base...',
-    noSimilarTitles: 'Aucun titre similaire.',
+    noSimilarTitles: 'Aucun titre similaire dans votre catalogue personnel. Ce carrousel se mettra à jour automatiquement lorsque vous ajouterez des films et séries avec des genres ou thèmes similaires.',
     couldNotLoadSimilar: 'Impossible de charger similaires.',
     listsUpdated: 'Listes mises à jour !',
     deleteConfirmTitle: 'Supprimer ce',
+    deleteConfirmMessage: 'Êtes-vous sûr de vouloir supprimer ce {tipo} de votre catalogue ?',
     deleteFromDatabase: 'de la base de données ?',
     tag: 'tag',
     addFirstTag: 'Ajouter premier tag',
@@ -282,7 +329,7 @@ export const fr = {
   lists: {
     title: 'Listes',
     createNew: 'Créer nouvelle liste',
-    createList: '+ Créer liste',
+    createList: 'Créer liste',
     name: 'Nom de la liste',
     description: 'Description (optionnel)',
     placeholder: 'Nom de la liste',
@@ -301,6 +348,27 @@ export const fr = {
     errorCreating: 'Création impossible',
     errorDeleting: 'Suppression impossible',
     errorCreatingGeneric: 'Erreur création liste',
+    // Modal spécifique
+    manageListsTitle: 'Gérer les Listes',
+    yourLists: 'Vos Listes',
+    errorLoadingLists: 'Erreur lors du chargement des listes',
+    addedToList: 'Ajouté à la liste',
+    removedFromList: 'Supprimé de la liste',
+    errorUpdatingList: 'Erreur lors de la mise à jour de la liste',
+    listCreated: 'Liste créée avec succès !',
+    errorCreatingList: 'Erreur lors de la création de la liste',
+    titles: 'titres',
+    addToList: 'Ajouter à la liste',
+    removeFromList: 'Retirer de la liste',
+    add: 'Ajouter',
+    remove: 'Retirer',
+    noListsYet: 'Aucune liste pour le moment',
+    createFirstList: 'Créez votre première liste pour organiser votre catalogue',
+    createNewList: 'Créer une Nouvelle Liste',
+    listName: 'Nom de la liste',
+    listNamePlaceholder: 'Ex : Films favoris',
+    listDescription: 'Description',
+    listDescriptionPlaceholder: 'Description optionnelle de la liste',
     searchPlaceholder: 'Rechercher film ou série...',
     searchButton: 'Rechercher',
     addButton: 'Ajouter',
@@ -308,7 +376,42 @@ export const fr = {
     searchError: 'Erreur recherche',
     noResultsInCatalog: 'Aucun résultat dans le catalogue',
     searchCatalogError: 'Erreur catalogue',
-    errorAddingToList: 'Erreur ajout'
+    errorAddingToList: 'Erreur ajout',
+    // View choice modal
+    howToView: 'Comment souhaitez-vous voir cette liste ?',
+    viewAsPage: 'Voir en page',
+    pageDescription: 'Expérience page complète avec recherche et gestion du contenu',
+    viewAsModal: 'Voir en modal',
+    modalDescription: 'Vue rapide superposée pour naviguer',
+    viewTip: 'Vous pouvez changer cette préférence à tout moment',
+    // List page
+    searchResults: 'Disponibles à ajouter',
+    alreadyAdded: 'Déjà dans la liste',
+    emptyListDesc: 'Cette liste est vide. Utilisez la recherche ci-dessus pour ajouter des films et séries.',
+    // List page specific
+    backToCatalog: 'Retour au listes',
+    breadcrumbCatalog: 'Catalogue',
+    breadcrumbLists: 'Listes',
+    titles: 'Titres',
+    created: 'Créée',
+    addToList: 'Ajouter à la liste',
+    alreadyInList: 'Déjà dans la liste',
+    searchPlaceholder: 'Rechercher dans votre catalogue pour ajouter...',
+    sortBy: 'Trier par',
+    searching: 'Recherche...',
+    noResults: 'Aucun titre trouvé dans votre catalogue',
+    emptyList: 'Cette liste est vide',
+    contentOfList: 'Contenu de la liste',
+    // Edit mode
+    editList: 'Modifier la liste',
+    finishEditing: 'Terminer la modification',
+    enterEditMode: 'Entrer en mode modification',
+    exitEditMode: 'Sortir du mode modification',
+    editingList: 'Modification de la liste',
+    editInstructions: 'Glissez les éléments pour réorganiser et utilisez le bouton supprimer pour retirer des titres',
+    removeFromList: 'Retirer de la liste',
+    sortByPersonal: 'Ordre personnalisé',
+    sortByPersonal: 'Ordre personnalisé'
   },
   tags: {
     createTag: 'Créer Tag',
@@ -457,5 +560,338 @@ export const fr = {
     feature3Desc: 'Marquez vos favoris et ajoutez des annotations',
     getStarted: 'Commencez maintenant !',
     loginPrompt: 'Connectez-vous pour accéder à votre catalogue personnel et commencer à ajouter des films et séries'
+  },
+
+  // Authentication
+  auth: {
+    // Títulos y subtítulos
+    loginTitle: 'Se connecter',
+    registerTitle: 'Créer un compte',
+    forgotPasswordTitle: 'Réinitialiser le mot de passe',
+    loginSubtitle: 'Accédez à votre catalogue personnel',
+    registerSubtitle: 'Rejoignez notre communauté cinéphile',
+    forgotPasswordSubtitle: 'Entrez votre email ou nom d\'utilisateur et nous vous enverrons un lien pour réinitialiser votre mot de passe',
+    
+    // Pasos del registro
+    step1Title: 'Informations de base',
+    step2Title: 'Informations personnelles',
+    step2Subtitle: 'Parlez-nous un peu de vous',
+    step3Title: 'Préférences de divertissement',
+    step3Subtitle: 'Aidez-nous à personnaliser votre expérience',
+    step4Title: 'Informations supplémentaires',
+    step4Subtitle: 'Ces données nous aident à créer de meilleures statistiques',
+    
+    // Campos del formulario
+    email: 'Email',
+    emailOrUsername: 'Email ou nom d\'utilisateur',
+    username: 'Nom d\'utilisateur',
+    password: 'Mot de passe',
+    repeatPassword: 'Répéter le mot de passe',
+    name: 'Prénom',
+    lastName: 'Nom de famille',
+    birthDate: 'Date de naissance',
+    country: 'Pays',
+    preferredLanguage: 'Langue préférée',
+    favoriteGenres: 'Genres favoris',
+    streamingPlatforms: 'Plateformes de streaming que vous utilisez',
+    contentType: 'Type de contenu préféré',
+    occupation: 'Profession',
+    educationLevel: 'Niveau d\'études',
+    
+    // Opciones
+    movies: 'Films',
+    series: 'Séries',
+    both: 'Les deux',
+    
+    // Placeholders
+    emailPlaceholder: 'vous@email.com',
+    emailOrUsernamePlaceholder: 'vous@email.com ou votre_nom',
+    usernamePlaceholder: 'nom_utilisateur',
+    passwordPlaceholder: '••••••••',
+    namePlaceholder: 'Votre prénom',
+    lastNamePlaceholder: 'Votre nom de famille',
+    
+    // Botones
+    login: 'Se connecter',
+    register: 'Créer un compte',
+    next: 'Suivant',
+    previous: 'Précédent',
+    sendRecoveryLink: 'Envoyer le lien de récupération',
+    sending: 'Envoi en cours...',
+    loading: 'Chargement...',
+    
+    // Enlaces
+    noAccount: 'Pas de compte ? Inscrivez-vous',
+    hasAccount: 'Déjà un compte ? Connectez-vous',
+    forgotPassword: 'Mot de passe oublié ?',
+    backToLogin: '← Retour à la connexion',
+    
+    // Estados del username
+    usernameChecking: 'Vérification de la disponibilité...',
+    usernameAvailable: '✓ Nom d\'utilisateur disponible',
+    usernameNotAvailable: '✗ Nom d\'utilisateur non disponible',
+    usernameHelp: 'Ce sera votre nom public. Seules les lettres, chiffres, tirets, points et traits de soulignement sont autorisés.',
+    
+    // Privacidad
+    privacyTitle: 'Paramètres de confidentialité',
+    shareStats: 'Partager mes statistiques de manière anonyme pour améliorer la plateforme',
+    publicProfile: 'Rendre mon profil public (les autres utilisateurs peuvent voir mes listes et évaluations)',
+    
+    // Mensajes de error
+    emailRequired: 'Email ou nom d\'utilisateur requis',
+    emailInvalid: 'Email valide requis',
+    usernameRequired: 'Le nom d\'utilisateur doit contenir au moins 3 caractères',
+    usernameTooLong: 'Le nom d\'utilisateur ne peut pas dépasser 50 caractères',
+    usernameInvalidChars: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres, tirets, traits de soulignement et points',
+    usernameNotAvailableError: 'Ce nom d\'utilisateur est déjà pris',
+    usernameVerifying: 'Vérification de la disponibilité...',
+    passwordRequired: 'Le mot de passe doit contenir au moins 6 caractères',
+    passwordMismatch: 'Les mots de passe ne correspondent pas',
+    nameRequired: 'Le prénom est requis',
+    lastNameRequired: 'Le nom de famille est requis',
+    birthDateRequired: 'La date de naissance est requise',
+    tooYoung: 'Vous devez avoir au moins 13 ans',
+    countryRequired: 'Le pays est requis',
+    genresRequired: 'Vous devez sélectionner au moins un genre favori',
+    contentTypeRequired: 'Vous devez sélectionner un type de contenu préféré',
+    usernameCheckError: 'Erreur lors de la vérification du nom d\'utilisateur',
+    invalidCredentials: 'Identifiants incorrects',
+    userNotFound: 'Utilisateur non trouvé',
+    registerError: 'Erreur d\'inscription',
+    recoveryError: 'Erreur lors de l\'envoi de la demande de récupération',
+    
+    // Mensajes de éxito
+    registerSuccess: 'Inscription réussie ! Vous pouvez maintenant vous connecter.',
+    
+    // Progreso
+    step: 'Étape {{current}} sur {{total}}',
+    
+    // Selectores
+    selectCountry: 'Sélectionnez votre pays',
+    selectOccupation: 'Sélectionnez votre profession',
+    selectEducation: 'Sélectionnez votre niveau d\'études',
+    
+    // Países
+    countries: {
+      spain: 'Espagne',
+      mexico: 'Mexique',
+      argentina: 'Argentine',
+      colombia: 'Colombie',
+      chile: 'Chili',
+      peru: 'Pérou',
+      venezuela: 'Venezuela',
+      ecuador: 'Équateur',
+      bolivia: 'Bolivie',
+      paraguay: 'Paraguay',
+      uruguay: 'Uruguay',
+      costaRica: 'Costa Rica',
+      panama: 'Panama',
+      guatemala: 'Guatemala',
+      honduras: 'Honduras',
+      elSalvador: 'El Salvador',
+      nicaragua: 'Nicaragua',
+      dominicanRepublic: 'République Dominicaine',
+      cuba: 'Cuba',
+      puertoRico: 'Porto Rico',
+      usa: 'États-Unis',
+      canada: 'Canada',
+      brazil: 'Brésil',
+      france: 'France',
+      italy: 'Italie',
+      germany: 'Allemagne',
+      uk: 'Royaume-Uni',
+      portugal: 'Portugal',
+      other: 'Autre'
+    },
+    
+    // Géneros
+    genres: {
+      action: 'Action',
+      adventure: 'Aventure',
+      animation: 'Animation',
+      biography: 'Biographie',
+      comedy: 'Comédie',
+      crime: 'Crime',
+      documentary: 'Documentaire',
+      drama: 'Drame',
+      family: 'Famille',
+      fantasy: 'Fantaisie',
+      history: 'Histoire',
+      horror: 'Horreur',
+      music: 'Musique',
+      mystery: 'Mystère',
+      romance: 'Romance',
+      sciFi: 'Science-Fiction',
+      sport: 'Sport',
+      thriller: 'Thriller',
+      war: 'Guerre',
+      western: 'Western',
+      musical: 'Musical',
+      noir: 'Noir'
+    },
+    
+    // Plataformas
+    platforms: {
+      netflix: 'Netflix',
+      primeVideo: 'Prime Video',
+      disneyPlus: 'Disney+',
+      hboMax: 'HBO Max',
+      appleTv: 'Apple TV+',
+      paramount: 'Paramount+',
+      hulu: 'Hulu',
+      peacock: 'Peacock',
+      discovery: 'Discovery+',
+      crunchyroll: 'Crunchyroll',
+      filmin: 'Filmin',
+      movistar: 'Movistar+',
+      skyShowtime: 'SkyShowtime',
+      other: 'Autre'
+    },
+    
+    // Ocupaciones
+    occupations: {
+      student: 'Étudiant(e)',
+      employee: 'Employé(e)',
+      entrepreneur: 'Entrepreneur',
+      freelancer: 'Freelance',
+      retired: 'Retraité(e)',
+      unemployed: 'Sans emploi',
+      homemaker: 'Au foyer',
+      healthcare: 'Professionnel de santé',
+      educator: 'Éducateur/trice',
+      engineer: 'Ingénieur(e)',
+      artist: 'Artiste',
+      technology: 'Technologie',
+      services: 'Services',
+      commerce: 'Commerce',
+      industry: 'Industrie',
+      other: 'Autre'
+    },
+    
+    // Niveles de educación
+    education: {
+      primary: 'Enseignement primaire',
+      secondary: 'Enseignement secondaire',
+      highSchool: 'Lycée',
+      vocational: 'Formation professionnelle',
+      university: 'Études universitaires',
+      masters: 'Master',
+      doctorate: 'Doctorat',
+      other: 'Autre'
+    }
+  },
+
+  // Genres translations
+  genres: {
+    'acción': 'Action',
+    'action': 'Action',
+    'aventura': 'Aventure',
+    'adventure': 'Aventure',
+    'comedia': 'Comédie',
+    'comedy': 'Comédie',
+    'drama': 'Drame',
+    'terror': 'Horreur',
+    'horror': 'Horreur',
+    'thriller': 'Thriller',
+    'suspense': 'Suspense',
+    'ciencia ficción': 'Science-fiction',
+    'science fiction': 'Science-fiction',
+    'sci-fi': 'Science-fiction',
+    'fantasía': 'Fantastique',
+    'fantasy': 'Fantastique',
+    'romance': 'Romance',
+    'romántica': 'Romance',
+    'animación': 'Animation',
+    'animation': 'Animation',
+    'documental': 'Documentaire',
+    'documentary': 'Documentaire',
+    'crimen': 'Crime',
+    'crime': 'Crime',
+    'misterio': 'Mystère',
+    'mystery': 'Mystère',
+    'guerra': 'Guerre',
+    'war': 'Guerre',
+    'bélica': 'Guerre',
+    'belica': 'Guerre',
+    'western': 'Western',
+    'musical': 'Musical',
+    'biografía': 'Biographie',
+    'biography': 'Biographie',
+    'historia': 'Histoire',
+    'history': 'Histoire',
+    'familia': 'Famille',
+    'family': 'Famille',
+    'deporte': 'Sport',
+    'sport': 'Sport',
+    'música': 'Musique',
+    'music': 'Musique'
+  },
+
+  // Email templates
+  email: {
+    passwordReset: {
+      subject: 'Récupération de mot de passe - Mon Catalogue',
+      title: '🎬 Mon Catalogue',
+      subtitle: 'Récupération de mot de passe',
+      greeting: 'Bonjour {username}',
+      message: 'Nous avons reçu une demande de réinitialisation du mot de passe de votre compte Mon Catalogue.',
+      instruction: 'Pour créer un nouveau mot de passe, cliquez sur le lien suivant :',
+      buttonText: 'Réinitialiser le mot de passe',
+      alternativeText: 'Si vous ne pouvez pas cliquer sur le bouton, copiez et collez le lien suivant dans votre navigateur :',
+      expirationWarning: 'Ce lien expirera dans 24 heures pour des raisons de sécurité.',
+      noRequestWarning: 'Si vous n\'avez pas demandé ce changement, vous pouvez ignorer cet email. Votre mot de passe ne sera pas modifié.',
+      thanks: 'Merci d\'utiliser Mon Catalogue !',
+      footer: 'Ceci est un email automatique, veuillez ne pas répondre à ce message.'
+    }
+  },
+
+  // Welcome screen
+  welcome: {
+    title: 'Bienvenue dans votre Catalogue Personnel',
+    subtitle: 'Créez et gérez votre collection personnelle de films et séries',
+    feature1: 'Catalogue Personnel',
+    feature1Desc: 'Organisez vos films et séries préférés',
+    feature2: 'Tags Personnalisés',
+    feature2Desc: 'Marquez et catégorisez votre contenu',
+    feature3: 'Favoris et Notes',
+    feature3Desc: 'Marquez vos favoris et ajoutez des annotations',
+    getStarted: 'Commencer maintenant !',
+    loginPrompt: 'Connectez-vous pour accéder à votre catalogue personnel et commencer à ajouter des films et séries'
+  },
+
+  // Empty state for authenticated users with no content
+  emptyState: {
+    title: 'Bienvenue dans votre catalogue personnel !',
+    subtitle: 'Vous êtes sur le point de créer votre collection parfaite de films et séries. Nous vous guidons étape par étape.',
+    guideTitle: 'Comment commencer ? C\'est très facile :',
+    
+    step1Title: 'Ajoutez votre premier film ou série',
+    step1Desc: 'Cliquez sur le bouton vert "Ajouter" dans la barre supérieure et recherchez n\'importe quel titre que vous avez vu ou voulez voir.',
+    
+    step2Title: 'Personnalisez votre expérience',
+    step2Desc: 'Marquez comme favori, donnez une note personnelle, ajoutez des tags personnalisés et organisez votre contenu comme vous préférez.',
+    
+    step3Title: 'Profitez de votre catalogue',
+    step3Desc: 'Explorez les statistiques, découvrez les tendances, gérez votre liste de visionnage et n\'oubliez jamais ce que vous avez vu.',
+    
+    feature1Title: 'Statistiques Avancées',
+    feature1Desc: 'Graphiques détaillés de vos genres préférés, notes moyennes et tendances de visionnage.',
+    
+    feature2Title: 'Tags Intelligents',
+    feature2Desc: 'Créez des tags personnalisés pour organiser votre contenu : "Classiques", "Films du week-end", etc.',
+    
+    feature3Title: 'Système de Favoris',
+    feature3Desc: 'Marquez vos titres favoris et donnez des notes personnelles pour vous souvenir de ce que vous avez le plus aimé.',
+    
+    feature4Title: 'Multi-plateforme',
+    feature4Desc: 'Accédez à votre catalogue depuis n\'importe quel appareil. Vos données toujours synchronisées et sécurisées.',
+    
+    addFirstTitle: 'Ajouter mon premier film/série',
+    addFirstHint: 'Cela ne prendra que quelques secondes et vous verrez immédiatement comment fonctionne votre catalogue personnel.',
+    
+    tipsTitle: 'Conseils professionnels :',
+    tip1: 'Vous pouvez importer des listes d\'autres services ou ajouter du contenu en masse.',
+    tip2: 'Utilisez la recherche avancée avec des filtres par genre, année, note ou tags personnalisés.',
+    tip3: 'Votre catalogue se met à jour automatiquement avec les informations de TMDb.'
   }
 };

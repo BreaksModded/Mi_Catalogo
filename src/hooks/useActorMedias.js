@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://mi-catalogo-backend.onrender.com';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 export default function useActorMedias(personId) {
   const [medias, setMedias] = useState([]);
@@ -11,7 +11,11 @@ export default function useActorMedias(personId) {
     if (!personId) return;
     setLoading(true);
     setError('');
-    fetch(`${BACKEND_URL}/medias/by_actor/${personId}`)
+    const token = localStorage.getItem('jwt_token');
+    console.log('JWT token used for /medias/by_actor:', token);
+    fetch(`${BACKEND_URL}/medias/by_actor/${personId}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(data => {
         // Elimina duplicados por id (puede haber ids iguales de películas y series)

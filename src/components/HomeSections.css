@@ -1,0 +1,58 @@
+/* Estilos para HomeSections */
+
+.load-more-sections-btn {
+  background: linear-gradient(145deg, #232323 0%, #1a1a1a 100%);
+  color: #ffffff;
+  border: 2px solid #333333;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.load-more-sections-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 226, 199, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.load-more-sections-btn:hover {
+  background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
+  border-color: #00e2c7;
+  color: #00e2c7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 226, 199, 0.2);
+}
+
+.load-more-sections-btn:hover::before {
+  left: 100%;
+}
+
+.load-more-sections-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.load-more-sections-btn:focus {
+  outline: none;
+  border-color: #00e2c7;
+  box-shadow: 0 0 0 3px rgba(0, 226, 199, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .load-more-sections-btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+}

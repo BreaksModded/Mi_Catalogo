@@ -491,9 +491,10 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
             className="show-more-providers-btn"
             onClick={() => setShowAllProviders(!showAllProviders)}
           >
+            <i className={`fas ${showAllProviders ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
             {showAllProviders 
-              ? `🔼 ${t('streaming.showLess', 'Mostrar menos')}` 
-              : `🔽 ${t('streaming.seeMore', 'Ver {{count}} más').replace('{{count}}', arr.length - 6)}`
+              ? ` ${t('streaming.showLess', 'Mostrar menos')}` 
+              : ` ${t('streaming.seeMore', 'Ver {{count}} más').replace('{{count}}', arr.length - 6)}`
             }
           </button>
         )}
@@ -507,7 +508,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
       {availableCountries.length > 1 && (
         <div className="country-selector">
           <div className="selector-label">
-            <span className="selector-icon">🌍</span>
+            <span className="selector-icon"><i className="fas fa-globe"></i></span>
             <span>{t('streaming.availabilityByRegion', 'Disponibilidad por región')}:</span>
           </div>
           <select
@@ -531,7 +532,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
         {loading && (
           <div className="streaming-loading-enhanced">
             <div className="loading-spinner-enhanced"></div>
-            <span>🔄 {t('detailModal.loading')}</span>
+            <span><i className="fas fa-sync-alt fa-spin"></i> {t('detailModal.loading')}</span>
           </div>
         )}
         
@@ -565,7 +566,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
         
         {!loading && !error && !providers && (
           <div className="streaming-none-enhanced">
-            <div className="none-icon">🚫</div>
+            <div className="none-icon"><i className="fas fa-ban"></i></div>
             <div className="none-content">
               <h4>{t('streaming.notAvailable', 'No disponible')}</h4>
               <p>{t('streaming.noStreamingInfoFound', 'No se encontró información de streaming para {{region}}.').replace('{{region}}', countries[selectedCountry]?.name || t('streaming.thisRegion', 'esta región'))}</p>
@@ -577,7 +578,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
         {!loading && providers && (
           <div className="streaming-footer-info">
             <div className="info-item-small">
-              <span className="info-icon">ℹ️</span>
+              <span className="info-icon"><i className="fas fa-info-circle"></i></span>
               <span>{t('streaming.pricesEstimated', 'Los precios son estimados y pueden variar')}</span>
             </div>
             <div className="info-item-small">
@@ -627,6 +628,19 @@ function SimilarItem({ item, onUpdate, isDraggingRef, isMobile }) {
 function DetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Función auxiliar para peticiones autenticadas con JWT
+  const authenticatedFetch = (url, options = {}) => {
+    const jwtToken = localStorage.getItem('jwt_token');
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
+      }
+    });
+  };
+  
   const [media, setMedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -687,6 +701,13 @@ function DetailPage() {
   const mediaType = media?.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
   const { posterUrl } = useDynamicPoster(media?.tmdb_id, mediaType, media?.imagen);
   
+  // Función para traducir el estado
+  const translateStatus = (status) => {
+    if (!status) return '';
+    const statusKey = status.toLowerCase().replace(/\s+/g, '');
+    return t(`status.${statusKey}`, status);
+  };
+  
   // Mapear idioma para TMDb API
   const getTmdbLanguage = (lang) => {
     switch (lang) {
@@ -701,9 +722,7 @@ function DetailPage() {
     const fetchMedia = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${BACKEND_URL}/medias/${id}`, {
-          credentials: 'include'
-        });
+        const response = await authenticatedFetch(`${BACKEND_URL}/medias/${id}`);
         if (!response.ok) {
           throw new Error(t('errors.mediaNotFound', 'Media no encontrado'));
         }
@@ -763,7 +782,7 @@ function DetailPage() {
     setLoadingSimilares(true);
     setErrorSimilares('');
     
-    fetch(`${BACKEND_URL}/medias/${media.id}/similares`, { credentials: 'include' })
+    authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/similares`)
       .then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.detail || 'Error'); }))
       .then(data => setSimilares(Array.isArray(data) ? data : []))
       .catch(() => setErrorSimilares(t('errors.couldNotLoadSimilar', 'No se pudieron cargar similares.')))
@@ -773,13 +792,13 @@ function DetailPage() {
   // Cargar tags y listas
   useEffect(() => {
     // Cargar todos los tags
-    fetch(`${BACKEND_URL}/tags`)
+    authenticatedFetch(`${BACKEND_URL}/tags`)
       .then(res => res.ok ? res.json() : [])
       .then(setAllTags)
       .catch(() => setAllTags([]));
       
     // Cargar listas
-    fetch(`${BACKEND_URL}/listas`)
+    authenticatedFetch(`${BACKEND_URL}/listas`)
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         setListas(data);
@@ -795,11 +814,9 @@ function DetailPage() {
   // Funciones para manejo de favoritos/pendientes
   const handleToggleFavorite = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/medias/${media.id}/favorito`, {
+      const response = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/favorito?favorito=${!favorito}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ favorito: !favorito })
+        headers: { 'Content-Type': 'application/json' }
       });
       if (response.ok) {
         setFavorito(!favorito);
@@ -811,11 +828,9 @@ function DetailPage() {
 
   const handleTogglePending = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/medias/${media.id}/pendiente`, {
+      const response = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/pendiente?pendiente=${!pendiente}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ pendiente: !pendiente })
+        headers: { 'Content-Type': 'application/json' }
       });
       if (response.ok) {
         setPendiente(!pendiente);
@@ -833,10 +848,9 @@ function DetailPage() {
     setNotesError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/medias/${media.id}/anotacion_personal`, {
+      const response = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/anotacion_personal`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         // Backend expects a plain JSON string, not an object wrapper
         body: JSON.stringify(tempNotes)
       });
@@ -861,11 +875,10 @@ function DetailPage() {
     setSavingRating(true);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/medias/${media.id}/nota_personal`, {
+      const response = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/nota_personal`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nota_personal: parseFloat(tempRating) || null })
+        body: JSON.stringify(parseFloat(tempRating) || null)
       });
       
       if (!response.ok) throw new Error(t('errors.errorSaving', 'Error al guardar'));
@@ -900,24 +913,20 @@ function DetailPage() {
 
     try {
       for (const id of toAdd) {
-        await fetch(`${BACKEND_URL}/medias/${media.id}/tags`, {
+        await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/tags`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ tag_id: id })
         });
       }
       for (const id of toRemove) {
-        await fetch(`${BACKEND_URL}/medias/${media.id}/tags/${id}`, {
-          method: 'DELETE',
-          credentials: 'include'
+        await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/tags/${id}`, {
+          method: 'DELETE'
         });
       }
 
       // Reconsultar el media
-      const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
-        credentials: 'include'
-      });
+      const res = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}`);
       if (res.ok) {
         const updated = await res.json();
         setLocalTags(Array.isArray(updated.tags) ? updated.tags : []);
@@ -933,7 +942,7 @@ function DetailPage() {
   // Función para eliminar media
   const handleDelete = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
+      const response = await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -968,7 +977,7 @@ function DetailPage() {
         <Navbar onSection={handleNavigation} onSearch={handleSearch} searchValue="" />
         <div className="detail-page-loading">
           <div className="loading-spinner"></div>
-          <h2>{t('detailModal.loadingAdvancedDetails')}</h2>
+          <h2><i className="fas fa-sync-alt fa-spin"></i> {t('detailModal.loadingAdvancedDetails')}</h2>
         </div>
       </div>
     );
@@ -1074,18 +1083,18 @@ function DetailPage() {
                   className={`action-btn ${pendiente ? 'pending-active' : ''}`} 
                   onClick={handleTogglePending}
                 >
-                  {pendiente ? '✅' : '⏳'} {pendiente ? t('detailModal.removeFromPending') : t('detailModal.addToPending')}
+                  <i className={`fas ${pendiente ? 'fa-check-circle' : 'fa-clock'}`}></i> {pendiente ? t('detailModal.removeFromPending') : t('detailModal.addToPending')}
                 </button>
                 
                 <button 
                   className={`action-btn ${favorito ? 'favorite-active' : ''}`} 
                   onClick={handleToggleFavorite}
                 >
-                  {favorito ? '❤️' : '🤍'} {favorito ? t('detailModal.removeFromFavorites') : t('detailModal.addToFavorites')}
+                  <i className="fas fa-heart" style={{color: favorito ? '#e91e63' : '#fff'}}></i> {favorito ? t('detailModal.removeFromFavorites') : t('detailModal.addToFavorites')}
                 </button>
                 
                 <button className="action-btn" onClick={() => setShowListasModal(true)}>
-                  📂 {t('detailModal.addToList')}
+                  <i className="fas fa-folder-plus"></i> {t('detailModal.addToList')}
                 </button>
                 
                 {/* Editor de nota personal */}
@@ -1106,7 +1115,7 @@ function DetailPage() {
                       onClick={handleSaveRating}
                       disabled={savingRating}
                     >
-                      {savingRating ? '⏳' : '💾'}
+                      <i className={`fas ${savingRating ? 'fa-spinner fa-spin' : 'fa-save'}`}></i>
                     </button>
                     <button 
                       className="action-btn"
@@ -1115,17 +1124,17 @@ function DetailPage() {
                         setEditingRating(false);
                       }}
                     >
-                      ❌
+                      <i className="fas fa-times"></i>
                     </button>
                   </div>
                 ) : (
                   <button className="action-btn" onClick={() => setEditingRating(true)}>
-                    ⭐ {t('detailModal.rate', 'Valorar')}
+                    <i className="fas fa-star" style={{color: '#f1c708ff'}}></i> {t('detailModal.rate', 'Valorar')}
                   </button>
                 )}
                 
                 <button className="action-btn delete-btn" onClick={() => setShowDeleteConfirm(true)}>
-                  🗑️ {t('detailModal.delete')}
+                  <i className="fas fa-trash-alt"></i> {t('detailModal.delete')}
                 </button>
               </div>
             </div>
@@ -1155,7 +1164,7 @@ function DetailPage() {
                 </div>
                 <div className="info-row">
                   <span className="info-label">{t('detailModal.status')}:</span>
-                  <span className="info-value">{displayMedia.estado}</span>
+                  <span className="info-value">{translateStatus(displayMedia.estado)}</span>
                 </div>
               </div>
 
@@ -1178,18 +1187,18 @@ function DetailPage() {
 
           {/* Sección de similares */}
           <div className="similares-block-page">
-            <h3>{t('detailModal.similar')}</h3>
+            <h3><i className="fas fa-film"></i> {t('detailModal.similar')}</h3>
             {loadingSimilares && (
               <div className="similares-cargando-page">
                 <div className="similares-spinner-page"></div>
-                <div style={{marginTop: 10, fontWeight: 500, color: '#1976d2'}}>{t('detailModal.searchingMatches')}</div>
+                <div style={{marginTop: 10, fontWeight: 500, color: '#1976d2'}}><i className="fas fa-search"></i> {t('detailModal.searchingMatches')}</div>
               </div>
             )}
             {errorSimilares && (
-              <div className="similares-error-page">{errorSimilares}</div>
+              <div className="similares-error-page"><i className="fas fa-exclamation-triangle"></i> {errorSimilares}</div>
             )}
             {!loadingSimilares && similares.length === 0 && !errorSimilares && (
-              <div className="similares-vacio-page">{t('detailModal.noSimilarTitles')}</div>
+              <div className="similares-vacio-page"><i className="fas fa-info-circle"></i> {t('detailModal.noSimilarTitles')}</div>
             )}
             {!loadingSimilares && similares.length > 0 && (
               <div
@@ -1240,7 +1249,7 @@ function DetailPage() {
               {tmdbDetails && tmdbDetails.trailer && (
                 <div className="trailer-block-page">
                   <div className="info-item">
-                    <span className="label">Tráiler:</span>
+                    <span className="label">{t('detailModal.trailer')}:</span>
                     {tmdbDetails.trailer.includes('youtube.com') || tmdbDetails.trailer.includes('youtu.be') ? (() => {
                       let videoId = null;
                       const ytMatch = tmdbDetails.trailer.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/)|youtu.be\/)([\w-]{11})/);
@@ -1254,7 +1263,7 @@ function DetailPage() {
                           width="100%"
                           height="200"
                           src={`https://www.youtube.com/embed/${videoId}`}
-                          title="Tráiler de YouTube"
+                          title={t('detailModal.youtubeTrailer')}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
@@ -1416,14 +1425,14 @@ function DetailPage() {
       {showDeleteConfirm && (
         <div className="delete-confirm-overlay">
           <div className="delete-confirm-modal">
-            <h3>{t('detailModal.deleteConfirmTitle')} {media.tipo}</h3>
-            <p>¿Estás seguro de que quieres eliminar este {media.tipo.toLowerCase()} de tu catálogo?</p>
+            <h3><i className="fas fa-exclamation-triangle"></i> {t('detailModal.deleteConfirmTitle')} {media.tipo}</h3>
+            <p>{t('detailModal.deleteConfirmMessage', { tipo: media.tipo.toLowerCase() })}</p>
             <div className="delete-confirm-actions">
               <button className="btn-cancel" onClick={() => setShowDeleteConfirm(false)}>
-                {t('detailModal.cancel')}
+                <i className="fas fa-times"></i> {t('detailModal.cancel')}
               </button>
               <button className="btn-delete" onClick={() => { handleDelete(); setShowDeleteConfirm(false); }}>
-                {t('detailModal.delete')}
+                <i className="fas fa-trash-alt"></i> {t('detailModal.delete')}
               </button>
             </div>
           </div>
@@ -1433,13 +1442,12 @@ function DetailPage() {
       {/* Modal de listas */}
       {showListasModal && (
         <ListasModal
-          mediaId={media.id}
-          listas={listas}
-          listasDeMedia={listasDeMedia}
+          isOpen={showListasModal}
           onClose={() => setShowListasModal(false)}
-          onListasChange={() => {
+          mediaId={media.id}
+          onListChange={() => {
             // Recargar listas
-            fetch(`${BACKEND_URL}/listas`)
+            authenticatedFetch(`${BACKEND_URL}/listas`)
               .then(res => res.ok ? res.json() : [])
               .then(data => {
                 setListas(data);
@@ -1457,16 +1465,16 @@ function DetailPage() {
           <div className="tags-modal" onClick={(e) => e.stopPropagation()}>
             <div className="tags-modal-header">
               <div className="tags-modal-title">
-                <span className="tags-modal-icon">🏷️</span>
+                <span className="tags-modal-icon"><i className="fas fa-tags"></i></span>
                 <h3>{t('detailModal.manageTags', 'Gestionar Tags')}</h3>
               </div>
-              <button className="tags-modal-close" onClick={() => setShowTagsManager(false)}>×</button>
+              <button className="tags-modal-close" onClick={() => setShowTagsManager(false)}><i className="fas fa-times"></i></button>
             </div>
             
             <div className="tags-modal-content">
               <div className="tags-search-section">
                 <div className="tags-search-container">
-                  <span className="search-icon">🔍</span>
+                  <span className="search-icon"><i className="fas fa-search"></i></span>
                   <input
                     type="text"
                     value={tagSearch}
@@ -1547,19 +1555,19 @@ const TMDBDetails = ({ tmdbDetails, media }) => {
       )}
       {tmdbDetails.generos && (
         <div className="info-item">
-          <span className="label">{t('detailModal.genres')}:</span>
+          <span className="label"><i className="fas fa-tags"></i> {t('detailModal.genres')}:</span>
           <span className="value">{tmdbDetails.generos}</span>
         </div>
       )}
       {tmdbDetails.pais && (
         <div className="info-item">
-          <span className="label">{t('detailModal.country')}:</span>
+          <span className="label"><i className="fas fa-globe"></i> {t('detailModal.country')}:</span>
           <span className="value">{tmdbDetails.pais}</span>
         </div>
       )}
       {tmdbDetails.duracion && (
         <div className="info-item">
-          <span className="label">{t('detailModal.duration')}:</span>
+          <span className="label"><i className="fas fa-clock"></i> {t('detailModal.duration')}:</span>
           <span className="value">{tmdbDetails.duracion} min</span>
         </div>
       )}
@@ -1567,13 +1575,13 @@ const TMDBDetails = ({ tmdbDetails, media }) => {
         <>
           {tmdbDetails.presupuesto !== undefined && tmdbDetails.presupuesto !== null && (
             <div className="info-item">
-              <span className="label">{t('detailModal.budget')}:</span>
+              <span className="label"><i className="fas fa-dollar-sign"></i> {t('detailModal.budget')}:</span>
               <span className="value">{tmdbDetails.presupuesto > 0 ? `$${tmdbDetails.presupuesto.toLocaleString('es-ES')}` : t('detailModal.notAvailable')}</span>
             </div>
           )}
           {tmdbDetails.recaudacion !== undefined && tmdbDetails.recaudacion !== null && (
             <div className="info-item">
-              <span className="label">{t('detailModal.revenue')}:</span>
+              <span className="label"><i className="fas fa-chart-line"></i> {t('detailModal.revenue')}:</span>
               <span className="value">{tmdbDetails.recaudacion > 0 ? `$${tmdbDetails.recaudacion.toLocaleString('es-ES')}` : t('detailModal.notAvailable')}</span>
             </div>
           )}
@@ -1582,7 +1590,7 @@ const TMDBDetails = ({ tmdbDetails, media }) => {
       {media.tipo === 'serie' && tmdbDetails.temporadas_detalle?.length > 0 && (
         <div className="tmdb-seasons-block-page">
           <div className="info-item">
-            <span className="label">{t('detailModal.seasonsAndEpisodes')}:</span>
+            <span className="label"><i className="fas fa-list-ol"></i> {t('detailModal.seasonsAndEpisodes')}:</span>
             <div className="seasons-list">
               {tmdbDetails.temporadas_detalle.map(season => (
                 <details key={season.numero} className="season-detail">
