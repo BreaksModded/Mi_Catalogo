@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
 import { useDynamicPoster } from '../hooks/useDynamicPoster';
 import PosterSkeleton from './PosterSkeleton';
@@ -229,6 +230,16 @@ const scrollLeftRef = useRef(0);
   const [tempSelectedTagIds, setTempSelectedTagIds] = useState([]);
   const [showAllTags, setShowAllTags] = useState(false);
   const { t, currentLanguage } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
+
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
 
   // Hook para portada dinámica
   const mediaType = media?.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
@@ -498,7 +509,7 @@ const scrollLeftRef = useRef(0);
                 {displayMedia.titulo} 
                 <span className="detail-modal-year">({displayMedia.anio})</span>
               </h2>
-              <p><strong>{t('detailModal.genre')}</strong> {displayMedia.genero}</p>
+              <p><strong>{t('detailModal.genre')}</strong> {translateGenres(displayMedia.genero)}</p>
               <p><strong>{t('detailModal.director')}</strong> {displayMedia.director}</p>
               <p><strong>{t('detailModal.cast')}</strong> {displayMedia.elenco}</p>
               <p><strong>{t('detailModal.synopsis')}</strong> {displayMedia.sinopsis}</p>
@@ -915,12 +926,22 @@ export default DetailModal;
 
 const TMDBDetails = ({ tmdbDetails, media }) => {
   const { t } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
+  
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
   
   return (
     <>
       {tmdbDetails.titulo_original && <div><b>{t('detailModal.originalTitle')}:</b> {tmdbDetails.titulo_original}</div>}
       {tmdbDetails.idioma_original && <div><b>{t('detailModal.originalLanguage')}:</b> {tmdbDetails.idioma_original.toUpperCase()}</div>}
-      {tmdbDetails.generos && <div><b>{t('detailModal.genres')}:</b> {tmdbDetails.generos}</div>}
+      {tmdbDetails.generos && <div><b>{t('detailModal.genres')}:</b> {translateGenres(tmdbDetails.generos)}</div>}
       {tmdbDetails.pais && <div><b>{t('detailModal.country')}:</b> {tmdbDetails.pais}</div>}
       {tmdbDetails.duracion && <div><b>{t('detailModal.duration')}:</b> {tmdbDetails.duracion} min</div>}
       {media.tipo === 'película' && (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import { useDynamicPosters, getDynamicPosterUrl } from '../hooks/useDynamicPoster';
 import SectionRow from './SectionRow';
@@ -21,6 +22,7 @@ function rotateArray(arr, shift) {
 // HomeSections ahora recibe 'medias' como prop y 'onMediaClick' para la selección
 export default function HomeSections({ medias, onMediaClick }) {
   const { t } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
   
   // Hook para traducir listas de medios - DEBE IR ANTES que otros useMemo que lo usen
   const translatedMedias = useTranslatedMediaList(medias || [], 'all');
@@ -28,14 +30,10 @@ export default function HomeSections({ medias, onMediaClick }) {
   // Hook para portadas dinámicas
   const postersMap = useDynamicPosters(translatedMedias.displayData || []);
   
-  // Función para normalizar géneros usando el sistema de traducción existente
+  // Función para normalizar géneros usando el sistema de traducción inteligente
   const normalizeGenre = (genero) => {
     if (!genero) return '';
-    const generoLower = genero.toLowerCase().trim();
-    // Usar el sistema de traducción para normalizar
-    const translated = t(`genres.${generoLower}`);
-    // Si no encuentra traducción, devolver el género original
-    return translated === `genres.${generoLower}` ? genero : translated;
+    return translateGenre(genero);
   };  // Definir las secciones de forma dinámica para poder traducirlas
   const getSections = () => [
     { titleKey: 'homeSections.trends', especial: 'tendencias' },

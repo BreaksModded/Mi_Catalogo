@@ -4,6 +4,7 @@ import "./DetailModal.css";
 import "./AddMediaForm.css";
 import "./AuthModal.css";
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 
@@ -12,22 +13,42 @@ const PAISES_KEYS = [
   "spain", "mexico", "argentina", "colombia", "chile", "peru", "venezuela", "ecuador", 
   "bolivia", "paraguay", "uruguay", "costaRica", "panama", "guatemala", "honduras",
   "elSalvador", "nicaragua", "dominicanRepublic", "cuba", "puertoRico", "usa",
-  "canada", "brazil", "france", "italy", "germany", "uk", "portugal", "other"
+  "canada", "brazil", "france", "italy", "germany", "uk", "portugal", 
+  "netherlands", "belgium", "sweden", "norway", "denmark", "finland", "poland", 
+  "czechRepublic", "austria", "switzerland", "australia", "newZealand", "japan", 
+  "southKorea", "china", "india", "thailand", "singapore", "malaysia", "indonesia", 
+  "philippines", "vietnam", "southAfrica", "turkey", "israel", "russia", "ukraine", 
+  "other"
 ];
 
 const GENEROS_KEYS = [
-  "action", "adventure", "animation", "biography", "comedy", "crime", "documentary",
-  "drama", "family", "fantasy", "history", "horror", "music", "mystery", "romance",
-  "sciFi", "sport", "thriller", "war", "western", "musical", "noir"
-];
-
-const PLATAFORMAS_KEYS = [
-  "netflix", "primeVideo", "disneyPlus", "hboMax", "appleTv", "paramount", "hulu",
-  "peacock", "discovery", "crunchyroll", "filmin", "movistar", "skyShowtime", "other"
+  { key: "action", icon: "💥", color: "#ff4757" },
+  { key: "adventure", icon: "🗺️", color: "#2ed573" },
+  { key: "animation", icon: "🎨", color: "#ff9ff3" },
+  { key: "biography", icon: "👤", color: "#70a1ff" },
+  { key: "comedy", icon: "😂", color: "#ffa502" },
+  { key: "crime", icon: "🕵️", color: "#2f3542" },
+  { key: "documentary", icon: "📽️", color: "#57606f" },
+  { key: "drama", icon: "🎭", color: "#3742fa" },
+  { key: "family", icon: "👨‍👩‍👧‍👦", color: "#2ed573" },
+  { key: "fantasy", icon: "🧙‍♂️", color: "#a55eea" },
+  { key: "history", icon: "🏛️", color: "#8854d0" },
+  { key: "horror", icon: "👻", color: "#2f3542" },
+  { key: "music", icon: "🎵", color: "#ff6b81" },
+  { key: "mystery", icon: "🔍", color: "#5352ed" },
+  { key: "romance", icon: "💕", color: "#ff3838" },
+  { key: "sciFi", icon: "🚀", color: "#40739e" },
+  { key: "sport", icon: "⚽", color: "#44bd32" },
+  { key: "thriller", icon: "😱", color: "#c44569" },
+  { key: "war", icon: "⚔️", color: "#8b7355" },
+  { key: "western", icon: "🤠", color: "#d63031" },
+  { key: "musical", icon: "🎼", color: "#fd79a8" },
+  { key: "noir", icon: "🕴️", color: "#2d3436" }
 ];
 
 export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLoginProp }) {
   const { t, currentLanguage } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
   const [isLogin, setIsLogin] = useState(isLoginProp ?? true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -36,6 +57,11 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Estados para las plataformas dinámicas
+  const [availablePlatforms, setAvailablePlatforms] = useState([]); // Plataformas disponibles por país
+  const [loadingPlatforms, setLoadingPlatforms] = useState(false); // Estado de carga
+  const [showAllPlatforms, setShowAllPlatforms] = useState(false); // Controla si mostrar todas las plataformas
 
   // Datos básicos
   const [email, setEmail] = useState("");
@@ -101,6 +127,138 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
       mounted.current = false;
     };
   }, []);
+
+  // Función para ordenar plataformas por popularidad usando datos de TMDb
+  const sortPlatformsByPopularity = (platforms) => {
+    return platforms.sort((a, b) => {
+      // Primer criterio: display_priority (menor número = más popular)
+      // TMDb proporciona este campo que indica la popularidad en el país específico
+      const aPriority = a.display_priority || 999;
+      const bPriority = b.display_priority || 999;
+      
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      
+      // Segundo criterio: ordenar alfabéticamente si tienen la misma prioridad
+      return a.provider_name.localeCompare(b.provider_name);
+    });
+  };
+
+  // Cargar plataformas disponibles según el país seleccionado
+  useEffect(() => {
+    const loadPlatformsByCountry = async () => {
+      if (!pais || !show) {
+        setAvailablePlatforms([]);
+        return;
+      }
+
+      // Mapear nombres de países a códigos ISO
+      const countryCodeMap = {
+        'spain': 'ES',
+        'mexico': 'MX', 
+        'argentina': 'AR',
+        'colombia': 'CO',
+        'chile': 'CL',
+        'peru': 'PE',
+        'venezuela': 'VE',
+        'ecuador': 'EC',
+        'bolivia': 'BO',
+        'paraguay': 'PY',
+        'uruguay': 'UY',
+        'costaRica': 'CR',
+        'panama': 'PA',
+        'guatemala': 'GT',
+        'honduras': 'HN',
+        'elSalvador': 'SV',
+        'nicaragua': 'NI',
+        'dominicanRepublic': 'DO',
+        'cuba': 'CU',
+        'puertoRico': 'PR',
+        'usa': 'US',
+        'canada': 'CA',
+        'brazil': 'BR',
+        'uk': 'GB', // Cambiado de 'unitedKingdom' a 'uk' para coincidir con PAISES_KEYS
+        'france': 'FR',
+        'germany': 'DE',
+        'italy': 'IT',
+        'portugal': 'PT',
+        'netherlands': 'NL',
+        'belgium': 'BE',
+        'sweden': 'SE',
+        'norway': 'NO',
+        'denmark': 'DK',
+        'finland': 'FI',
+        'poland': 'PL',
+        'czechRepublic': 'CZ',
+        'austria': 'AT',
+        'switzerland': 'CH',
+        'australia': 'AU',
+        'newZealand': 'NZ',
+        'japan': 'JP',
+        'southKorea': 'KR',
+        'china': 'CN',
+        'india': 'IN',
+        'thailand': 'TH',
+        'singapore': 'SG',
+        'malaysia': 'MY',
+        'indonesia': 'ID',
+        'philippines': 'PH',
+        'vietnam': 'VN',
+        'southAfrica': 'ZA',
+        'turkey': 'TR',
+        'israel': 'IL',
+        'russia': 'RU',
+        'ukraine': 'UA',
+        'other': null // Agregar 'other' que está en PAISES_KEYS
+      };
+
+      const countryCode = countryCodeMap[pais];
+      if (countryCode === undefined) {
+        console.log(`Código de país no encontrado para: ${pais}`);
+        setAvailablePlatforms([]);
+        return;
+      }
+
+      // Si es "other" (countryCode es null), mostrar mensaje y no cargar plataformas
+      if (countryCode === null) {
+        console.log('País "Otro" seleccionado - no se cargarán plataformas específicas');
+        setAvailablePlatforms([]);
+        return;
+      }
+
+      setLoadingPlatforms(true);
+      try {
+        const response = await fetch(`${BACKEND_URL}/tmdb/watch/providers/regions/${countryCode}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Plataformas disponibles en ${countryCode}:`, data.results?.length || 0);
+          
+          // Ordenar plataformas por popularidad antes de establecerlas
+          const sortedPlatforms = sortPlatformsByPopularity(data.results || []);
+          setAvailablePlatforms(sortedPlatforms);
+          
+          // Limpiar plataformas seleccionadas cuando cambie el país
+          // para evitar inconsistencias con plataformas no disponibles
+          setPlataformas([]);
+          setShowAllPlatforms(false); // Resetear vista compacta
+        } else {
+          console.error(`Error cargando plataformas para ${countryCode}:`, response.status);
+          setAvailablePlatforms([]);
+          setPlataformas([]);
+          setShowAllPlatforms(false);
+        }
+      } catch (error) {
+        console.error('Error cargando plataformas por país:', error);
+        setAvailablePlatforms([]);
+        setShowAllPlatforms(false);
+      } finally {
+        setLoadingPlatforms(false);
+      }
+    };
+
+    loadPlatformsByCountry();
+  }, [pais, show]);
 
   // Función para verificar disponibilidad del username
   const checkUsernameAvailability = async (usernameToCheck) => {
@@ -592,7 +750,7 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
           >
             <option value="">{t('auth.selectCountry')}</option>
             {PAISES_KEYS.map(paisKey => (
-              <option key={paisKey} value={t(`auth.countries.${paisKey}`)}>{t(`auth.countries.${paisKey}`)}</option>
+              <option key={paisKey} value={paisKey}>{t(`auth.countries.${paisKey}`)}</option>
             ))}
           </select>
           {validationErrors.pais && <span className="error-text">{validationErrors.pais}</span>}
@@ -623,68 +781,155 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
       
       <div className="form-group">
         <label className="form-label">{t('auth.favoriteGenres')}</label>
-        <div className="checkbox-grid">
-          {GENEROS_KEYS.map(generoKey => (
-            <label key={generoKey} className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={safeGenerosFavoritos.includes(t(`auth.genres.${generoKey}`))}
-                onChange={() => toggleGenero(t(`auth.genres.${generoKey}`))}
-              />
-              <span className="checkbox-label">{t(`auth.genres.${generoKey}`)}</span>
-            </label>
-          ))}
+        <div className="visual-selector genres">
+          {GENEROS_KEYS.map(genreObj => {
+            const translatedGenre = translateGenre(genreObj.key);
+            return (
+              <div 
+                key={genreObj.key} 
+                className={`genre-item ${safeGenerosFavoritos.includes(translatedGenre) ? 'selected' : ''}`}
+                style={{ '--item-color': genreObj.color }}
+                onClick={() => toggleGenero(translatedGenre)}
+              >
+                <span className="icon">{genreObj.icon}</span>
+                <span className="name">{translatedGenre}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
       
       <div className="form-group">
         <label className="form-label">{t('auth.streamingPlatforms')}</label>
-        <div className="checkbox-grid">
-          {PLATAFORMAS_KEYS.map(plataformaKey => (
-            <label key={plataformaKey} className="checkbox-item">
-              <input
-                type="checkbox"
-                checked={safePlataformas.includes(t(`auth.platforms.${plataformaKey}`))}
-                onChange={() => togglePlataforma(t(`auth.platforms.${plataformaKey}`))}
-              />
-              <span className="checkbox-label">{t(`auth.platforms.${plataformaKey}`)}</span>
-            </label>
-          ))}
-        </div>
+        {!pais && (
+          <p className="form-hint">{t('auth.selectCountryFirst', 'Selecciona primero tu país para ver las plataformas disponibles')}</p>
+        )}
+        {pais && loadingPlatforms && (
+          <div className="loading-platforms">
+            <div className="loading-spinner-small"></div>
+            <span>{t('auth.loadingPlatforms', 'Cargando plataformas disponibles...')}</span>
+          </div>
+        )}
+        {pais && !loadingPlatforms && (
+          <div className="platforms-container">
+            <div className={`platforms-grid-container ${showAllPlatforms ? 'expanded' : ''}`}>
+              <div className="visual-selector platforms">
+                {availablePlatforms.length > 0 ? (
+                  availablePlatforms.map(platform => {
+                    let logoPath = platform.logo_path;
+                    
+                    return (
+                      <div 
+                        key={platform.provider_id} 
+                        className={`platform-item ${safePlataformas.includes(platform.provider_name) ? 'selected' : ''}`}
+                        style={{ '--item-color': '#0073e6' }} // Color genérico para plataformas dinámicas
+                        onClick={() => togglePlataforma(platform.provider_name)}
+                      >
+                        {logoPath ? (
+                          <img 
+                            src={`https://image.tmdb.org/t/p/w92${logoPath}`}
+                            alt={platform.provider_name}
+                            className="logo"
+                            loading="lazy"
+                            onError={(e) => {
+                              console.log(`Error cargando logo para ${platform.provider_name}:`, e);
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className="logo-placeholder" 
+                          style={{ display: logoPath ? 'none' : 'flex' }}
+                        >
+                          <span className="platform-initial">{platform.provider_name.charAt(0)}</span>
+                        </div>
+                        <span className="name">{platform.provider_name}</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="no-platforms-message">
+                    <p>
+                      {pais === 'other' 
+                        ? t('auth.otherCountrySelected', 'Has seleccionado "Otro país". Podrás especificar tus plataformas manualmente más tarde.')
+                        : t('auth.noPlatformsAvailable', 'No se encontraron plataformas disponibles para tu país')
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Botón "Ver más" solo si hay más de 12 plataformas */}
+            {availablePlatforms.length > 12 && (
+              <button
+                type="button"
+                className={`show-more-platforms ${showAllPlatforms ? 'expanded' : ''}`}
+                onClick={() => setShowAllPlatforms(!showAllPlatforms)}
+              >
+                <span className="icon">▼</span>
+                <span>
+                  {showAllPlatforms 
+                    ? t('auth.showLess', 'Mostrar menos') 
+                    : t('auth.showMore', 'Ver más plataformas')
+                  }
+                </span>
+                {!showAllPlatforms && (
+                  <span className="platforms-count">
+                    +{availablePlatforms.length - 12}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="form-group">
         <label className="form-label">{t('auth.contentType')}</label>
-        <div className="radio-group">
-          <label className="radio-item">
+        <div className="radio-group visual-radio-group">
+          <label className={`radio-item visual-radio ${(tipoContenido || "") === "peliculas" ? 'selected' : ''}`}>
             <input
               type="radio"
               name="tipoContenido"
               value="peliculas"
               checked={(tipoContenido || "") === "peliculas"}
               onChange={e => safeSetValue(setTipoContenido, e.target?.value)}
+              className="visual-radio-input"
             />
-            <span className="radio-label">{t('auth.movies')}</span>
+            <div className="visual-content">
+              <span className="visual-icon content-icon">🎬</span>
+              <span className="radio-label">{t('auth.movies')}</span>
+            </div>
           </label>
-          <label className="radio-item">
+          <label className={`radio-item visual-radio ${(tipoContenido || "") === "series" ? 'selected' : ''}`}>
             <input
               type="radio"
               name="tipoContenido"
               value="series"
               checked={(tipoContenido || "") === "series"}
               onChange={e => safeSetValue(setTipoContenido, e.target?.value)}
+              className="visual-radio-input"
             />
-            <span className="radio-label">{t('auth.series')}</span>
+            <div className="visual-content">
+              <span className="visual-icon content-icon">📺</span>
+              <span className="radio-label">{t('auth.series')}</span>
+            </div>
           </label>
-          <label className="radio-item">
+          <label className={`radio-item visual-radio ${(tipoContenido || "") === "ambos" ? 'selected' : ''}`}>
             <input
               type="radio"
               name="tipoContenido"
               value="ambos"
               checked={(tipoContenido || "") === "ambos"}
               onChange={e => safeSetValue(setTipoContenido, e.target?.value)}
+              className="visual-radio-input"
             />
-            <span className="radio-label">{t('auth.both')}</span>
+            <div className="visual-content">
+              <span className="visual-icon content-icon">🎭</span>
+              <span className="radio-label">{t('auth.both')}</span>
+            </div>
           </label>
         </div>
       </div>

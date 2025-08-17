@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import './Resumen.css';
 import GeneroChart, { YearChart } from './GeneroChart';
+import GenreManager from './GenreManager';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
 import { contentTranslationService } from '../utils/contentTranslation';
 
@@ -75,6 +77,7 @@ const ErrorState = ({ error, onRetry, t }) => (
 
 function Resumen({ medias }) {
   const { t, currentLanguage } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
   
   // JWT authentication function
   const authenticatedFetch = useCallback((url, options = {}) => {
@@ -102,13 +105,6 @@ function Resumen({ medias }) {
       return media.titulo;
     }
   }, [currentLanguage]);
-
-  // Genre translation function
-  const translateGenre = useCallback((genre) => {
-    if (!genre) return '';
-    const lowerGenre = genre.toLowerCase();
-    return t(`genres.${lowerGenre}`, genre);
-  }, [t]);
 
   // Enhanced state management
   const [state, setState] = useState({
@@ -569,6 +565,9 @@ function Resumen({ medias }) {
           <YearChart data={safeData.vistosPorAnio} />
         </div>
       </section>
+
+      {/* Genre Management Section - Solo en desarrollo */}
+      <GenreManager medias={medias} />
     </div>
   );
 }

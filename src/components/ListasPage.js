@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 import { useDynamicPosters, getDynamicPosterUrl, useDynamicPoster } from '../hooks/useDynamicPoster';
 import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import Navbar from './Navbar';
@@ -58,6 +59,16 @@ function PreviewPoster({ media, index }) {
 function SearchResultItem({ media, onAdd, adding, t }) {
   const mediaType = media.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
   const { posterUrl, loading } = useDynamicPoster(media.tmdb_id, mediaType, media.imagen);
+  const { translateGenre } = useGenreTranslation();
+  
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
   
   return (
     <div className="lista-resultado-item">
@@ -75,7 +86,7 @@ function SearchResultItem({ media, onAdd, adding, t }) {
         <span className="lista-resultado-detalles">
           {media.anio && `${media.anio}`}
           {media.anio && media.genero && ' • '}
-          {media.genero}
+          {translateGenres(media.genero)}
         </span>
       </div>
       <button
@@ -94,6 +105,16 @@ function SearchResultItem({ media, onAdd, adding, t }) {
 function EditableMediaItem({ media, index, onRemove, onDragStart, onDragOver, onDrop, isDragging, t }) {
   const mediaType = media.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
   const { posterUrl, loading } = useDynamicPoster(media.tmdb_id, mediaType, media.imagen);
+  const { translateGenre } = useGenreTranslation();
+  
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
   
   return (
     <div 
@@ -117,7 +138,7 @@ function EditableMediaItem({ media, index, onRemove, onDragStart, onDragOver, on
         <p className="editable-media-details">
           {media.anio && `${media.anio}`}
           {media.anio && media.genero && ' • '}
-          {media.genero}
+          {translateGenres(media.genero)}
         </p>
       </div>
       <button

@@ -2,21 +2,17 @@ import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function GeneroChart({ data }) {
   const { t } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
   
   if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).length === 0) {
     return <div className="no-data-message">{t('messages.noData', 'No hay datos de géneros')}</div>;
   }
-
-  // Traducir los géneros
-  const translateGenre = (genre) => {
-    const lowerGenre = genre.toLowerCase();
-    return t(`genres.${lowerGenre}`, genre);
-  };
 
   const labels = Object.keys(data).map(translateGenre);
   const counts = Object.values(data);

@@ -627,6 +627,9 @@
   align-items: center;
   gap: 20px;
   text-align: left;
+  min-height: 80px;
+  box-sizing: border-box;
+  /* Ajusta el valor de min-height según el diseño deseado */
 }
 
 .stat-icon {

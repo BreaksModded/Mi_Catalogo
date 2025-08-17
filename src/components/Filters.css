@@ -117,6 +117,67 @@
   }
 }
 
+/* Responsive: Laptops y tablets horizontales - SOLUCIÓN MULTILINEA */
+@media (max-width: 1400px) and (min-width: 769px) {
+  .filters-bar {
+    /* Permitir múltiples líneas para evitar solapamiento */
+    flex-wrap: wrap;
+    padding: 20px;
+    gap: 12px;
+    margin: 16px 0;
+    /* Mantener altura automática para acomodar múltiples líneas */
+    min-height: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  
+  /* Mantener tamaños legibles - NO comprimir demasiado */
+  .filters-bar select {
+    min-width: 120px; /* Más ancho para legibilidad */
+    padding: 8px 28px 8px 12px;
+    font-size: 0.9em;
+    margin: 2px;
+  }
+  
+  .filter-btn {
+    padding: 8px 16px;
+    font-size: 0.9em;
+    min-width: 90px; /* Más ancho para legibilidad */
+    margin: 2px;
+    letter-spacing: 0.3px;
+  }
+  
+  .input-group {
+    gap: 8px;
+    margin: 2px;
+    /* Permitir que se ajuste naturalmente */
+    flex-shrink: 0;
+  }
+  
+  .input-group label {
+    font-size: 0.85em;
+    margin-right: 6px;
+    white-space: nowrap; /* Evitar que el texto se corte */
+  }
+  
+  .input-group input {
+    width: 70px; /* Más ancho para facilitar la entrada */
+    padding: 8px 10px;
+    font-size: 0.9em;
+  }
+  
+  .react-select__control {
+    min-width: 120px !important; /* Consistente con los selects nativos */
+    font-size: 0.9em !important;
+    margin: 2px !important;
+  }
+  
+  /* Asegurar que los elementos no se compriman demasiado */
+  .filters-bar > * {
+    flex-shrink: 0; /* Evitar que los elementos se compriman */
+  }
+}
+
 
 .input-group {
   display: flex;
@@ -317,11 +378,19 @@
   backdrop-filter: blur(20px) !important;
   overflow: hidden !important;
   padding: 0 !important;
+  /* Asegurar ancho mínimo para evitar scroll horizontal */
+  min-width: 200px !important;
+  width: max-content !important;
+  max-width: 300px !important;
 }
 
 .react-select__menu-list {
   padding: 0 !important;
   margin: 0 !important;
+  /* Evitar scroll horizontal */
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  max-height: 200px !important;
 }
 
 .react-select__control {
@@ -354,6 +423,32 @@
   border-radius: 0 !important;
   margin: 0 !important;
   border: none !important;
+  /* Evitar que el texto se corte */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Media query específica para pantallas de portátil - Dropdown de géneros más ancho */
+@media (max-width: 1400px) and (min-width: 769px) {
+  .react-select__menu {
+    /* En pantallas de portátil, hacer el dropdown más ancho */
+    min-width: 250px !important;
+    width: auto !important;
+    max-width: 350px !important;
+  }
+  
+  .react-select__option {
+    /* Más padding para mejor legibilidad */
+    padding: 14px 20px !important;
+    font-size: 0.9em !important;
+  }
+  
+  .react-select__menu-list {
+    /* Altura máxima ajustada para pantallas de portátil */
+    max-height: 250px !important;
+  }
 }
 
 .react-select__option:first-child {

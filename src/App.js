@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SectionRow from './components/SectionRow';
 import Resumen from './components/Resumen';
@@ -7,7 +7,7 @@ import Filters from './components/Filters';
 import DetailModal from './components/DetailModal';
 import DetailPage from './components/DetailPage';
 import ViewChoiceModal from './components/ViewChoiceModal';
-import AddMediaForm from './components/AddMediaForm';
+import AddMediaVersionSelector from './components/AddMediaVersionSelector';
 import ListasView from './components/ListasView';
 import ListasPage from './components/ListasPage';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
@@ -126,6 +126,7 @@ function CatalogPage() {
   const { showNotification } = useNotification();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [medias, setMedias] = useState([]); 
   const [filteredItems, setFilteredItems] = useState([]);
@@ -148,6 +149,15 @@ function CatalogPage() {
   React.useEffect(() => {
     localStorage.setItem('catalogo_section', section);
   }, [section]);
+
+  // Escuchar cambios de navegación para actualizar la sección
+  React.useEffect(() => {
+    if (location.state && location.state.section) {
+      setSection(location.state.section);
+      // Limpiar el estado para evitar que se mantenga en el historial
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -1361,7 +1371,7 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
       />
       <div className="main-content">
       {section === 'add' ? (
-        <AddMediaForm onAdded={handleMediaAdded} />
+        <AddMediaVersionSelector onAdded={handleMediaAdded} />
       ) : section === 'resumen' ? (
         <Resumen medias={medias} pendientes={pendientes} />
       ) : section === 'listas' ? (

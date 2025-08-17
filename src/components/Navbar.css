@@ -1,3 +1,4 @@
+/* ===== BASE NAVBAR STYLES ===== */
 .navbar {
   background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
   color: #fff;
@@ -14,12 +15,15 @@
   z-index: 100;
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 226, 199, 0.1);
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .navbar-logo {
@@ -29,7 +33,7 @@
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
-  /* Prevenir selección de texto */
+  flex-shrink: 0;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -56,14 +60,18 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
 .navbar a {
   text-decoration: none;
   color: inherit;
 }
+
 .navbar-links {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .navbar-links button,
@@ -80,7 +88,7 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  /* Prevenir selección de texto y scroll con clic medio */
+  white-space: nowrap;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -115,6 +123,7 @@
 .navbar-links a:hover::before {
   width: 80%;
 }
+
 .navbar-search {
   position: relative;
 }
@@ -148,6 +157,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
+
 .navbar-add-btn {
   background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%);
   color: #181818;
@@ -166,7 +176,7 @@
   overflow: hidden;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  /* Prevenir selección de texto */
+  white-space: nowrap;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -198,6 +208,7 @@
 .navbar-add-btn:hover::before {
   left: 100%;
 }
+
 .navbar-hamburger {
   display: none;
 }
@@ -206,7 +217,379 @@
   display: none;
 }
 
-/* --- Responsive Navbar for Mobile --- */
+/* ===== RESPONSIVE MEDIA QUERIES (Ordenadas de mayor a menor) ===== */
+
+/* --- Pantallas Ultra Anchas (más de 1600px) --- */
+/* Usar estilos base */
+
+/* --- Laptops Grandes (15.6", 16", 17") - 1200px a 1600px --- */
+@media (max-width: 1600px) and (min-width: 1201px) {
+  .navbar {
+    padding: 0 18px;
+    height: 66px;
+  }
+  
+  .navbar-logo {
+    font-size: 1.9em;
+  }
+  
+  .cinema-icon {
+    font-size: 1.25em;
+    margin-right: 10px;
+  }
+  
+  .navbar-links {
+    gap: 6px;
+  }
+  
+  .navbar-links button,
+  .navbar-links a {
+    font-size: 0.9em;
+    margin: 0 4px;
+    padding: 9px 14px;
+  }
+  
+  .navbar-search input {
+    width: 180px;
+    padding: 9px 12px;
+    font-size: 0.92em;
+  }
+  
+  .navbar-add-btn {
+    padding: 8px 16px;
+    margin-left: 12px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    min-width: auto;
+  }
+  
+  .user-dropdown-trigger {
+    padding: 7px 10px;
+    min-width: 120px;
+  }
+  
+  .user-dropdown-trigger .user-name {
+    display: block !important;
+    font-size: 13px;
+  }
+  
+  .user-dropdown-trigger .dropdown-arrow {
+    display: block !important;
+  }
+  
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+}
+
+/* --- Laptops Medianos (13", 14") - 900px a 1200px --- */
+@media (max-width: 1200px) and (min-width: 901px) {
+  .navbar {
+    padding: 0 14px;
+    height: 62px;
+  }
+  
+  .navbar-logo {
+    font-size: 1.7em;
+  }
+  
+  .cinema-icon {
+    font-size: 1.15em;
+    margin-right: 7px;
+  }
+  
+  .navbar-links {
+    gap: 2px;
+  }
+  
+  .navbar-links button,
+  .navbar-links a {
+    font-size: 0.82em;
+    margin: 0 2px;
+    padding: 8px 11px;
+  }
+  
+  .navbar-search input {
+    width: 170px;
+    padding: 8px 11px;
+    font-size: 0.88em;
+  }
+  
+  .navbar-add-btn {
+    padding: 7px 14px;
+    margin-left: 10px;
+    font-size: 0.82em;
+    white-space: nowrap;
+    min-width: auto;
+  }
+  
+  .user-dropdown {
+    margin-left: 4px;
+  }
+  
+  .user-dropdown-trigger {
+    padding: 5px 7px;
+    min-width: 38px !important;
+    width: 38px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .user-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #00e2c7;
+    pointer-events: none;
+    filter: drop-shadow(0 0 2px rgba(0, 226, 199, 0.6));
+  }
+  
+  .user-dropdown-trigger:hover {
+    box-shadow: 0 0 12px rgba(0, 226, 199, 0.4);
+  }
+  
+  .user-dropdown-trigger:hover::after {
+    border-top-color: #ffffff;
+    filter: drop-shadow(0 0 3px rgba(0, 226, 199, 0.8));
+  }
+  
+  .user-info {
+    width: auto;
+    gap: 0;
+    justify-content: center;
+  }
+  
+  .user-dropdown-trigger .user-name {
+    display: none !important;
+  }
+  
+  .user-dropdown-trigger .dropdown-arrow {
+    display: none !important;
+  }
+  
+  .user-avatar {
+    width: 25px;
+    height: 25px;
+    font-size: 11px;
+  }
+}
+
+/* --- Laptops Pequeños (11", 12") - 821px a 900px --- */
+@media (max-width: 900px) and (min-width: 821px) {
+  .navbar {
+    padding: 0 12px;
+    height: 60px;
+  }
+  
+  .navbar-logo {
+    font-size: 1.5em;
+  }
+  
+  .navbar-title {
+    font-size: 0.9em;
+    letter-spacing: 1px;
+  }
+  
+  .cinema-icon {
+    font-size: 1.1em;
+    margin-right: 6px;
+  }
+  
+  .navbar-links {
+    gap: 1px;
+  }
+  
+  .navbar-links button,
+  .navbar-links a {
+    font-size: 0.75em;
+    margin: 0 1px;
+    padding: 6px 8px;
+    letter-spacing: 0.1px;
+  }
+  
+  .navbar-search input {
+    width: 140px;
+    padding: 6px 8px;
+    font-size: 0.85em;
+  }
+  
+  .navbar-add-btn {
+    padding: 5px 10px;
+    margin-left: 6px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    min-width: auto;
+  }
+  
+  .user-dropdown {
+    margin-left: 2px;
+  }
+  
+  .user-dropdown-trigger {
+    padding: 4px 6px;
+    min-width: 35px !important;
+    width: 35px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .user-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 0;
+    height: 0;
+    border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent;
+    border-top: 2.5px solid rgba(0, 226, 199, 0.8);
+    pointer-events: none;
+  }
+  
+  .user-dropdown-trigger:hover {
+    box-shadow: 0 0 6px rgba(0, 226, 199, 0.3);
+  }
+  
+  .user-dropdown-trigger:hover::after {
+    border-top-color: #00e2c7;
+  }
+  
+  .user-info {
+    width: auto;
+    gap: 0;
+    justify-content: center;
+  }
+  
+  .user-dropdown-trigger .user-name {
+    display: none !important;
+  }
+  
+  .user-dropdown-trigger .dropdown-arrow {
+    display: none !important;
+  }
+  
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+}
+
+/* --- Laptops Muy Pequeños (10") - 769px a 820px --- */
+@media (max-width: 820px) and (min-width: 769px) {
+  .navbar {
+    padding: 0 8px;
+    height: 56px;
+  }
+  
+  .navbar-logo {
+    font-size: 1.3em;
+  }
+  
+  .navbar-title {
+    font-size: 0.8em;
+    letter-spacing: 0.5px;
+  }
+  
+  .cinema-icon {
+    font-size: 1em;
+    margin-right: 4px;
+  }
+  
+  .navbar-links {
+    gap: 0px;
+  }
+  
+  .navbar-links button,
+  .navbar-links a {
+    font-size: 0.7em;
+    margin: 0;
+    padding: 5px 6px;
+    letter-spacing: 0px;
+  }
+  
+  .navbar-search input {
+    width: 120px;
+    padding: 5px 8px;
+    font-size: 0.8em;
+  }
+  
+  .navbar-add-btn {
+    padding: 4px 8px;
+    margin-left: 4px;
+    font-size: 0.7em;
+    letter-spacing: 0px;
+    border-radius: 8px;
+    white-space: nowrap;
+    min-width: auto;
+  }
+  
+  .navbar-right {
+    gap: 4px;
+  }
+  
+  .user-dropdown {
+    margin-left: 2px;
+  }
+  
+  .user-dropdown-trigger {
+    padding: 3px 5px;
+    min-width: 30px !important;
+    width: 30px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .user-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 0;
+    height: 0;
+    border-left: 2px solid transparent;
+    border-right: 2px solid transparent;
+    border-top: 2px solid rgba(0, 226, 199, 0.8);
+    pointer-events: none;
+  }
+  
+  .user-dropdown-trigger:hover {
+    box-shadow: 0 0 6px rgba(0, 226, 199, 0.3);
+  }
+  
+  .user-dropdown-trigger:hover::after {
+    border-top-color: #00e2c7;
+  }
+  
+  .user-info {
+    width: auto;
+    gap: 0;
+    justify-content: center;
+  }
+  
+  .user-dropdown-trigger .user-name {
+    display: none !important;
+  }
+  
+  .user-dropdown-trigger .dropdown-arrow {
+    display: none !important;
+  }
+  
+  .user-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+}
+
+/* --- Tablets y Móviles (768px y menos) --- */
 @media (max-width: 768px) {
   .navbar {
     flex-wrap: wrap;
@@ -312,9 +695,62 @@
   .navbar-right {
     gap: 8px;
   }
+  
+  .user-dropdown {
+    margin-left: 4px;
+  }
+  
+  .user-dropdown-trigger {
+    padding: 8px;
+    min-width: 44px !important;
+    width: 44px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .user-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 3px solid rgba(0, 226, 199, 0.8);
+    pointer-events: none;
+  }
+  
+  .user-dropdown-trigger:hover {
+    box-shadow: 0 0 10px rgba(0, 226, 199, 0.4);
+  }
+  
+  .user-dropdown-trigger:hover::after {
+    border-top-color: #00e2c7;
+  }
+  
+  .user-dropdown-trigger .user-name {
+    display: none !important;
+  }
+  
+  .user-dropdown-trigger .dropdown-arrow {
+    display: none !important;
+  }
+  
+  .user-info {
+    width: auto;
+    gap: 0;
+    justify-content: center;
+  }
+  
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
 }
 
-/* User Dropdown Styles */
+/* ===== USER DROPDOWN STYLES ===== */
 .user-dropdown {
   position: relative;
   display: inline-block;
@@ -490,12 +926,20 @@
   color: white;
 }
 
-.dropdown-item svg {
+.dropdown-item svg,
+.dropdown-item i {
   opacity: 0.7;
   transition: opacity 0.15s ease;
 }
 
-.dropdown-item:hover svg {
+.dropdown-item i {
+  width: 16px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.dropdown-item:hover svg,
+.dropdown-item:hover i {
   opacity: 1;
 }
 

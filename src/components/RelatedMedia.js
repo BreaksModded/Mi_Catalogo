@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './RelatedMedia.css';
 import { useLanguage } from '../context/LanguageContext';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
-const TMDB_URL = `${BACKEND_URL}/tmdb`;
+const API_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 
 function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
   const { t, currentLanguage } = useLanguage();
@@ -26,45 +25,69 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
         let collectionIds = [];
 
         // Obtener información de la colección si existe
-  const languageCode = currentLanguage === 'en' ? 'en-US' : 'es-ES';
-  const collectionRes = await fetch(`${TMDB_URL}/movie/${tmdbId}?language=${languageCode}`);
-        const movieData = await collectionRes.json();
+        const languageCode = currentLanguage === 'en' ? 'en-US' : 'es-ES';
+        
+        // Usar el endpoint correcto del backend
+        const movieRes = await fetch(`${API_URL}/tmdb/${mediaType}/${tmdbId}?language=${languageCode}`);
+        if (!movieRes.ok) {
+          console.error('Error fetching movie data:', await movieRes.text());
+          throw new Error('Failed to fetch movie data');
+        }
+        const movieData = await movieRes.json();
 
         // Si hay colección, obtener sus partes
         if (movieData.belongs_to_collection) {
           const collectionId = movieData.belongs_to_collection.id;
-          const collectionPartsRes = await fetch(`${TMDB_URL}/collection/${collectionId}?language=${languageCode}`);
-          const collectionPartsData = await collectionPartsRes.json();
+          
+          // Usar endpoint de backend en lugar de TMDb directo
+          try {
+            const collectionPartsRes = await fetch(`${API_URL}/tmdb/collection/${collectionId}?language=${languageCode}`);
+            if (!collectionPartsRes.ok) {
+              console.error('Collection endpoint not available, skipping collection data');
+            } else {
+              const collectionPartsData = await collectionPartsRes.json();
 
-          if (collectionPartsData.parts) {
-            // Filtrar la película actual de la colección
-            let parts = collectionPartsData.parts.filter(item => item.id !== parseInt(tmdbId));
-            // Filtrar solo películas (media_type === 'movie' o no tiene media_type)
-            parts = parts.filter(item => !item.media_type || item.media_type === 'movie');
-            // Ordenar por año de salida ascendente
-            parts = parts.sort((a, b) => {
-              const yearA = a.release_date ? parseInt(a.release_date.slice(0, 4)) : 0;
-              const yearB = b.release_date ? parseInt(b.release_date.slice(0, 4)) : 0;
-              return yearA - yearB;
-            });
-            groups.push({
-              type: 'collection',
-              title: movieData.belongs_to_collection.name,
-              items: parts
-            });
-            collectionIds = parts.map(item => item.id);
+              if (collectionPartsData.parts) {
+                // Filtrar la película actual de la colección
+                let parts = collectionPartsData.parts.filter(item => item.id !== parseInt(tmdbId));
+                // Filtrar solo películas (media_type === 'movie' o no tiene media_type)
+                parts = parts.filter(item => !item.media_type || item.media_type === 'movie');
+                // Ordenar por año de salida ascendente
+                parts = parts.sort((a, b) => {
+                  const yearA = a.release_date ? parseInt(a.release_date.slice(0, 4)) : 0;
+                  const yearB = b.release_date ? parseInt(b.release_date.slice(0, 4)) : 0;
+                  return yearA - yearB;
+                });
+                groups.push({
+                  type: 'collection',
+                  title: movieData.belongs_to_collection.name,
+                  items: parts
+                });
+                collectionIds = parts.map(item => item.id);
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching collection data:', err);
           }
         }
 
-        // Obtener recomendaciones según el tipo
+        // Obtener recomendaciones según el tipo usando el backend
         let recommendationsUrl = '';
         if (mediaType === 'tv') {
-          recommendationsUrl = `${TMDB_URL}/tv/${tmdbId}/recommendations?language=${languageCode}&page=1`;
+          recommendationsUrl = `${API_URL}/tmdb/tv/${tmdbId}/recommendations?language=${languageCode}&page=1`;
         } else {
-          recommendationsUrl = `${TMDB_URL}/movie/${tmdbId}/recommendations?language=${languageCode}&page=1`;
+          recommendationsUrl = `${API_URL}/tmdb/movie/${tmdbId}/recommendations?language=${languageCode}&page=1`;
         }
+        
         const recommendationsRes = await fetch(recommendationsUrl);
-        const recommendationsData = await recommendationsRes.json();
+        
+        let recommendationsData = {};
+        try {
+          recommendationsData = await recommendationsRes.json();
+        } catch (err) {
+          console.error('Error parsing recommendations JSON:', err);
+          recommendationsData = { results: [] };
+        }
         let filteredRecommendations = recommendationsData.results || [];
         if (collectionIds.length > 0) {
           filteredRecommendations = filteredRecommendations.filter(item => !collectionIds.includes(item.id));
@@ -114,7 +137,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
                 : t('addMedia.unknownYear', 'Año desconocido');
               const posterUrl = item.poster_path
                 ? `https://image.tmdb.org/t/p/w200${item.poster_path}`
-                : `https://via.placeholder.com/200x300?text=${encodeURIComponent(t('addMedia.notAvailable', 'No+disponible'))}`;
+                : `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><rect width="200" height="300" fill="#333"/><text x="100" y="150" text-anchor="middle" fill="#666" font-family="Arial" font-size="14">${t('addMedia.notAvailable', 'No disponible')}</text></svg>`)}`;
 
               return (
                 <div key={item.id} className="related-media-item" style={{cursor:'pointer'}} onClick={() => onSelectMedia && onSelectMedia(item)}>
@@ -123,7 +146,7 @@ function RelatedMedia({ tmdbId, mediaType, onSelectMedia = () => {} }) {
                     alt={title} 
                     className="related-media-poster"
                     onError={(e) => {
-                      e.target.src = `https://via.placeholder.com/200x300?text=${encodeURIComponent(t('addMedia.notAvailable', 'No+disponible'))}`;
+                      e.target.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><rect width="200" height="300" fill="#333"/><text x="100" y="150" text-anchor="middle" fill="#666" font-family="Arial" font-size="14">${t('addMedia.notAvailable', 'No disponible')}</text></svg>`)}`;
                     }}
                   />
                   <div className="related-media-info">

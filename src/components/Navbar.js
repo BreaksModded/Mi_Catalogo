@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "./LanguageSelector";
 import AuthModal from "./AuthModal";
@@ -7,6 +8,8 @@ import "./Navbar.css";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 
 function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -116,7 +119,16 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
 
   // Cierra el menú al navegar
   const handleNav = (section) => {
-    onSection(section);
+    // Si ya estamos en la página principal, solo cambiar la sección
+    if (location.pathname === '/') {
+      onSection(section);
+    } else {
+      // Si estamos en otra página, navegar a la principal con la sección como estado
+      navigate('/', { 
+        replace: true,
+        state: { section: section }
+      });
+    }
     setMenuOpen(false);
   };
 
@@ -130,7 +142,7 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
   };
 
   const sectionToHref = (section) => {
-    // Todas las secciones viven en la página principal '/', el estado lo maneja onSection
+    // Todas las secciones principales viven en la página principal '/'
     return '/';
   };
 
@@ -272,26 +284,16 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
                   </div>
                   <div className="dropdown-divider"></div>
                   <button className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <i className="fas fa-user"></i>
                     {t('navbar.profile')}
                   </button>
                   <button className="dropdown-item" onClick={() => setDropdownOpen(false)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M19.4 15A1.65 1.65 0 0 0 20.6 13.07L21.16 11.33A1.65 1.65 0 0 0 19.73 9.1L18.9 9.38A10.6 10.6 0 0 0 17.1 7.62L17.38 6.8A1.65 1.65 0 0 0 15.15 5.37L13.41 5.93A1.65 1.65 0 0 0 12 7.58A1.65 1.65 0 0 0 10.59 5.93L8.85 5.37A1.65 1.65 0 0 0 6.62 6.8L6.9 7.62A10.6 10.6 0 0 0 5.1 9.38L4.27 9.1A1.65 1.65 0 0 0 2.84 11.33L3.4 13.07A1.65 1.65 0 0 0 4.6 15L5.1 14.62A10.6 10.6 0 0 0 6.9 16.38L6.62 17.2A1.65 1.65 0 0 0 8.85 18.63L10.59 18.07A1.65 1.65 0 0 0 12 16.42A1.65 1.65 0 0 0 13.41 18.07L15.15 18.63A1.65 1.65 0 0 0 17.38 17.2L17.1 16.38A10.6 10.6 0 0 0 18.9 14.62L19.4 15Z" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
+                    <i className="fas fa-cog"></i>
                     {t('navbar.settings')}
                   </button>
                   <div className="dropdown-divider"></div>
                   <button className="dropdown-item logout-item" onClick={handleLogout}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <polyline points="16,17 21,12 16,7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <i className="fas fa-sign-out-alt"></i>
                     {t('navbar.logout')}
                   </button>
                 </>

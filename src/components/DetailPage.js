@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
+import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
 import { useDynamicPoster } from '../hooks/useDynamicPoster';
 import PosterSkeleton from './PosterSkeleton';
@@ -692,6 +693,16 @@ function DetailPage() {
   const [showAllTags, setShowAllTags] = useState(false);
   
   const { t, currentLanguage } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
+  
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
   
   // Hook para contenido traducido
   const { translatedMedia, isTranslating } = useTranslatedContent(media);
@@ -1149,7 +1160,7 @@ function DetailPage() {
               <div className="media-info-complete">
                 <div className="info-row">
                   <span className="info-label">{t('detailModal.genre')}:</span>
-                  <span className="info-value">{displayMedia.genero}</span>
+                  <span className="info-value">{translateGenres(displayMedia.genero)}</span>
                 </div>
                 <div className="info-row">
                   <span className="info-label">{t('detailModal.director')}:</span>
@@ -1538,6 +1549,16 @@ function DetailPage() {
 // Componente TMDBDetails
 const TMDBDetails = ({ tmdbDetails, media }) => {
   const { t } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
+  
+  // Función para traducir múltiples géneros separados por comas
+  const translateGenres = (genresString) => {
+    if (!genresString) return '';
+    return genresString
+      .split(',')
+      .map(genre => translateGenre(genre.trim()))
+      .join(', ');
+  };
   
   return (
     <>
@@ -1556,7 +1577,7 @@ const TMDBDetails = ({ tmdbDetails, media }) => {
       {tmdbDetails.generos && (
         <div className="info-item">
           <span className="label"><i className="fas fa-tags"></i> {t('detailModal.genres')}:</span>
-          <span className="value">{tmdbDetails.generos}</span>
+          <span className="value">{translateGenres(tmdbDetails.generos)}</span>
         </div>
       )}
       {tmdbDetails.pais && (

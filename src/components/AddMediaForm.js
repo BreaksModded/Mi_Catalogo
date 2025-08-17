@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './AddMediaForm.css';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
-import TagsModal from './TagsModal';
+import TagsModalNew from './TagsModalNew';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
 import RelatedMedia from './RelatedMedia';
 
@@ -597,7 +597,7 @@ const [existMsg, setExistMsg] = useState('');
           )}
         </form>
       </div>
-      <TagsModal
+      <TagsModalNew
         open={showTagsModal}
         tags={tags}
         selectedTags={selectedTags}

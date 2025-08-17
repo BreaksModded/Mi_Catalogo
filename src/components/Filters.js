@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import Select from 'react-select';
 import { useLanguage } from '../context/LanguageContext';
-import TagsModal from './TagsModal';
+import { useGenreTranslation } from '../utils/genreTranslation';
+import TagsModalNew from './TagsModalNew';
 import './Filters.css';
 
 function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGeneros, minYear, maxYear, onYear, minNota, maxNota, onNota, minNotaPersonal, maxNotaPersonal, onNotaPersonal, showFavs, showPendings, onShowFavs, onShowPendings, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, orderBy, onOrder }) {
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [showFilters, setShowFilters] = useState(window.innerWidth > 768);
   const { t } = useLanguage();
+  const { translateGenre } = useGenreTranslation();
 
   // Toggle filters on mobile
   React.useEffect(() => {
@@ -119,14 +121,6 @@ function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGene
     })
   };
 
-  // Función para traducir géneros
-  const translateGenre = (genre) => {
-    const lowerGenre = genre.toLowerCase();
-    // Buscar en las traducciones de géneros
-    const translation = t(`genres.${lowerGenre}`, genre);
-    return translation;
-  };
-
   // Opciones para tipo de media
   const tipoOptions = [
     { value: '', label: t('filters.all') },
@@ -189,149 +183,150 @@ function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGene
         </span>
       </button>
       <div className="filters-bar" style={{ display: showFilters ? 'flex' : 'none' }}>
-
-      <Select
-        options={tipoOptions}
-        value={tipoOptions.find(opt => opt.value === selectedTipo) || tipoOptions[0]}
-        onChange={selected => onTipo(selected ? selected.value : '')}
-        placeholder={t('filters.all')}
-        classNamePrefix="react-select"
-        menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-        menuPosition="fixed"
-        isSearchable={false}
-        styles={customSelectStyles}
-      />
-      
-      <Select
-        isMulti
-        options={generoOptions}
-        value={generoOptions.filter(opt => selectedGeneros.includes(opt.value))}
-        onChange={selected => onGeneros(selected ? selected.map(opt => opt.value) : [])}
-        placeholder={t('filters.genres')}
-        classNamePrefix="react-select"
-        menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-        menuPosition="fixed"
-        hideSelectedOptions={false}
-        closeMenuOnSelect={false}
-        isSearchable={false}
-        styles={customSelectStyles}
-        components={{
-          MultiValue: () => null,
-          MultiValueContainer: () => null,
-          IndicatorSeparator: () => null,
-          ValueContainer: ({ children, getValue, hasValue }) => {
-            const selectedValues = getValue();
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', height: '36px', padding: '0 8px 0 12px' }}>
-                {hasValue && selectedValues.length > 0 ? (
-                  <div style={{ 
-                    color: '#fff', 
-                    fontWeight: '500',
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap' 
-                  }}>
-                    {selectedValues.map(option => option.label).join(', ')}
-                  </div>
-                ) : (
-                  <div style={{ 
-                    color: '#fff', 
-                    fontStyle: 'italic',
-                    fontWeight: '500'
-                  }}>
-                    {t('filters.genres')}
-                  </div>
-                )}
-                {children[1]}
-              </div>
-            );
-          }
-        }}
-      />
-      <div className="input-group">
-        <label>{t('filters.year')}</label>
-        <input 
-          type="number" 
-          min="1900" 
-          max="2100" 
-          value={minYear} 
-          onChange={e => onYear(e.target.value, maxYear)} 
-          placeholder={t('filters.from')} 
+        {/* ...existing filter bar content, without the modal... */}
+        <Select
+          options={tipoOptions}
+          value={tipoOptions.find(opt => opt.value === selectedTipo) || tipoOptions[0]}
+          onChange={selected => onTipo(selected ? selected.value : '')}
+          placeholder={t('filters.all')}
+          classNamePrefix="react-select"
+          menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+          isSearchable={false}
+          styles={customSelectStyles}
         />
-        <input 
-          type="number" 
-          min="1900" 
-          max="2100" 
-          value={maxYear} 
-          onChange={e => onYear(minYear, e.target.value)} 
-          placeholder={t('filters.to')} 
+        <Select
+          isMulti
+          options={generoOptions}
+          value={generoOptions.filter(opt => selectedGeneros.includes(opt.value))}
+          onChange={selected => onGeneros(selected ? selected.map(opt => opt.value) : [])}
+          placeholder={t('filters.genres')}
+          classNamePrefix="react-select"
+          menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+          hideSelectedOptions={false}
+          closeMenuOnSelect={false}
+          isSearchable={false}
+          styles={customSelectStyles}
+          components={{
+            MultiValue: () => null,
+            MultiValueContainer: () => null,
+            IndicatorSeparator: () => null,
+            ValueContainer: ({ children, getValue, hasValue }) => {
+              const selectedValues = getValue();
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', height: '36px', padding: '0 8px 0 12px' }}>
+                  {hasValue && selectedValues.length > 0 ? (
+                    <div style={{ 
+                      color: '#fff', 
+                      fontWeight: '500',
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap' 
+                    }}>
+                      {selectedValues.map(option => option.label).join(', ')}
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      color: '#fff', 
+                      fontStyle: 'italic',
+                      fontWeight: '500'
+                    }}>
+                      {t('filters.genres')}
+                    </div>
+                  )}
+                  {children[1]}
+                </div>
+              );
+            }
+          }}
         />
+        <div className="input-group">
+          <label>{t('filters.year')}</label>
+          <input 
+            type="number" 
+            min="1900" 
+            max="2100" 
+            value={minYear} 
+            onChange={e => onYear(e.target.value, maxYear)} 
+            placeholder={t('filters.from')} 
+          />
+          <input 
+            type="number" 
+            min="1900" 
+            max="2100" 
+            value={maxYear} 
+            onChange={e => onYear(minYear, e.target.value)} 
+            placeholder={t('filters.to')} 
+          />
+        </div>
+        <div className="input-group">
+          <label>{t('filters.tmdbRating')}</label>
+          <input 
+            type="number" 
+            min="0" 
+            max="10" 
+            step="0.1" 
+            value={minNota} 
+            onChange={e => onNota(e.target.value, maxNota)} 
+            placeholder={t('filters.min')} 
+          />
+          <input 
+            type="number" 
+            min="0" 
+            max="10" 
+            step="0.1" 
+            value={maxNota} 
+            onChange={e => onNota(minNota, e.target.value)} 
+            placeholder={t('filters.max')} 
+          />
+        </div>
+        <div className="input-group">
+          <label>{t('filters.myRating')}</label>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="0.1"
+            value={minNotaPersonal}
+            onChange={e => onNotaPersonal(e.target.value, maxNotaPersonal)}
+            placeholder={t('filters.min')}
+          />
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="0.1"
+            value={maxNotaPersonal}
+            onChange={e => onNotaPersonal(minNotaPersonal, e.target.value)}
+            placeholder={t('filters.max')}
+          />
+        </div>
+        {/* Ordenar por */}
+        <Select
+          options={orderOptions}
+          value={orderOptions.find(opt => opt.value === orderBy) || orderOptions[0]}
+          onChange={selected => onOrder(selected ? selected.value : '')}
+          placeholder={t('filters.orderBy')}
+          classNamePrefix="react-select"
+          menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+          isSearchable={false}
+          styles={customSelectStyles}
+        />
+        <button className={showFavs ? 'filter-btn filter-btn-active' : 'filter-btn'} onClick={onShowFavs} title={t('filters.showOnlyFavorites')}>{t('filters.favorites')}</button>
+        <button className={showPendings ? 'filter-btn filter-btn-active' : 'filter-btn'} onClick={onShowPendings} title={t('filters.showOnlyPending')}>{t('filters.pending')}</button>
+        {/* Selector múltiple de tags */}
+        <button 
+          className={selectedTags.length > 0 ? 'filter-btn filter-btn-active' : 'filter-btn'} 
+          onClick={() => setShowTagsModal(true)} 
+          title={t('filters.manageTags')}
+        >
+          {t('filters.tags')} ({selectedTags.length})
+        </button>
       </div>
-      <div className="input-group">
-        <label>{t('filters.tmdbRating')}</label>
-        <input 
-          type="number" 
-          min="0" 
-          max="10" 
-          step="0.1" 
-          value={minNota} 
-          onChange={e => onNota(e.target.value, maxNota)} 
-          placeholder={t('filters.min')} 
-        />
-        <input 
-          type="number" 
-          min="0" 
-          max="10" 
-          step="0.1" 
-          value={maxNota} 
-          onChange={e => onNota(minNota, e.target.value)} 
-          placeholder={t('filters.max')} 
-        />
-      </div>
-      <div className="input-group">
-        <label>{t('filters.myRating')}</label>
-        <input
-          type="number"
-          min="0"
-          max="10"
-          step="0.1"
-          value={minNotaPersonal}
-          onChange={e => onNotaPersonal(e.target.value, maxNotaPersonal)}
-          placeholder={t('filters.min')}
-        />
-        <input
-          type="number"
-          min="0"
-          max="10"
-          step="0.1"
-          value={maxNotaPersonal}
-          onChange={e => onNotaPersonal(minNotaPersonal, e.target.value)}
-          placeholder={t('filters.max')}
-        />
-      </div>
-      {/* Ordenar por */}
-      <Select
-        options={orderOptions}
-        value={orderOptions.find(opt => opt.value === orderBy) || orderOptions[0]}
-        onChange={selected => onOrder(selected ? selected.value : '')}
-        placeholder={t('filters.orderBy')}
-        classNamePrefix="react-select"
-        menuPortalTarget={typeof window !== 'undefined' ? document.body : null}
-        menuPosition="fixed"
-        isSearchable={false}
-        styles={customSelectStyles}
-      />
-      <button className={showFavs ? 'filter-btn filter-btn-active' : 'filter-btn'} onClick={onShowFavs} title={t('filters.showOnlyFavorites')}>{t('filters.favorites')}</button>
-      <button className={showPendings ? 'filter-btn filter-btn-active' : 'filter-btn'} onClick={onShowPendings} title={t('filters.showOnlyPending')}>{t('filters.pending')}</button>
-      {/* Selector múltiple de tags */}
-      <button 
-        className={selectedTags.length > 0 ? 'filter-btn filter-btn-active' : 'filter-btn'} 
-        onClick={() => setShowTagsModal(true)} 
-        title={t('filters.manageTags')}
-      >
-        {t('filters.tags')} ({selectedTags.length})
-      </button>
-      <TagsModal
+      {/* Modal fuera de la barra de filtros */}
+      <TagsModalNew
         open={showTagsModal}
         tags={tags}
         selectedTags={selectedTags}
@@ -340,7 +335,6 @@ function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGene
         onDeleteTag={onDeleteTag}
         onClose={() => setShowTagsModal(false)}
       />
-      </div>
     </div>
   );
 }
