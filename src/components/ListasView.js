@@ -3,7 +3,7 @@ import './ListasView.css';
 import ListaDetalleModal from './ListaDetalleModal';
 import ListaViewChoiceModal from './ListaViewChoiceModal';
 import { useLanguage } from '../context/LanguageContext';
-import { useDynamicPoster } from '../hooks/useDynamicPoster';
+import { useHybridPoster } from '../hooks/useHybridContent';
 import PosterSkeleton from './PosterSkeleton';
 import { useNotification } from '../context/NotificationContext';
 
@@ -25,16 +25,21 @@ const EyeIcon = () => (
   <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>
 );
 
-// Componente para cada portada individual de la lista
+// Componente para cada portada individual de la lista con contenido híbrido
 function ListaCover({ media }) {
   const mediaType = media.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
-  const { posterUrl, loading } = useDynamicPoster(media.tmdb_id, mediaType, media.imagen);
+  const { posterUrl, loading, cached } = useHybridPoster(media.tmdb_id, mediaType, media.imagen);
 
   if (loading) {
     return <PosterSkeleton width="100%" height="100%" className="lista-cover" />;
   }
 
-  return <img src={posterUrl} alt={media.titulo} className="lista-cover" />;
+  return (
+    <div className="lista-cover-container">
+      <img src={posterUrl} alt={media.titulo} className="lista-cover" />
+      {cached && <div className="lista-cache-dot" title="Cache">🚀</div>}
+    </div>
+  );
 }
 
 export default function ListasView() {

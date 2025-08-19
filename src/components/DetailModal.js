@@ -513,7 +513,7 @@ const scrollLeftRef = useRef(0);
               <p><strong>{t('detailModal.director')}</strong> {displayMedia.director}</p>
               <p><strong>{t('detailModal.cast')}</strong> {displayMedia.elenco}</p>
               <p><strong>{t('detailModal.synopsis')}</strong> {displayMedia.sinopsis}</p>
-              <p><strong>{t('detailModal.status')}</strong> {displayMedia.estado}</p>
+              <p><strong>{t('detailModal.status')}</strong> {displayMedia.status}</p>
 
               {/* TAGS: diseño mejorado */}
               <div className="media-tags-block">

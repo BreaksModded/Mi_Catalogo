@@ -20,18 +20,38 @@ export const en = {
     optional: 'Optional'
   },
 
+  // Media types
+  movie: 'Movie',
+  series: 'Series',
+  
+  // Media type mappings (to translate database values)
+  mediaTypes: {
+    'película': 'movie',
+    'serie': 'series',
+    'pelicula': 'movie'  // without accent as fallback
+  },
+
   // Status (from TMDb API)
   status: {
     released: 'Released',
     'in production': 'In Production',
     'post production': 'Post Production',
+    'inproduction': 'In Production',
+    'postproduction': 'Post Production',
     planned: 'Planned',
     rumored: 'Rumored',
     canceled: 'Canceled',
     cancelled: 'Cancelled',
     ended: 'Ended',
     'returning series': 'Returning Series',
-    'pilot': 'Pilot'
+    'returningSeries': 'Returning Series',
+    'returningseries': 'Returning Series',
+    pilot: 'Pilot',
+    unknown: 'Unknown',
+    'upcoming': 'Upcoming',
+    'completed': 'Completed',
+    'continuing': 'Continuing',
+    'hiatus': 'On Hiatus'
   },
 
   person: {
@@ -268,6 +288,7 @@ export const en = {
   // Buttons and actions
   actions: {
     save: 'Save',
+    saving: 'Saving...',
     cancel: 'Cancel',
     delete: 'Delete',
     edit: 'Edit',
@@ -510,7 +531,9 @@ export const en = {
     bulkApplied: 'Selection applied',
     deleted: 'Tags deleted',
     nameTooShort: 'Name must be at least 2 characters',
-    nameTooLong: 'Name cannot be more than 30 characters'
+    nameTooLong: 'Name cannot be more than 30 characters',
+    saveSuccess: 'Tags saved successfully',
+    saveFailed: 'Error saving tags'
   },
 
   // Add Media Form
@@ -578,6 +601,16 @@ export const en = {
     invalidRating: 'Personal rating must be between 0 and 10',
     // Existence checks
     existsInCatalog: 'This {{type}} already exists in your catalog',
+    existsInPersonalCatalog: 'This {{type}} is already in your personal catalog',
+    existsButNotInPersonal: 'This {{type}} exists in the database but is not in your personal catalog',
+    alreadyInCatalog: 'Already in your catalog:',
+    addedOn: 'Added on',
+    favorite: 'Favorite',
+    pending: 'Pending',
+    existsInDatabase: 'Exists in database:',
+    canAddToPersonal: 'You can add it to your personal catalog',
+    newContent: 'New content',
+    willBeAdded: 'Will be added to your personal catalog',
     movieExistsInCatalog: 'This movie already exists in your catalog',
     seriesExistsInCatalog: 'This series already exists in your catalog',
     movieNotInCatalog: 'This movie does not exist in your catalog',
@@ -585,6 +618,7 @@ export const en = {
     checkingExistence: 'Could not check existence',
     // Success/Error messages
     addedSuccessfully: '{{title}} has been added successfully',
+    translationsCreated: 'Automatic translations created: {{count}} languages ({{synopsis}} with synopsis)',
     movieAddedSuccess: 'Movie added successfully',
     seriesAddedSuccess: 'Series added successfully',
     errorUpdatingInterface: 'Error updating interface after adding',

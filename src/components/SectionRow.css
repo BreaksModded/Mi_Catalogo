@@ -389,3 +389,34 @@
 .section-row .load-more button:disabled::before {
   display: none;
 }
+
+/* Indicador de cache híbrido */
+.cache-indicator {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 200, 83, 0.95);
+  color: #fff;
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 4;
+  border: 1px solid rgba(0, 200, 83, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.5px;
+  animation: pulse-cache 2s ease-in-out infinite;
+}
+
+@keyframes pulse-cache {
+  0%, 100% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.05);
+  }
+}

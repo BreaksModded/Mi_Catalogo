@@ -1,0 +1,831 @@
+/* =====================================================
+   PÁGINA DE LISTA PROFESIONAL - HOME CINEMA
+   ===================================================== */
+
+.listas-page {
+  min-height: 100vh;
+  background: #181818;
+  color: #ffffff;
+}
+
+.listas-page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* =====================================================
+   ESTADOS DE CARGA Y ERROR
+   ===================================================== */
+
+.listas-loading,
+.listas-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.listas-loading .loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 226, 199, 0.3);
+  border-top: 4px solid #00e2c7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.listas-error i {
+  font-size: 4rem;
+  color: #ff6b6b;
+  margin-bottom: 20px;
+}
+
+.listas-error h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.listas-error p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 30px;
+}
+
+/* =====================================================
+   HERO SECTION - DISEÑO AVANZADO
+   ===================================================== */
+
+.lista-hero {
+  position: relative;
+  height: 340px;
+  border-radius: 24px;
+  overflow: hidden;
+  margin: 24px 0 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.lista-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(12px) saturate(1.2) brightness(0.8);
+  transform: scale(1.1);
+}
+
+.lista-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg, 
+    rgba(24,24,24,0.1) 0%, 
+    rgba(24,24,24,0.7) 60%, 
+    rgba(24,24,24,0.95) 100%
+  );
+}
+
+.lista-hero__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 36px 32px;
+}
+
+.lista-hero__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* =====================================================
+   BOTÓN DE VOLVER MEJORADO
+   ===================================================== */
+
+.lista-btn-back {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0, 226, 199, 0.15) 0%, rgba(0, 180, 166, 0.15) 100%);
+  border: 2px solid rgba(0, 226, 199, 0.3);
+  color: #00e2c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(20px);
+  font-size: 20px;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.lista-btn-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #00e2c7 0%, #00b4a6 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 14px;
+}
+
+.lista-btn-back:hover {
+  transform: translateY(-3px) scale(1.05);
+  border-color: #00e2c7;
+  box-shadow: 
+    0 8px 25px rgba(0, 226, 199, 0.4),
+    0 0 0 4px rgba(0, 226, 199, 0.1);
+}
+
+.lista-btn-back:hover::before {
+  opacity: 1;
+}
+
+.lista-btn-back:hover i {
+  color: #000000;
+  transform: translateX(-2px);
+}
+
+.lista-btn-back:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.lista-btn-back i {
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+/* =====================================================
+   BREADCRUMB NAVIGATION
+   ===================================================== */
+
+.lista-hero__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.breadcrumb-item {
+  transition: color 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.breadcrumb-item.current {
+  color: #00e2c7;
+  font-weight: 600;
+  background: rgba(0, 226, 199, 0.1);
+}
+
+.breadcrumb-item:not(.current):hover {
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lista-hero__breadcrumb i {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* =====================================================
+   CONTENIDO PRINCIPAL
+   ===================================================== */
+
+.lista-hero__main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.lista-hero__text {
+  max-width: 900px;
+}
+
+/* =====================================================
+   TÍTULO MEJORADO CON EFECTOS AVANZADOS
+   ===================================================== */
+
+.lista-hero__title {
+  margin: 0 0 16px 0;
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.6);
+  position: relative;
+  display: inline-block;
+}
+
+.lista-hero__title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #00e2c7 0%, #00b4a6 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 226, 199, 0.4);
+}
+
+.lista-hero__subtitle {
+  margin: 0 0 20px 0;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+  max-width: 700px;
+}
+
+.lista-hero__metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lista-hero__stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.stat-item i {
+  color: #00e2c7;
+  font-size: 1rem;
+  width: 16px;
+  text-align: center;
+}
+
+.stat-number {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0 4px;
+}
+
+.lista-hero__preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  min-width: max-content;
+}
+
+.preview-posters {
+  display: flex;
+  align-items: center;
+  gap: -8px;
+}
+
+.preview-poster {
+  width: 40px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  margin-left: -8px;
+  transition: transform 0.3s ease, z-index 0.3s ease;
+}
+
+.preview-poster:first-child {
+  margin-left: 0;
+}
+
+.preview-poster:hover {
+  transform: translateY(-4px) scale(1.05);
+  z-index: 10 !important;
+  border-color: #00e2c7;
+}
+
+.preview-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-more {
+  width: 40px;
+  height: 60px;
+  border-radius: 6px;
+  background: rgba(0, 226, 199, 0.2);
+  border: 2px solid rgba(0, 226, 199, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #00e2c7;
+  margin-left: -8px;
+}
+
+/* =====================================================
+   TOOLBAR - BÚSQUEDA Y ORDENACIÓN
+   ===================================================== */
+
+.lista-toolbar {
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 700px) 1fr;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0 24px;
+}
+
+.lista-toolbar__center {
+  display: flex;
+  justify-content: center;
+}
+
+.lista-toolbar-search {
+  position: relative;
+  width: 100%;
+}
+
+.lista-toolbar__right {
+  display: flex;
+  justify-content: end;
+}
+
+/* =====================================================
+   CONTROLES DE ORDENACIÓN
+   ===================================================== */
+
+.listas-sort-container {
+  position: relative;
+}
+
+.listas-sort-select {
+  background: rgba(24, 24, 24, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+  color: #ffffff;
+  padding: 10px 35px 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  min-width: 160px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.listas-sort-select:hover {
+  border-color: rgba(0, 226, 199, 0.5);
+  background: rgba(0, 226, 199, 0.1);
+}
+
+.listas-sort-select:focus {
+  outline: none;
+  border-color: #00e2c7;
+  box-shadow: 0 0 0 3px rgba(0, 226, 199, 0.2);
+}
+
+.listas-sort-container i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+/* =====================================================
+   BÚSQUEDA Y RESULTADOS
+   ===================================================== */
+
+.listas-search-input {
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 1px solid rgba(0, 226, 199, 0.3);
+  border-radius: 50px;
+  color: #ffffff;
+  padding: 18px 60px 18px 55px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.listas-search-input:focus {
+  border-color: #00e2c7;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(0, 226, 199, 0.1);
+}
+
+.listas-search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #00e2c7;
+  font-size: 18px;
+}
+
+.listas-search-clear {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.6);
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.listas-search-clear:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* =====================================================
+   RESULTADOS DE BÚSQUEDA
+   ===================================================== */
+
+.listas-search-results {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-radius: 20px;
+  padding: 25px;
+  border: 1px solid rgba(0, 226, 199, 0.1);
+  margin-bottom: 30px;
+}
+
+.listas-search-results-section h3.listas-search-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.listas-search-title i {
+  color: #00e2c7;
+}
+
+.listas-search-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.listas-search-loading .loader.small {
+  width: 30px;
+  height: 30px;
+  border-width: 3px;
+  margin-bottom: 15px;
+}
+
+.listas-search-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.lista-btn-add {
+  background: linear-gradient(135deg, #00e2c7 0%, #00b4a6 100%);
+  border: none;
+  border-radius: 10px;
+  color: #000000;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lista-btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 226, 199, 0.3);
+}
+
+.lista-btn-add.disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lista-btn-add.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.listas-no-results {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.listas-no-results i {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* =====================================================
+   CONTENIDO DE LA LISTA
+   ===================================================== */
+
+.listas-content {
+  margin: 40px 0;
+}
+
+/* =====================================================
+   ESTADO VACÍO
+   ===================================================== */
+
+.listas-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.listas-empty-icon {
+  font-size: 5rem;
+  margin-bottom: 25px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.listas-empty h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+.listas-empty p {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* =====================================================
+   ANIMACIONES
+   ===================================================== */
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 1200px) {
+  .listas-page-container {
+    padding: 0 20px 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .listas-page-container {
+    padding: 0 16px 60px;
+  }
+  .lista-hero {
+    height: 280px;
+    border-radius: 16px;
+  }
+  
+  .lista-hero__content {
+    padding: 20px 24px 24px;
+  }
+  
+  .lista-hero__title {
+    font-size: 2.2rem;
+  }
+  
+  .lista-hero__subtitle {
+    font-size: 1rem;
+  }
+  
+  .lista-hero__stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .stat-separator {
+    display: none;
+  }
+  
+  .lista-hero__preview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .preview-poster {
+    width: 36px;
+    height: 54px;
+  }
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 1200px) {
+  .listas-page-container {
+    padding: 0 20px 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .listas-page-container {
+    padding: 0 16px 60px;
+  }
+  
+  .lista-hero {
+    height: 280px;
+    border-radius: 16px;
+  }
+  
+  .lista-hero__content {
+    padding: 20px 24px 24px;
+  }
+  
+  .lista-hero__title {
+    font-size: 2.4rem;
+  }
+  
+  .lista-hero__title::after {
+    width: 50px;
+    height: 3px;
+  }
+  
+  .lista-hero__subtitle {
+    font-size: 1rem;
+  }
+  
+  .lista-hero__stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .stat-separator {
+    display: none;
+  }
+  
+  .lista-hero__preview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .preview-poster {
+    width: 36px;
+    height: 54px;
+  }
+  
+  .lista-toolbar {
+    grid-template-columns: 1fr;
+  }
+  
+  .lista-toolbar__right {
+    justify-content: center;
+  }
+  
+  .listas-search-input {
+    padding: 16px 50px 16px 45px;
+  }
+  
+  .listas-search-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .lista-hero {
+    height: 240px;
+    border-radius: 14px;
+  }
+  
+  .lista-hero__content {
+    padding: 16px 20px 20px;
+  }
+  
+  .lista-btn-back {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  
+  .lista-hero__header {
+    margin-bottom: 4px;
+  }
+  
+  .lista-hero__breadcrumb {
+    font-size: 0.8rem;
+  }
+  
+  .lista-hero__title {
+    font-size: 2rem;
+  }
+  
+  .lista-hero__title::after {
+    width: 40px;
+    height: 3px;
+  }
+  
+  .lista-hero__subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .lista-hero__metadata {
+    gap: 12px;
+  }
+  
+  .lista-hero__stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .stat-separator {
+    display: none;
+  }
+  
+  .lista-hero__preview {
+    display: none;
+  }
+  
+  .listas-sort-select {
+    min-width: 120px;
+    padding: 6px 25px 6px 12px;
+    font-size: 12px;
+  }
+  
+  .listas-sort-container i {
+    right: 8px;
+    font-size: 12px;
+  }
+}
+}

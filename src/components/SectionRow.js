@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useDynamicPoster } from '../hooks/useDynamicPoster';
+import { useHybridPoster } from '../hooks/useHybridContent';
 import { useLanguage } from '../context/LanguageContext';
 import { useTranslatedMediaList } from '../hooks/useTranslatedContent';
 import PosterSkeleton from './PosterSkeleton';
@@ -52,10 +52,10 @@ export const getRatingColors = (rating) => {
   }
 };
 
-// Componente individual para cada card con su propia portada dinámica
+// Componente individual para cada card con su propia portada híbrida (cache + TMDb fallback)
 function SectionRowCard({ item, onSelect, t }) {
   const mediaType = item.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie';
-  const { posterUrl, loading } = useDynamicPoster(item.tmdb_id, mediaType, item.imagen);
+  const { posterUrl, loading, cached } = useHybridPoster(item.tmdb_id, mediaType, item.imagen);
   const href = `/detail/${item.id}`;
 
   const handleClick = (e) => {
@@ -71,7 +71,7 @@ function SectionRowCard({ item, onSelect, t }) {
       href={href}
       className="section-row-card"
       onClick={handleClick}
-      title={item.titulo}
+      title={`${item.titulo}${cached ? ' (🚀 Cache)' : ''}`}
       style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit', display: 'block' }}
       rel="noopener noreferrer"
     >
@@ -85,6 +85,9 @@ function SectionRowCard({ item, onSelect, t }) {
             className={`section-row-poster poster-transition ${loading ? 'poster-loading' : 'poster-loaded'}`}
             loading="lazy"
           />
+        )}
+        {cached && (
+          <div className="cache-indicator" title="Cargado desde cache local">🚀</div>
         )}
         {item.favorito && (
           <span className="favorite-badge">{t('detailModal.favorite')}</span>

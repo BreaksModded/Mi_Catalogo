@@ -11,12 +11,12 @@ import { useHybridPoster, useHybridContentBatch } from './useHybridContent';
  * Hook de compatibilidad que redirige a la nueva implementación
  */
 export const useDynamicPoster = (tmdbId, mediaType, fallbackImage = null) => {
-  const { posterUrl, loading, cached } = useHybridPoster(tmdbId, mediaType, fallbackImage);
+  const { posterUrl, loading, isFromCache } = useHybridPoster(tmdbId, mediaType, fallbackImage);
   
   return {
-    posterUrl: posterUrl,  // Cambiado de imageUrl a posterUrl para consistencia
+    imageUrl: posterUrl,
     loading,
-    cached: cached,        // Corregido: usar 'cached' en lugar de 'isFromCache'
+    cached: isFromCache,
     error: null
   };
 };
@@ -26,17 +26,17 @@ export const useDynamicPoster = (tmdbId, mediaType, fallbackImage = null) => {
  * Hook de compatibilidad para múltiples posters
  */
 export const useDynamicPosters = (mediaList) => {
-  const { contentMap, loading } = useHybridContentBatch(mediaList);
+  const contentMap = useHybridContentBatch(mediaList);
   
   // Convertir al formato esperado por el componente App.js
   const postersMap = {};
   Object.keys(contentMap).forEach(key => {
     const content = contentMap[key];
     postersMap[key] = {
-      posterUrl: content.posterUrl,  // Cambiado de imageUrl a posterUrl
-      loading: loading,
+      imageUrl: content.posterUrl,
+      loading: content.loading,
       cached: content.cached,
-      error: content.error || null
+      error: content.error
     };
   });
   

@@ -7,6 +7,7 @@ import { useTranslatedContent } from '../hooks/useTranslatedContent';
 import { useDynamicPoster } from '../hooks/useDynamicPoster';
 import PosterSkeleton from './PosterSkeleton';
 import ListasModal from './ListasModal';
+import TagsModalNew from './TagsModalNew';
 import Navbar from './Navbar';
 import { getPlatformLink } from './platformLinks';
 import { getRatingColors } from './SectionRow';
@@ -688,9 +689,7 @@ function DetailPage() {
   const [showTagsManager, setShowTagsManager] = useState(false);
   const [allTags, setAllTags] = useState([]);
   const [localTags, setLocalTags] = useState([]);
-  const [tagSearch, setTagSearch] = useState('');
-  const [tempSelectedTagIds, setTempSelectedTagIds] = useState([]);
-  const [showAllTags, setShowAllTags] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
   
   const { t, currentLanguage } = useLanguage();
   const { translateGenre } = useGenreTranslation();
@@ -907,27 +906,87 @@ function DetailPage() {
 
   // Funciones para tags
   const openTagsManager = () => {
-    setTempSelectedTagIds((Array.isArray(localTags) ? localTags : []).map(t => t.id));
-    setTagSearch('');
+    setSelectedTagIds((Array.isArray(localTags) ? localTags : []).map(t => String(t.id)));
     setShowTagsManager(true);
   };
 
-  const toggleTempTag = (id) => {
-    setTempSelectedTagIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const handleTagChange = (selectedTagIds) => {
+    setSelectedTagIds(selectedTagIds);
   };
 
-  const applyTagsChanges = async () => {
-    const currentIds = new Set((localTags || []).map(t => t.id));
-    const nextIds = new Set(tempSelectedTagIds);
+  const handleTagCreate = async (tagName) => {
+    try {
+      const response = await authenticatedFetch(`${BACKEND_URL}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: tagName })
+      });
+      
+      if (response.ok) {
+        const newTag = await response.json();
+        setAllTags(prev => [...prev, newTag]);
+        return newTag;
+      }
+    } catch (error) {
+      console.error('Error creating tag:', error);
+      throw error;
+    }
+  };
+
+  const handleTagDelete = async (tagIds) => {
+    try {
+      for (const tagId of tagIds) {
+        await authenticatedFetch(`${BACKEND_URL}/tags/${tagId}`, {
+          method: 'DELETE'
+        });
+      }
+      
+      // Actualizar la lista de tags
+      setAllTags(prev => prev.filter(tag => !tagIds.includes(tag.id)));
+      setLocalTags(prev => prev.filter(tag => !tagIds.includes(tag.id)));
+    } catch (error) {
+      console.error('Error deleting tags:', error);
+      throw error;
+    }
+  };
+
+  const handleTagsClose = async () => {
+    // Cerrar modal sin aplicar cambios (cancelar)
+    setShowTagsManager(false);
+  };
+
+  const handleTagSave = async (selectedTags) => {
+    try {
+      // Convertir tags a IDs si es necesario
+      const tagIds = selectedTags.map(tag => {
+        const id = typeof tag === 'object' ? tag.id : tag;
+        return String(id);
+      });
+      
+      // Actualizar el estado local
+      setSelectedTagIds(tagIds);
+      
+      // Aplicar cambios al backend
+      await applyTagChanges(tagIds);
+      
+    } catch (error) {
+      console.error('Error saving tags:', error);
+      throw error;
+    }
+  };
+
+  const applyTagChanges = async (tagsToApply = null) => {
+    // Convertir todos los IDs a strings para comparación consistente
+    const currentIds = new Set((localTags || []).map(t => String(t.id)));
+    const nextIds = new Set((tagsToApply || selectedTagIds).map(id => String(id)));
     const toAdd = [...nextIds].filter(id => !currentIds.has(id));
     const toRemove = [...currentIds].filter(id => !nextIds.has(id));
 
     try {
       for (const id of toAdd) {
-        await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/tags`, {
+        await authenticatedFetch(`${BACKEND_URL}/medias/${media.id}/tags/${id}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tag_id: id })
+          headers: { 'Content-Type': 'application/json' }
         });
       }
       for (const id of toRemove) {
@@ -943,8 +1002,6 @@ function DetailPage() {
         setLocalTags(Array.isArray(updated.tags) ? updated.tags : []);
         setMedia(updated);
       }
-
-      setShowTagsManager(false);
     } catch (error) {
       console.error('Error managing tags:', error);
     }
@@ -978,9 +1035,8 @@ function DetailPage() {
     navigate(`/detail/${similarItem.id}`);
   };
 
-  // Filtros para tags
+  // Filtros para tags - funciones de normalización si son necesarias
   const normalize = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const filteredAllTags = tagSearch ? allTags.filter(t => normalize(t.nombre).includes(normalize(tagSearch))) : allTags;
 
   if (loading) {
     return (
@@ -1175,7 +1231,7 @@ function DetailPage() {
                 </div>
                 <div className="info-row">
                   <span className="info-label">{t('detailModal.status')}:</span>
-                  <span className="info-value">{translateStatus(displayMedia.estado)}</span>
+                  <span className="info-value">{translateStatus(displayMedia.status)}</span>
                 </div>
               </div>
 
@@ -1314,22 +1370,15 @@ function DetailPage() {
               </div>
             ) : (
               <div className="tags-grid-page">
-                {(showAllTags ? localTags : localTags.slice(0, 8)).map(tag => (
+                {localTags.slice(0, 8).map(tag => (
                   <div className="tag-chip-page" key={tag.id}>
                     {typeof tag === 'string' ? tag : tag.nombre}
                   </div>
                 ))}
                 {localTags.length > 8 && (
-                  <button 
-                    className="tag-chip-page" 
-                    onClick={() => setShowAllTags(!showAllTags)}
-                    style={{ background: 'rgba(255,255,255,0.1)', cursor: 'pointer' }}
-                  >
-                    {showAllTags 
-                      ? `${t('detailModal.showLess', 'Mostrar menos')}`
-                      : `+${localTags.length - 8} ${t('detailModal.more', 'más')}`
-                    }
-                  </button>
+                  <div className="tag-chip-page" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                    +{localTags.length - 8} {t('detailModal.more', 'más')}
+                  </div>
                 )}
               </div>
             )}
@@ -1471,77 +1520,16 @@ function DetailPage() {
       )}
 
       {/* Modal de gestión de tags */}
-      {showTagsManager && (
-        <div className="tags-modal-overlay" onClick={(e) => { if (e.target.classList.contains('tags-modal-overlay')) setShowTagsManager(false); }}>
-          <div className="tags-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="tags-modal-header">
-              <div className="tags-modal-title">
-                <span className="tags-modal-icon"><i className="fas fa-tags"></i></span>
-                <h3>{t('detailModal.manageTags', 'Gestionar Tags')}</h3>
-              </div>
-              <button className="tags-modal-close" onClick={() => setShowTagsManager(false)}><i className="fas fa-times"></i></button>
-            </div>
-            
-            <div className="tags-modal-content">
-              <div className="tags-search-section">
-                <div className="tags-search-container">
-                  <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input
-                    type="text"
-                    value={tagSearch}
-                    onChange={(e) => setTagSearch(e.target.value)}
-                    placeholder={t('detailModal.searchTags', 'Buscar tags...')}
-                    className="tags-search-input"
-                  />
-                  {tagSearch && (
-                    <button className="clear-search-btn" onClick={() => setTagSearch('')}>×</button>
-                  )}
-                </div>
-              </div>
-
-              <div className="tags-selection-area">
-                {filteredAllTags.length > 0 ? (
-                  <div className="tags-grid">
-                    {filteredAllTags.map(tg => (
-                      <label key={tg.id} className={`tag-option ${tempSelectedTagIds.includes(tg.id) ? 'selected' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={tempSelectedTagIds.includes(tg.id)}
-                          onChange={() => toggleTempTag(tg.id)}
-                          className="tag-checkbox"
-                        />
-                        <span className="tag-option-text">{tg.nombre}</span>
-                        <span className="tag-check-mark">✓</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="no-tags-found">
-                    <span className="no-results-icon">😕</span>
-                    <p>{t('detailModal.noTagsFound', 'No hay tags que coincidan')}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="tags-modal-footer">
-              <div className="selected-count">
-                <span className="count-icon">📊</span>
-                {t('detailModal.selected', 'Seleccionados')}: <strong>{tempSelectedTagIds.length}</strong>
-              </div>
-              <div className="tags-modal-actions">
-                <button className="tags-cancel-btn" onClick={() => setShowTagsManager(false)}>
-                  {t('actions.cancel')}
-                </button>
-                <button className="tags-save-btn" onClick={applyTagsChanges}>
-                  <span className="save-icon">💾</span>
-                  {t('actions.save')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TagsModalNew
+        open={showTagsManager}
+        tags={allTags}
+        selectedTags={selectedTagIds}
+        onTagChange={handleTagChange}
+        onCreateTag={handleTagCreate}
+        onDeleteTag={handleTagDelete}
+        onSave={handleTagSave}
+        onClose={handleTagsClose}
+      />
     </div>
   );
 }

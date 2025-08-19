@@ -3,7 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useNotification } from '../context/NotificationContext';
 import './TagsModalNew.css';
 
-function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, onClose }) {
+function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDeleteTag, onSave, onClose }) {
   const [newTagName, setNewTagName] = useState('');
   const [error, setError] = useState('');
   const [deleteMode, setDeleteMode] = useState(false);
@@ -11,6 +11,8 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [tempSelectedTags, setTempSelectedTags] = useState([]);
   const [selectedBulkTags, setSelectedBulkTags] = useState(new Set());
   
   const { t } = useLanguage();
@@ -33,18 +35,32 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
 
   // Estadísticas
   const totalTags = tags.length;
-  const selectedCount = Array.isArray(selectedTags) ? selectedTags.length : 0;
+  const selectedCount = Array.isArray(tempSelectedTags) ? tempSelectedTags.length : 0;
   const deleteCount = tagsToDelete.length;
 
   // Reset states when modal opens/closes
   useEffect(() => {
     if (open) {
+      // Inicializar tempSelectedTags con los tags actualmente seleccionados
+      // Convertir IDs a objetos de tags completos si es necesario
+      const initialSelectedTags = Array.isArray(selectedTags) ? selectedTags.map(tagIdOrObj => {
+        if (typeof tagIdOrObj === 'object' && tagIdOrObj.id) {
+          return tagIdOrObj; // Ya es un objeto tag
+        } else {
+          // Es un ID, buscar el tag completo
+          const foundTag = tags.find(t => t.id === tagIdOrObj || String(t.id) === String(tagIdOrObj));
+          return foundTag;
+        }
+      }).filter(Boolean) : []; // Filtrar valores undefined
+      
+      setTempSelectedTags(initialSelectedTags);
       setNewTagName('');
       setError('');
       setDeleteMode(false);
       setTagsToDelete([]);
       setShowConfirmDialog(false);
       setTagSearch('');
+      setIsSaving(false);
       setSelectedBulkTags(new Set());
       // Focus search input after modal animation
       setTimeout(() => {
@@ -53,7 +69,7 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
         }
       }, 200);
     }
-  }, [open]);
+  }, [open, selectedTags, tags]);
 
   const handleCreateTag = async () => {
     const trimmedName = newTagName.trim();
@@ -88,10 +104,22 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
 
     setIsCreating(true);
     try {
-      await onCreateTag(trimmedName);
+      const createdTag = await onCreateTag(trimmedName);
       setNewTagName('');
       setError('');
       showNotification(t('tags.created', 'Tag creado exitosamente'), 'success');
+      
+      // Agregar el nuevo tag a la selección temporal automáticamente
+      if (createdTag) {
+        setTempSelectedTags(prev => {
+          const newSelection = Array.isArray(prev) ? [...prev] : [];
+          if (!newSelection.some(tag => tag.id === createdTag.id)) {
+            newSelection.push(createdTag);
+          }
+          return newSelection;
+        });
+      }
+      
       // Focus back to input for quick creation
       setTimeout(() => {
         if (newTagInputRef.current) {
@@ -105,6 +133,39 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!onSave) return;
+    
+    try {
+      setIsSaving(true);
+      await onSave(tempSelectedTags);
+      showNotification(t('tags.saveSuccess', 'Tags guardados exitosamente'), 'success');
+      onClose();
+    } catch (err) {
+      const msg = err?.message || t('tags.saveFailed', 'Error al guardar los tags');
+      setError(msg);
+      showNotification(msg, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Restaurar la selección original sin guardar cambios
+    const originalSelectedTags = Array.isArray(selectedTags) ? selectedTags.map(tagIdOrObj => {
+      if (typeof tagIdOrObj === 'object' && tagIdOrObj.id) {
+        return tagIdOrObj; // Ya es un objeto tag
+      } else {
+        // Es un ID, buscar el tag completo
+        const foundTag = tags.find(t => t.id === tagIdOrObj || String(t.id) === String(tagIdOrObj));
+        return foundTag;
+      }
+    }).filter(Boolean) : []; // Filtrar valores undefined
+    
+    setTempSelectedTags(originalSelectedTags);
+    onClose();
   };
 
   const handleKeyPress = (e) => {
@@ -122,14 +183,23 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
           : [...current, String(tagId)]
       );
     } else {
-      const tagIdStr = String(tagId);
-      const currentSelected = Array.isArray(selectedTags) ? selectedTags : [];
+      const tag = tags.find(t => t.id === tagId);
+      if (!tag) return;
       
-      if (currentSelected.includes(tagIdStr)) {
-        onTagChange(currentSelected.filter(id => id !== tagIdStr));
-      } else {
-        onTagChange([...currentSelected, tagIdStr]);
-      }
+      setTempSelectedTags(prev => {
+        const currentSelection = Array.isArray(prev) ? [...prev] : [];
+        const existingIndex = currentSelection.findIndex(t => t.id === tagId);
+        
+        if (existingIndex >= 0) {
+          // Remover el tag
+          currentSelection.splice(existingIndex, 1);
+        } else {
+          // Agregar el tag
+          currentSelection.push(tag);
+        }
+        
+        return currentSelection;
+      });
     }
   };
 
@@ -152,12 +222,18 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
   };
 
   const handleApplyBulkSelection = () => {
-    const currentSelected = Array.isArray(selectedTags) ? selectedTags : [];
-    const newSelection = Array.from(selectedBulkTags).map(String);
+    const currentSelection = Array.isArray(tempSelectedTags) ? [...tempSelectedTags] : [];
+    const bulkSelectedTags = Array.from(selectedBulkTags);
     
-    // Add bulk selected tags to current selection
-    const combined = [...new Set([...currentSelected, ...newSelection])];
-    onTagChange(combined);
+    // Add bulk selected tags to current temp selection
+    bulkSelectedTags.forEach(tagId => {
+      const tag = tags.find(t => t.id === tagId);
+      if (tag && !currentSelection.some(t => t.id === tagId)) {
+        currentSelection.push(tag);
+      }
+    });
+    
+    setTempSelectedTags(currentSelection);
     setSelectedBulkTags(new Set());
     showNotification(t('tags.bulkApplied', 'Selección aplicada'), 'success');
   };
@@ -369,7 +445,7 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
                       ? tagsToDelete.includes(String(tag.id))
                       : selectedBulkTags.size > 0 
                         ? selectedBulkTags.has(tag.id)
-                        : Array.isArray(selectedTags) && selectedTags.includes(String(tag.id));
+                        : Array.isArray(tempSelectedTags) && tempSelectedTags.some(t => t.id === tag.id);
                     
                     return (
                       <div 
@@ -418,25 +494,46 @@ function TagsModalNew({ open, tags, selectedTags, onTagChange, onCreateTag, onDe
         {/* Footer */}
         <div className="tags-modal-new-footer">
           <div className="footer-stats">
-            <div className="stat-item">
+            <div className="tags-modal-stat-item">
               <i className="fas fa-tags"></i>
               <span>{totalTags} {t('tags.total', 'total')}</span>
             </div>
-            <div className="stat-item">
+            <div className="tags-modal-stat-item">
               <i className="fas fa-check-circle"></i>
               <span>{selectedCount} {t('tags.applied', 'aplicados')}</span>
             </div>
             {deleteMode && (
-              <div className="stat-item delete">
+              <div className="tags-modal-stat-item delete">
                 <i className="fas fa-trash"></i>
                 <span>{deleteCount} {t('tags.toDelete', 'a eliminar')}</span>
               </div>
             )}
           </div>
           <div className="footer-actions">
-            <button className="secondary-btn" onClick={onClose}>
+            <button 
+              className="secondary-btn" 
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
               <i className="fas fa-times"></i>
-              {t('actions.close', 'Cerrar')}
+              {t('actions.cancel', 'Cancelar')}
+            </button>
+            <button 
+              className="primary-btn" 
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  {t('actions.saving', 'Guardando...')}
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-save"></i>
+                  {t('actions.save', 'Guardar')}
+                </>
+              )}
             </button>
           </div>
         </div>

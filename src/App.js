@@ -927,13 +927,13 @@ function CatalogPage() {
       const searchNorm = normalize(searchQuery);
       results = results.filter(m => {
         const tituloNorm = m.titulo ? normalize(m.titulo) : "";
-        const tituloInglesNorm = m.titulo_ingles ? normalize(m.titulo_ingles) : "";
+        const originalTitleNorm = m.original_title ? normalize(m.original_title) : "";
         const elencoNorm = m.elenco ? normalize(m.elenco) : "";
         const directorNorm = m.director ? normalize(m.director) : "";
         const generoNorm = m.genero ? normalize(m.genero) : "";
         return (
           tituloNorm.includes(searchNorm) ||
-          tituloInglesNorm.includes(searchNorm) ||
+          originalTitleNorm.includes(searchNorm) ||
           elencoNorm.includes(searchNorm) ||
           directorNorm.includes(searchNorm) ||
           generoNorm.includes(searchNorm)

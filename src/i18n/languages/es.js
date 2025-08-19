@@ -23,19 +23,35 @@ export const es = {
   // Media types
   movie: 'Película',
   series: 'Serie',
+  
+  // Media type mappings (to translate database values)
+  mediaTypes: {
+    'película': 'película',
+    'serie': 'serie',
+    'pelicula': 'película'  // without accent as fallback
+  },
 
   // Status (from TMDb API)
   status: {
     released: 'Estrenada',
     'in production': 'En producción',
     'post production': 'Post-producción',
+    'inproduction': 'En producción',
+    'postproduction': 'Post-producción',
     planned: 'Planeada',
     rumored: 'Rumoreada',
     canceled: 'Cancelada',
     cancelled: 'Cancelada',
     ended: 'Finalizada',
     'returning series': 'Serie renovada',
-    'pilot': 'Piloto'
+    'returningSeries': 'Serie renovada',
+    'returningseries': 'Serie renovada',
+    pilot: 'Piloto',
+    unknown: 'Desconocido',
+    'upcoming': 'Próximamente',
+    'completed': 'Completada',
+    'continuing': 'Continuando',
+    'hiatus': 'En pausa'
   },
 
   // Navbar
@@ -231,6 +247,7 @@ export const es = {
   // Actions
   actions: {
     save: 'Guardar',
+    saving: 'Guardando...',
     cancel: 'Cancelar',
     delete: 'Eliminar',
     edit: 'Editar',
@@ -535,7 +552,9 @@ export const es = {
     bulkApplied: 'Selección aplicada',
     deleted: 'Tags eliminados',
     nameTooShort: 'El nombre debe tener al menos 2 caracteres',
-    nameTooLong: 'El nombre no puede tener más de 30 caracteres'
+    nameTooLong: 'El nombre no puede tener más de 30 caracteres',
+    saveSuccess: 'Tags guardados exitosamente',
+    saveFailed: 'Error al guardar los tags'
   },
 
   // Add Media Form
@@ -603,6 +622,16 @@ export const es = {
     invalidRating: 'La nota personal debe estar entre 0 y 10',
     // Existence checks
     existsInCatalog: 'Esta {{type}} ya existe en tu catálogo',
+    existsInPersonalCatalog: 'Este {{type}} ya está en tu catálogo personal',
+    existsButNotInPersonal: 'Este {{type}} existe en la base de datos pero no está en tu catálogo personal',
+    alreadyInCatalog: 'Ya en tu catálogo:',
+    addedOn: 'Añadido el',
+    favorite: 'Favorito',
+    pending: 'Pendiente',
+    existsInDatabase: 'Existe en la base de datos:',
+    canAddToPersonal: 'Puedes añadirlo a tu catálogo personal',
+    newContent: 'Contenido nuevo',
+    willBeAdded: 'Se añadirá a tu catálogo personal',
     movieExistsInCatalog: 'Esta película ya existe en tu catálogo',
     seriesExistsInCatalog: 'Esta serie ya existe en tu catálogo',
     movieNotInCatalog: 'Esta película no existe en tu catálogo',
@@ -610,6 +639,7 @@ export const es = {
     checkingExistence: 'No se pudo comprobar la existencia',
     // Success/Error messages
     addedSuccessfully: '{{title}} se ha añadido correctamente',
+    translationsCreated: 'Traducciones automáticas creadas: {{count}} idiomas ({{synopsis}} con sinopsis)',
     movieAddedSuccess: 'Película añadida con éxito',
     seriesAddedSuccess: 'Serie añadida con éxito',
     errorUpdatingInterface: 'Error al actualizar la interfaz tras añadir',
@@ -631,7 +661,7 @@ export const es = {
     'Añadir Película o Serie': 'Añadir Película o Serie',
     'Buscar en TMDb...': 'Buscar en TMDb...',
     'Buscar TMDb': 'Buscar TMDb',
-    'Título original / en inglés': 'Título original / en inglés',
+    'Título original': 'Título original',
     'Tipo (película o serie)': 'Tipo (película o serie)',
     'Reparto principal': 'Reparto principal',
     'URL de la imagen': 'URL de la imagen',

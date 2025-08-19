@@ -61,14 +61,14 @@ export default function AddMediaForm({ onAdded }) {
   }
   const [form, setForm] = useState({
     titulo: '',
-    titulo_ingles: '',
+    original_title: '',
     anio: '',
     genero: '',
     sinopsis: '',
     director: '',
     elenco: '',
     imagen: '',
-    estado: '',
+    status: '',  // Cambiado de estado a status
     tipo: '',
     temporadas: '',
     episodios: '',
@@ -162,7 +162,7 @@ const [existMsg, setExistMsg] = useState('');
       episodios: form.episodios ? Number(form.episodios) : null,
       nota_personal: form.nota_personal ? Number(form.nota_personal) : null,
       tmdb_id: form.tmdb_id || null,
-      titulo_ingles: form.titulo_ingles || '',
+      original_title: form.original_title || '',
       tags: selectedTags
     };
 
@@ -307,14 +307,14 @@ const [existMsg, setExistMsg] = useState('');
           
           const formToSet = {
             titulo: selectData.titulo || '',
-            titulo_ingles: selectData.titulo_original || selectData.original_title || '',
+            original_title: selectData.titulo_original || selectData.original_title || '',
             anio: selectData.anio || '',
             genero: selectData.genero || '',
             sinopsis: selectData.sinopsis || '',
             director: selectData.director || '',
             elenco: selectData.elenco || '',
             imagen: selectData.imagen || '',
-            estado: selectData.estado || '',
+            status: selectData.status || '',  // Cambiado de estado a status
             tipo: selectData.tipo || '',
             temporadas: selectData.temporadas || '',
             episodios: selectData.episodios || '',
@@ -369,14 +369,14 @@ const [existMsg, setExistMsg] = useState('');
       
       const formToSet = {
         titulo: data.titulo || '',
-        titulo_ingles: data.titulo_original || data.original_title || '',
+        original_title: data.titulo_original || data.original_title || '',
         anio: data.anio || '',
         genero: data.genero || '',
         sinopsis: data.sinopsis || '',
         director: data.director || '',
         elenco: data.elenco || '',
         imagen: data.imagen || '',
-        estado: data.estado || '',
+        status: data.status || '',  // Cambiado de estado a status
         tipo: data.tipo || '',
         temporadas: data.temporadas || '',
         episodios: data.episodios || '',
@@ -504,7 +504,7 @@ const [existMsg, setExistMsg] = useState('');
             <>
               <div className="addmedia-fields">
                 <input name="titulo" value={form.titulo} onChange={handleChange} placeholder={t('addMedia.titleField', 'Título')} required className="addmedia-field" />
-                <input name="titulo_ingles" value={form.titulo_ingles} onChange={handleChange} placeholder={t('addMedia.originalTitleField', 'Título original / en inglés')} className="addmedia-field" />
+                <input name="original_title" value={form.original_title} onChange={handleChange} placeholder={t('addMedia.originalTitleField', 'Título original')} className="addmedia-field" />
                 <input name="anio" value={form.anio} onChange={handleChange} placeholder={t('addMedia.yearField', 'Año')} type="number" required className="addmedia-field" />
                 <input name="genero" value={form.genero} onChange={handleChange} placeholder={t('addMedia.genreField', 'Género')} className="addmedia-field" />
                 <input name="tipo" value={form.tipo} onChange={handleChange} placeholder={t('addMedia.typeField', 'Tipo (película o serie)')} required className="addmedia-field" />
@@ -521,7 +521,7 @@ const [existMsg, setExistMsg] = useState('');
                   </div>
                 )}
                 <textarea name="sinopsis" value={form.sinopsis} onChange={handleChange} placeholder={t('addMedia.synopsisField', 'Sinopsis')} className="addmedia-field addmedia-textarea" />
-                <input name="estado" value={form.estado} onChange={handleChange} placeholder={t('addMedia.statusField', 'Estado (vista, pendiente, etc.)')} className="addmedia-field" />
+                <input name="status" value={form.status} onChange={handleChange} placeholder={t('addMedia.statusField', 'Estado (vista, pendiente, etc.)')} className="addmedia-field" />
               </div>
               <div className="addmedia-tags-section">
                 <button 
@@ -566,14 +566,14 @@ const [existMsg, setExistMsg] = useState('');
                       const data = await res.json();
                       const formToSet = {
                         titulo: data.titulo || '',
-                        titulo_ingles: data.titulo_original || data.original_title || '',
+                        original_title: data.titulo_original || data.original_title || '',
                         anio: data.anio || '',
                         genero: data.genero || '',
                         sinopsis: data.sinopsis || '',
                         director: data.director || '',
                         elenco: data.elenco || '',
                         imagen: data.imagen || '',
-                        estado: data.estado || '',
+                        status: data.status || '',  // Cambiado de estado a status
                         tipo: data.tipo || '',
                         temporadas: data.temporadas || '',
                         episodios: data.episodios || '',

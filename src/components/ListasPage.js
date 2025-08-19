@@ -387,13 +387,13 @@ export default function ListasPage() {
           
           // Buscar en múltiples campos con normalización completa
           const tituloNorm = normalize(media.titulo || '');
-          const tituloInglesNorm = normalize(media.titulo_ingles || '');
+          const originalTitleNorm = normalize(media.original_title || '');
           const elencoNorm = normalize(media.elenco || '');
           const directorNorm = normalize(media.director || '');
           const generoNorm = normalize(media.genero || '');
           
           return tituloNorm.includes(searchNorm) || 
-                 tituloInglesNorm.includes(searchNorm) ||
+                 originalTitleNorm.includes(searchNorm) ||
                  elencoNorm.includes(searchNorm) ||
                  directorNorm.includes(searchNorm) ||
                  generoNorm.includes(searchNorm);

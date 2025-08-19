@@ -5,16 +5,73 @@ import { useNotification } from '../context/NotificationContext';
 import TagsModalNew from './TagsModalNew';
 import TmdbIdConflictModal from './TmdbIdConflictModal';
 import RelatedMedia from './RelatedMedia';
-import { useDynamicPoster } from '../hooks/useDynamicPoster';
+import { useHybridPoster, useHybridContent } from '../hooks/useHybridContent';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://mi-catalogo-backend.onrender.com";
 const API_URL = BACKEND_URL + '/medias';
 const TMDB_URL = BACKEND_URL + '/tmdb';
 
+// Componente auxiliar para mostrar el estado del catálogo con título traducido
+function CatalogStatusDisplay({ existStatus, translateMediaType }) {
+  const { t } = useLanguage();
+  
+  // Determinar el tipo de media para el hook (siempre llamar el hook)
+  const mediaType = existStatus?.tipo?.toLowerCase().includes('película') || 
+                   existStatus?.tipo?.toLowerCase().includes('pelicula') ? 'movie' : 'tv';
+  
+  // Obtener contenido híbrido para el título traducido (siempre llamar el hook)
+  const { content } = useHybridContent(existStatus?.tmdb_id, mediaType, null, true); // skipCache = true
+  
+  // Early return después de llamar todos los hooks
+  if (!existStatus || (!existStatus.inPersonalCatalog && !existStatus.exists)) return null;
+  
+  // Usar el título traducido si está disponible, sino usar el original
+  const displayTitle = content.title || existStatus.titulo;
+  
+  return (
+    <div className="addmedia-catalog-status" style={{
+      margin: '16px 0',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      fontSize: '0.9rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      backgroundColor: existStatus.inPersonalCatalog ? 'rgba(255, 193, 7, 0.1)' : 'rgba(40, 167, 69, 0.1)',
+      border: existStatus.inPersonalCatalog ? '1px solid rgba(255, 193, 7, 0.3)' : '1px solid rgba(40, 167, 69, 0.3)',
+      color: existStatus.inPersonalCatalog ? '#ffc107' : '#28a745'
+    }}>
+      <i className={`fas ${existStatus.inPersonalCatalog ? 'fa-exclamation-triangle' : 'fa-check-circle'}`}></i>
+      {existStatus.inPersonalCatalog ? (
+        <span>
+          <strong>{t('addMedia.alreadyInCatalog', 'Ya en tu catálogo:')}</strong>
+          {` ${displayTitle} (${translateMediaType(existStatus.tipo)})`}
+          {existStatus.fechaAgregado && (
+            <span style={{ opacity: 0.8, marginLeft: '8px' }}>
+              - {t('addMedia.addedOn', 'Añadido el')} {new Date(existStatus.fechaAgregado).toLocaleDateString()}
+            </span>
+          )}
+          {existStatus.favorito && (
+            <i className="fas fa-heart" style={{ marginLeft: '8px', color: '#e74c3c' }} title={t('addMedia.favorite', 'Favorito')}></i>
+          )}
+          {existStatus.pendiente && (
+            <i className="fas fa-clock" style={{ marginLeft: '8px', color: '#f39c12' }} title={t('addMedia.pending', 'Pendiente')}></i>
+          )}
+        </span>
+      ) : (
+        <span>
+          <strong>{t('addMedia.newContent', 'Contenido nuevo')}</strong>
+          {` - ${t('addMedia.willBeAdded', 'Se añadirá a tu catálogo personal')}`}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // Componente para cada resultado de búsqueda TMDB
 function TMDBResultCard({ item, onSelect, loading }) {
   const mediaType = item.media_type === 'movie' ? 'movie' : 'tv';
-  const { posterUrl, loading: posterLoading } = useDynamicPoster(item.id, mediaType, item.imagen);
+  const { posterUrl, loading: posterLoading, cached } = useHybridPoster(item.id, mediaType, item.imagen, true); // skipCache = true
   const { t } = useLanguage();
 
   const handleClick = () => {
@@ -33,14 +90,21 @@ function TMDBResultCard({ item, onSelect, loading }) {
         {posterLoading ? (
           <div className="addmedia-loading-spinner"></div>
         ) : posterUrl ? (
-          <img 
-            src={posterUrl} 
-            alt={item.titulo}
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.parentNode.innerHTML = '<i class="fas fa-film"></i>';
-            }}
-          />
+          <div className="poster-container">
+            <img 
+              src={posterUrl} 
+              alt={item.titulo}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = '<i class="fas fa-film"></i>';
+              }}
+            />
+            {cached && (
+              <div className="cache-indicator" title="Cargado desde caché">
+                <i className="fas fa-bolt"></i>
+              </div>
+            )}
+          </div>
         ) : (
           <i className="fas fa-film"></i>
         )}
@@ -79,19 +143,37 @@ function TMDBResultCard({ item, onSelect, loading }) {
 
 export default function AddMediaFormNew({ onAdded }) {
   const { t, currentLanguage } = useLanguage();
+  
+  // Helper function to translate media type from database values
+  const translateMediaType = (tipo) => {
+    if (!tipo) return '';
+    
+    // Convert to lowercase for consistent mapping
+    const tipoLower = tipo.toLowerCase();
+    
+    // Map common database values to translation keys
+    if (tipoLower.includes('película') || tipoLower.includes('pelicula') || tipoLower === 'movie') {
+      return t('movie', 'Película');
+    } else if (tipoLower.includes('serie') || tipoLower === 'series' || tipoLower === 'tv') {
+      return t('series', 'Serie');
+    }
+    
+    // Fallback to original value if no mapping found
+    return tipo;
+  };
   const { showNotification } = useNotification();
   
   // Estados principales
   const [form, setForm] = useState({
     titulo: '',
-    titulo_ingles: '',
+    original_title: '',
     anio: '',
     genero: '',
     sinopsis: '',
     director: '',
     elenco: '',
     imagen: '',
-    estado: '',
+    status: '',  // Cambiado de estado a status
     tipo: '',
     temporadas: '',
     episodios: '',
@@ -148,8 +230,8 @@ export default function AddMediaFormNew({ onAdded }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  // Chequeo de existencia en catálogo
-  const checkExistenceInCatalog = async (tmdb_id, tipo) => {
+  // Chequeo de existencia en catálogo personal
+  const checkExistenceInPersonalCatalog = async (tmdb_id, tipo) => {
     if (!tmdb_id) return;
     
     setExistStatus(null);
@@ -158,23 +240,38 @@ export default function AddMediaFormNew({ onAdded }) {
       const jwtToken = localStorage.getItem('jwt_token');
       const headers = jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {};
       
-      const response = await fetch(`${API_URL}/check-tmdb/${tmdb_id}`, { headers });
+      const response = await fetch(`${API_URL}/check-personal-catalog/${tmdb_id}`, { headers });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.exists) {
-          setExistStatus({ exists: true, tipo: data.tipo });
-          addNotification(
-            t('addMedia.existsInCatalog', 'Esta {{type}} ya existe en tu catálogo')
-              .replace('{{type}}', data.tipo),
-            'warning'
-          );
+        if (data.exists && data.in_personal_catalog) {
+          setExistStatus({ 
+            exists: true, 
+            inPersonalCatalog: true,
+            tmdb_id: tmdb_id,
+            titulo: data.titulo,
+            tipo: data.tipo,
+            fechaAgregado: data.fecha_agregado,
+            favorito: data.favorito,
+            pendiente: data.pendiente
+          });
+          // No mostrar notificación duplicada - solo el indicador visual
+        } else if (data.exists_in_general) {
+          setExistStatus({ 
+            exists: false, 
+            inPersonalCatalog: false,
+            existsInGeneral: true,
+            tmdb_id: tmdb_id,
+            titulo: data.titulo,
+            tipo: data.tipo
+          });
+          // No mostrar notificación duplicada - solo el indicador visual
         } else {
-          setExistStatus({ exists: false });
+          setExistStatus({ exists: false, inPersonalCatalog: false });
         }
       }
     } catch (err) {
-      console.error('Error checking existence:', err);
+      // Error checking personal catalog
     }
   };
 
@@ -191,7 +288,7 @@ export default function AddMediaFormNew({ onAdded }) {
           setTags(data);
         }
       } catch (err) {
-        console.error('Error cargando etiquetas:', err);
+        // Error loading tags
       }
     };
 
@@ -201,11 +298,18 @@ export default function AddMediaFormNew({ onAdded }) {
   // Verificar existencia cuando cambian campos relevantes
   useEffect(() => {
     if (form.tmdb_id && form.tipo) {
-      checkExistenceInCatalog(form.tmdb_id, form.tipo);
+      checkExistenceInPersonalCatalog(form.tmdb_id, form.tipo);
     } else {
       setExistStatus(null);
     }
   }, [form.tmdb_id, form.tipo]);
+
+  // Auto-seleccionar si hay solo 1 resultado
+  useEffect(() => {
+    if (tmdbOptions.length === 1 && !tmdbDetails && !selectingTmdb) {
+      handleTmdbSelect(tmdbOptions[0]);
+    }
+  }, [tmdbOptions, tmdbDetails, selectingTmdb]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -254,9 +358,18 @@ export default function AddMediaFormNew({ onAdded }) {
     }
 
     // Si el idioma actual no es español y tenemos tmdb_id, obtener datos en español para guardar
-    if (currentLanguage !== 'es' && form.tmdb_id) {
+    if (currentLanguage !== 'es' && form.tmdb_id && tmdbDetails) {
       try {
-        const spanishUrl = `${TMDB_URL}?id=${encodeURIComponent(form.tmdb_id)}&media_type=${encodeURIComponent(tmdbDetails?.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}&language=es-ES`;
+        // Usar el media_type correcto del tmdbDetails
+        const mediaType = tmdbDetails.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie');
+        
+        const params = new URLSearchParams({
+          id: form.tmdb_id,
+          media_type: mediaType,
+          language: 'es-ES'
+        });
+        
+        const spanishUrl = `${TMDB_URL}?${params.toString()}`;
         const spanishRes = await fetch(spanishUrl);
         
         if (spanishRes.ok) {
@@ -265,15 +378,17 @@ export default function AddMediaFormNew({ onAdded }) {
           // Reemplazar los campos de texto con la versión en español para guardar
           formDataToSave = {
             ...formDataToSave,
-            titulo: spanishData.title || spanishData.name || form.titulo,
-            sinopsis: spanishData.overview || form.sinopsis,
-            // Mantener el título en inglés si existe en los datos originales
-            titulo_ingles: spanishData.original_title || spanishData.original_name || form.titulo_ingles
+            titulo: spanishData.titulo || form.titulo,
+            sinopsis: spanishData.sinopsis || form.sinopsis,
+            // Mantener el título original si existe en los datos españoles
+            original_title: spanishData.titulo_original || spanishData.original_title || form.original_title
           };
+        } else {
+          // Could not obtain Spanish data, using current data
         }
       } catch (error) {
-        console.warn('No se pudieron obtener datos en español, usando datos actuales:', error);
-        // Si falla, continuar con los datos actuales
+        // Error obtaining Spanish data
+        // If it fails, continue with current data
       }
     }
 
@@ -284,7 +399,7 @@ export default function AddMediaFormNew({ onAdded }) {
       episodios: formDataToSave.episodios ? Number(formDataToSave.episodios) : null,
       nota_personal: formDataToSave.nota_personal ? Number(formDataToSave.nota_personal) : null,
       tmdb_id: formDataToSave.tmdb_id || null,
-      titulo_ingles: formDataToSave.titulo_ingles || '',
+      original_title: formDataToSave.original_title || '',
       tags: selectedTags
     };
 
@@ -304,23 +419,54 @@ export default function AddMediaFormNew({ onAdded }) {
       if (response.ok) {
         const newMedia = await response.json();
         setSubmitStatus('success');
-        addNotification(
-          t('addMedia.addedSuccessfully', '{{title}} se ha añadido correctamente')
-            .replace('{{title}}', form.titulo),
-          'success'
-        );
+        
+        // Verificar traducciones creadas automáticamente
+        if (form.tmdb_id) {
+          try {
+            const jwtToken = localStorage.getItem('jwt_token');
+            const headers = jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {};
+            
+            const translationsResponse = await fetch(`${API_URL}/${newMedia.id}/translations`, { headers });
+            if (translationsResponse.ok) {
+              const translationSummary = await translationsResponse.json();
+              // addNotification(
+              //   t('addMedia.addedSuccessfully', '{{title}} se ha añadido correctamente')
+              //     .replace('{{title}}', form.titulo),
+              //   'success'
+              // );
+              
+              // Mostrar información de traducciones
+              if (translationSummary.total > 0) {
+                // addNotification(
+                //   t('addMedia.translationsCreated', 'Traducciones automáticas creadas: {{count}} idiomas ({{synopsis}} con sinopsis)')
+                //     .replace('{{count}}', translationSummary.total)
+                //     .replace('{{synopsis}}', translationSummary.with_synopsis),
+                //   'info'
+                // );
+              }
+            }
+          } catch (err) {
+            // Could not verify translations
+          }
+        } else {
+          // addNotification(
+          //   t('addMedia.addedSuccessfully', '{{title}} se ha añadido correctamente')
+          //     .replace('{{title}}', form.titulo),
+          //   'success'
+          // );
+        }
         
         // Reset form
         setForm({
           titulo: '',
-          titulo_ingles: '',
+          original_title: '',
           anio: '',
           genero: '',
           sinopsis: '',
           director: '',
           elenco: '',
           imagen: '',
-          estado: '',
+          status: '',  // Cambiado de estado a status
           tipo: '',
           temporadas: '',
           episodios: '',
@@ -353,15 +499,54 @@ export default function AddMediaFormNew({ onAdded }) {
     setTmdbError('');
     setTmdbOptions([]);
     
+    // Limpiar el formulario actual si hay uno mostrado
+    if (tmdbDetails) {
+      setTmdbDetails(null);
+      setForm({
+        titulo: '',
+        original_title: '',
+        anio: '',
+        genero: '',
+        sinopsis: '',
+        director: '',
+        elenco: '',
+        imagen: '',
+        status: '',  // Cambiado de estado a status
+        tipo: '',
+        temporadas: '',
+        episodios: '',
+        nota_personal: '',
+        tmdb_id: ''
+      });
+      setExistStatus(null);
+    }
+    
     try {
       const jwtToken = localStorage.getItem('jwt_token');
       const headers = jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {};
       
-      const tipoPreferido = form.tipo?.toLowerCase() === 'serie' ? 'serie' : (form.tipo?.toLowerCase() === 'película' ? 'película' : '');
+      // Determinar tipo preferido basado en el formulario
+      let tipoPreferido = '';
+      if (form.tipo?.toLowerCase() === 'serie') {
+        tipoPreferido = 'serie';
+      } else if (form.tipo?.toLowerCase() === 'película') {
+        tipoPreferido = 'película';
+      }
+      
       const tmdbLang = getTmdbLanguage(currentLanguage);
-      const url = tipoPreferido ? 
-        `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&tipo_preferido=${encodeURIComponent(tipoPreferido)}&listar=true&language=${tmdbLang}` : 
-        `${TMDB_URL}?title=${encodeURIComponent(searchTitle)}&listar=true&language=${tmdbLang}`;
+      
+      // Construir URL con parámetros optimizados
+      const params = new URLSearchParams({
+        title: searchTitle,
+        listar: 'true',
+        language: tmdbLang
+      });
+      
+      if (tipoPreferido) {
+        params.append('tipo_preferido', tipoPreferido);
+      }
+      
+      const url = `${TMDB_URL}?${params.toString()}`;
       
       const response = await fetch(url, { headers });
       
@@ -373,8 +558,23 @@ export default function AddMediaFormNew({ onAdded }) {
       const data = await response.json();
       
       if (data.opciones && data.opciones.length > 0) {
-        setTmdbOptions(data.opciones);
+        // Mejorar los datos de las opciones con información del media_type
+        const opcionesEnriquecidas = data.opciones.map(opcion => ({
+          ...opcion,
+          // Asegurar que media_type esté presente y sea correcto
+          media_type: opcion.media_type || (opcion.tipo === 'serie' ? 'tv' : 'movie'),
+          // Agregar información de depuración
+          debug_info: {
+            original_media_type: opcion.media_type,
+            inferred_type: opcion.tipo,
+            final_media_type: opcion.media_type || (opcion.tipo === 'serie' ? 'tv' : 'movie')
+          }
+        }));
+        
+        setTmdbOptions(opcionesEnriquecidas);
         setTmdbError('');
+        
+        // Los resultados se procesarán en un useEffect separado para auto-selección
       } else {
         setTmdbError(t('addMedia.noTmdbResults', 'No se encontraron resultados en TMDb'));
       }
@@ -383,7 +583,7 @@ export default function AddMediaFormNew({ onAdded }) {
     } finally {
       setLoadingTmdb(false);
     }
-  }, [searchTitle, form.tipo, currentLanguage, t]);
+  }, [searchTitle, form.tipo, currentLanguage, t, tmdbDetails]);
 
   const handleTmdbSelect = useCallback(async (opcion) => {
     setSelectingTmdb(opcion.id);
@@ -393,7 +593,19 @@ export default function AddMediaFormNew({ onAdded }) {
       const headers = jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {};
       
       const tmdbLang = getTmdbLanguage(currentLanguage);
-      const url = `${TMDB_URL}?id=${encodeURIComponent(opcion.id)}&media_type=${encodeURIComponent(opcion.media_type)}&language=${tmdbLang}`;
+      
+      // Asegurar que tenemos el media_type correcto
+      const mediaType = opcion.media_type || (opcion.tipo === 'serie' ? 'tv' : 'movie');
+      
+      // Construir URL con parámetros correctos
+      const params = new URLSearchParams({
+        id: opcion.id,
+        media_type: mediaType,
+        language: tmdbLang
+      });
+      
+      const url = `${TMDB_URL}?${params.toString()}`;
+      
       const response = await fetch(url, { headers });
       
       if (!response.ok) {
@@ -403,24 +615,31 @@ export default function AddMediaFormNew({ onAdded }) {
       
       const details = await response.json();
       
-      // Preservar media_type de la opción original
+      // Preservar media_type de la opción original y asegurar consistencia
       const detailsWithMediaType = {
         ...details,
-        media_type: opcion.media_type
+        media_type: mediaType,
+        // Información de depuración
+        debug_selection: {
+          original_media_type: opcion.media_type,
+          final_media_type: mediaType,
+          backend_tipo: details.tipo,
+          selected_from: 'tmdb_search'
+        }
       };
       
       setTmdbDetails(detailsWithMediaType);
       setForm(prev => ({
         ...prev,
         titulo: details.titulo || '',
-        titulo_ingles: details.titulo_original || details.original_title || '',
+        original_title: details.titulo_original || details.original_title || '',
         anio: details.anio || '',
         genero: details.genero || '',
         sinopsis: details.sinopsis || '',
         director: details.director || '',
         elenco: details.elenco || '',
         imagen: details.imagen || '',
-        estado: details.estado || '',
+        status: details.status || '',  // Cambiado de estado a status
         tipo: details.tipo || '',
         temporadas: details.temporadas || '',
         episodios: details.episodios || '',
@@ -428,14 +647,14 @@ export default function AddMediaFormNew({ onAdded }) {
         tmdb_id: opcion.id || ''
       }));
       
-      addNotification(
-        t('addMedia.tmdbDataLoaded', 'Datos cargados desde TMDb'),
-        'success'
-      );
+      // addNotification(
+      //   t('addMedia.tmdbDataLoaded', 'Datos cargados desde TMDb'),
+      //   'success'
+      // );
       
-      // Chequear existencia en catálogo
+      // Chequear existencia en catálogo personal
       if (opcion.id && details.tipo) {
-        checkExistenceInCatalog(opcion.id, details.tipo);
+        await checkExistenceInPersonalCatalog(opcion.id, details.tipo);
       }
       
     } catch (err) {
@@ -443,7 +662,7 @@ export default function AddMediaFormNew({ onAdded }) {
     } finally {
       setSelectingTmdb(null);
     }
-  }, [currentLanguage, t]);
+  }, [currentLanguage, t, checkExistenceInPersonalCatalog, addNotification]);
 
   const handleCreateTag = async (nombre) => {
     try {
@@ -465,7 +684,7 @@ export default function AddMediaFormNew({ onAdded }) {
         return newTag;
       }
     } catch (err) {
-      console.error('Error creating tag:', err);
+      // Error creating tag
     }
     return null;
   };
@@ -485,12 +704,25 @@ export default function AddMediaFormNew({ onAdded }) {
         setSelectedTags(prev => prev.filter(id => id !== tagId));
       }
     } catch (err) {
-      console.error('Error deleting tag:', err);
+      // Error deleting tag
     }
   };
 
-  const handleTagChange = (tagIds) => {
-    setSelectedTags(tagIds);
+  const handleTagChange = (tagsData) => {
+    // Manejar tanto objetos de tags como IDs
+    if (Array.isArray(tagsData)) {
+      const processedTags = tagsData.map(item => {
+        // Si es un objeto tag, extraer el ID
+        if (typeof item === 'object' && item.id) {
+          return item.id;
+        }
+        // Si ya es un ID, devolverlo tal como está
+        return item;
+      });
+      setSelectedTags(processedTags);
+    } else {
+      setSelectedTags(tagsData);
+    }
   };
 
   const getNotificationIcon = (type) => {
@@ -620,14 +852,14 @@ export default function AddMediaFormNew({ onAdded }) {
                     setTmdbDetails(null);
                     setForm({
                       titulo: '',
-                      titulo_ingles: '',
+                      original_title: '',
                       anio: '',
                       genero: '',
                       sinopsis: '',
                       director: '',
                       elenco: '',
                       imagen: '',
-                      estado: '',
+                      status: '',  // Cambiado de estado a status
                       tipo: '',
                       temporadas: '',
                       episodios: '',
@@ -664,6 +896,9 @@ export default function AddMediaFormNew({ onAdded }) {
               )}
             </div>
 
+            {/* Personal Catalog Status Indicator */}
+            <CatalogStatusDisplay existStatus={existStatus} translateMediaType={translateMediaType} />
+
             <form onSubmit={handleSubmit}>
               <div className="addmedia-form-grid">
                 <div className="addmedia-field-group">
@@ -686,8 +921,8 @@ export default function AddMediaFormNew({ onAdded }) {
                     {t('addMedia.originalTitleField', 'Título Original')}
                   </label>
                   <input
-                    name="titulo_ingles"
-                    value={form.titulo_ingles}
+                    name="original_title"
+                    value={form.original_title}
                     onChange={handleChange}
                     placeholder={t('addMedia.originalTitlePlaceholder', 'Título en idioma original')}
                     className="addmedia-field addmedia-field-readonly"
@@ -731,7 +966,7 @@ export default function AddMediaFormNew({ onAdded }) {
                   </label>
                   <input
                     name="tipo"
-                    value={form.tipo}
+                    value={translateMediaType(form.tipo)}
                     onChange={handleChange}
                     placeholder={t('addMedia.typePlaceholder', 'película o serie')}
                     className="addmedia-field addmedia-field-readonly"
@@ -874,8 +1109,8 @@ export default function AddMediaFormNew({ onAdded }) {
                     {t('addMedia.statusField', 'Estado')}
                   </label>
                   <input
-                    name="estado"
-                    value={form.estado}
+                    name="status"
+                    value={form.status}
                     onChange={handleChange}
                     placeholder={t('addMedia.statusPlaceholder', 'vista, pendiente, etc.')}
                     className="addmedia-field addmedia-field-readonly"
@@ -963,10 +1198,22 @@ export default function AddMediaFormNew({ onAdded }) {
                 setTmdbError('');
                 
                 try {
-                  const tmdbLang = getTmdbLanguage(currentLanguage);
-                  const url = `${TMDB_URL}?id=${encodeURIComponent(item.id)}&media_type=${encodeURIComponent(item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie'))}&language=${tmdbLang}`;
+                  const jwtToken = localStorage.getItem('jwt_token');
+                  const headers = jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {};
                   
-                  const res = await fetch(url);
+                  const tmdbLang = getTmdbLanguage(currentLanguage);
+                  
+                  // Determinar media_type correcto
+                  const mediaType = item.media_type || (item.tipo === 'serie' ? 'tv' : 'movie');
+                  
+                  const params = new URLSearchParams({
+                    id: item.id,
+                    media_type: mediaType,
+                    language: tmdbLang
+                  });
+                  
+                  const url = `${TMDB_URL}?${params.toString()}`;
+                  const res = await fetch(url, { headers });
                   
                   if (!res.ok) {
                     const err = await res.json();
@@ -979,20 +1226,25 @@ export default function AddMediaFormNew({ onAdded }) {
                   // Preservar media_type del item original
                   const dataWithMediaType = {
                     ...data,
-                    media_type: item.media_type || (form.tipo?.toLowerCase().includes('serie') ? 'tv' : 'movie')
+                    media_type: mediaType,
+                    debug_selection: {
+                      selected_from: 'related_media',
+                      original_media_type: item.media_type,
+                      final_media_type: mediaType
+                    }
                   };
                   
                   // Actualizar formulario con los nuevos datos
                   setForm({
                     titulo: data.titulo || '',
-                    titulo_ingles: data.titulo_original || data.original_title || '',
+                    original_title: data.titulo_original || data.original_title || '',
                     anio: data.anio || '',
                     genero: data.genero || '',
                     sinopsis: data.sinopsis || '',
                     director: data.director || '',
                     elenco: data.elenco || '',
                     imagen: data.imagen || '',
-                    estado: data.estado || '',
+                    status: data.status || '',  // Cambiado de estado a status
                     tipo: data.tipo || '',
                     temporadas: data.temporadas || '',
                     episodios: data.episodios || '',
@@ -1006,14 +1258,14 @@ export default function AddMediaFormNew({ onAdded }) {
                   setTmdbError('');
                   
                   // Mostrar notificación
-                  addNotification(
-                    t('addMedia.relatedSelected', 'Contenido relacionado seleccionado'),
-                    'success'
-                  );
+                  // addNotification(
+                  //   t('addMedia.relatedSelected', 'Contenido relacionado seleccionado'),
+                  //   'success'
+                  // );
                   
-                  // Chequear existencia en catálogo
+                  // Chequear existencia en catálogo personal
                   if (item.id && data.tipo) {
-                    await checkExistenceInCatalog(item.id.toString(), data.tipo);
+                    await checkExistenceInPersonalCatalog(item.id.toString(), data.tipo);
                   }
                 } catch (err) {
                   setTmdbError(t('addMedia.connectionError', 'Error de conexión'));
@@ -1034,6 +1286,7 @@ export default function AddMediaFormNew({ onAdded }) {
           open={showTagsModal}
           tags={tags}
           selectedTags={selectedTags}
+          onSave={handleTagChange}
           onTagChange={handleTagChange}
           onCreateTag={handleCreateTag}
           onDeleteTag={handleDeleteTag}

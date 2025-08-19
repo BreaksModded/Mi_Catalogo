@@ -20,18 +20,38 @@ export const de = {
     optional: 'Optional'
   },
 
+  // Media types
+  movie: 'Film',
+  series: 'Serie',
+  
+  // Media type mappings (to translate database values)
+  mediaTypes: {
+    'película': 'film',
+    'serie': 'serie',
+    'pelicula': 'film'  // without accent as fallback
+  },
+
   // Status (from TMDb API)
   status: {
     released: 'Veröffentlicht',
     'in production': 'In Produktion',
     'post production': 'Postproduktion',
+    'inproduction': 'In Produktion',
+    'postproduction': 'Postproduktion',
     planned: 'Geplant',
     rumored: 'Gerüchte',
     canceled: 'Abgebrochen',
     cancelled: 'Abgebrochen',
     ended: 'Beendet',
     'returning series': 'Fortsetzende Serie',
-    'pilot': 'Pilot'
+    'returningSeries': 'Fortsetzende Serie',
+    'returningseries': 'Fortsetzende Serie',
+    pilot: 'Pilot',
+    unknown: 'Unbekannt',
+    'upcoming': 'Bevorstehend',
+    'completed': 'Abgeschlossen',
+    'continuing': 'Fortlaufend',
+    'hiatus': 'Pausiert'
   },
 
   person: {
@@ -190,6 +210,7 @@ export const de = {
   },
   actions: {
     save: 'Speichern',
+    saving: 'Speichern...',
     cancel: 'Abbrechen',
     delete: 'Löschen',
     edit: 'Bearbeiten',
@@ -458,7 +479,9 @@ export const de = {
     bulkApplied: 'Auswahl angewendet',
     deleted: 'Tags gelöscht',
     nameTooShort: 'Name muss mindestens 2 Zeichen haben',
-    nameTooLong: 'Name darf nicht mehr als 30 Zeichen haben'
+    nameTooLong: 'Name darf nicht mehr als 30 Zeichen haben',
+    saveSuccess: 'Tags erfolgreich gespeichert',
+    saveFailed: 'Fehler beim Speichern der Tags'
   },
   addMedia: {
     title: 'Inhalte hinzufügen',
@@ -524,6 +547,16 @@ export const de = {
     invalidRating: 'Bewertung 0-10',
     // Existence checks
     existsInCatalog: 'Dieser {{type}} existiert bereits in Ihrem Katalog',
+    existsInPersonalCatalog: 'Dieser {{type}} ist bereits in Ihrem persönlichen Katalog',
+    existsButNotInPersonal: 'Dieser {{type}} existiert in der Datenbank, aber nicht in Ihrem persönlichen Katalog',
+    alreadyInCatalog: 'Bereits in Ihrem Katalog:',
+    addedOn: 'Hinzugefügt am',
+    favorite: 'Favorit',
+    pending: 'Ausstehend',
+    existsInDatabase: 'Existiert in der Datenbank:',
+    canAddToPersonal: 'Sie können es zu Ihrem persönlichen Katalog hinzufügen',
+    newContent: 'Neuer Inhalt',
+    willBeAdded: 'Wird zu Ihrem persönlichen Katalog hinzugefügt',
     movieExistsInCatalog: 'Dieser Film existiert bereits in Ihrem Katalog',
     seriesExistsInCatalog: 'Diese Serie existiert bereits in Ihrem Katalog',
     movieNotInCatalog: 'Dieser Film existiert nicht in Ihrem Katalog',
@@ -531,6 +564,7 @@ export const de = {
     checkingExistence: 'Existenz konnte nicht überprüft werden',
     // Success/Error messages
     addedSuccessfully: '{{title}} wurde erfolgreich hinzugefügt',
+    translationsCreated: 'Automatische Übersetzungen erstellt: {{count}} Sprachen ({{synopsis}} mit Synopsis)',
     movieAddedSuccess: 'Film hinzugefügt',
     seriesAddedSuccess: 'Serie hinzugefügt',
     errorUpdatingInterface: 'Fehler bei der Oberflächenaktualisierung',

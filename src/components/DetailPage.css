@@ -102,6 +102,9 @@
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  width: 320px;  /* Ancho fijo para evitar que se expanda */
+  flex-shrink: 0;
+  align-self: flex-start;  /* Evita que se estire verticalmente */
 }
 
 .poster-container {
@@ -109,6 +112,7 @@
   display: flex;
   justify-content: center;
   padding-bottom: 20px;
+  flex-shrink: 0;  /* No permitir que se contraiga */
 }
 
 .detail-poster {
@@ -1086,6 +1090,10 @@
     gap: 16px;
   }
   
+  .poster-section {
+    width: 260px;  /* Reducir el ancho en móviles */
+  }
+  
   .detail-poster {
     width: 220px;
     height: 330px;
@@ -1157,6 +1165,10 @@
   
   .detail-page-info {
     padding: 20px;
+  }
+  
+  .poster-section {
+    width: 240px;  /* Reducir más el ancho en móviles pequeños */
   }
   
   .detail-poster {
