@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 export const en = {
   // Common/Global
   common: {
@@ -58,7 +59,13 @@ export const en = {
     full_filmography: 'Full filmography',
     knownFor: 'Known for',
     yourWatchedTitles: 'Your watched titles with this actor',
-    born: 'Born'
+    born: 'Born',
+    awards: 'Awards & Recognition',
+    loadingAwards: 'Loading awards...',
+    winner: 'Winner',
+    nominee: 'Nominee',
+    moreAwards: 'more awards',
+    noAwardsFound: 'No awards found on record'
   },
   // Navbar
   navbar: {
@@ -946,6 +953,65 @@ export const en = {
     // Progreso
     step: 'Step {{current}} of {{total}}',
     
+    // New translations for improved interface
+    selected: 'selected',
+    selectSpecificGenres: 'Select specific genres',
+    searchGenres: 'Search genres...',
+    backToCategories: 'Back to categories',
+    popularPlatforms: 'Most popular platforms',
+    exploreAllPlatforms: 'Explore all platforms',
+    searchPlatforms: 'Search platforms...',
+    allPlatforms: 'All',
+    popularOnly: 'Popular',
+    freePlatforms: 'Free',
+    paidPlatforms: 'Paid',
+    backToPopular: 'Back to popular',
+    noResultsFound: 'No results found',
+    moviesDescription: 'Feature films and documentaries',
+    seriesDescription: 'TV series and miniseries',
+    bothDescription: 'All types of content',
+    selectCountryFirst: 'Please select your country first to see available platforms',
+    loadingPlatforms: 'Loading available platforms...',
+    otherCountrySelected: 'You selected "Other country". You can specify your platforms manually later.',
+    noPlatformsAvailable: 'No platforms available for your country',
+    selectAllPlatforms: 'Select all platforms',
+    selectAllPopularPlatforms: 'Select all popular platforms',
+    deselectAllPlatforms: 'Deselect all platforms',
+  selectAllFreePlatforms: 'Select all free platforms',
+  selectPlatforms: 'Select the platforms where you watch content',
+    selectPopularGenres: 'Select popular genres',
+    clearSelection: 'Clear selection',
+    completeSelection: 'Complete selection',
+    selectAllInCategory: 'Select all in this category',
+    deselectAllInCategory: 'Deselect all in this category',
+    
+    // Genre filters
+    allGenres: 'All genres',
+    popularGenres: 'Popular genres',
+    trendingGenres: 'Trending',
+    selectAllPopular: 'Select popular',
+    selectAllTrending: 'Select trending',
+    selectAll: 'Select all',
+    deselectAll: 'Deselect all',
+    noGenresFound: 'No genres found with that criteria',
+    searchGenres: 'Search genres...',
+    
+    // TMDB Integration
+    loadingEnhancedGenres: 'Loading updated genre data...',
+    tmdbDataLoaded: 'Popularity data updated from TMDB',
+    
+    // Genre categories
+    genreCategories: {
+      adventure: 'Action & Adventure',
+      drama: 'Drama & Narrative',
+      comedy: 'Comedy',
+      thriller: 'Thriller & Horror',
+      romance: 'Romance',
+      family: 'Family & Animation',
+      entertainment: 'Entertainment',
+      war: 'War & Conflict'
+    },
+    
     // Selectores
     selectCountry: 'Select your country',
     selectOccupation: 'Select your occupation',
@@ -981,6 +1047,40 @@ export const en = {
       germany: 'Germany',
       uk: 'United Kingdom',
       portugal: 'Portugal',
+      netherlands: 'Netherlands',
+      belgium: 'Belgium',
+      sweden: 'Sweden',
+      norway: 'Norway',
+      denmark: 'Denmark',
+      finland: 'Finland',
+      austria: 'Austria',
+      switzerland: 'Switzerland',
+      poland: 'Poland',
+      czech: 'Czech Republic',
+      slovakia: 'Slovakia',
+      hungary: 'Hungary',
+      croatia: 'Croatia',
+      serbia: 'Serbia',
+      bulgaria: 'Bulgaria',
+      romania: 'Romania',
+      greece: 'Greece',
+      turkey: 'Turkey',
+      russia: 'Russia',
+      ukraine: 'Ukraine',
+      australia: 'Australia',
+      newZealand: 'New Zealand',
+      japan: 'Japan',
+      southKorea: 'South Korea',
+      china: 'China',
+      india: 'India',
+      thailand: 'Thailand',
+      philippines: 'Philippines',
+      indonesia: 'Indonesia',
+      malaysia: 'Malaysia',
+      singapore: 'Singapore',
+      southAfrica: 'South Africa',
+      egypt: 'Egypt',
+      morocco: 'Morocco',
       other: 'Other'
     },
     

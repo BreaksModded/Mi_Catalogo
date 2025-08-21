@@ -3,6 +3,7 @@ import { en } from './languages/en';
 import { pt } from './languages/pt';
 import { fr } from './languages/fr';
 import { de } from './languages/de';
+import { detectLanguageByLocation } from '../utils/geoLocationService';
 
 export const languages = {
   es,
@@ -38,4 +39,27 @@ export const detectBrowserLanguage = () => {
   }
   
   return defaultLanguage;
+};
+
+// Función para detectar el idioma basado en múltiples fuentes con prioridad
+export const detectPreferredLanguage = async () => {
+  try {
+    // 1. Intentar detectar por ubicación geográfica
+    const locationLanguage = await detectLanguageByLocation();
+    if (locationLanguage && languages[locationLanguage]) {
+      console.log(`Idioma detectado por ubicación: ${locationLanguage}`);
+      return locationLanguage;
+    }
+    
+    // 2. Fallback al idioma del navegador
+    const browserLanguage = detectBrowserLanguage();
+    console.log(`Idioma detectado por navegador: ${browserLanguage}`);
+    return browserLanguage;
+    
+  } catch (error) {
+    console.error('Error detectando idioma preferido:', error);
+    
+    // 3. Fallback final al idioma del navegador
+    return detectBrowserLanguage();
+  }
 };

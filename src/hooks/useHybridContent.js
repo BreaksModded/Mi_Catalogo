@@ -72,9 +72,9 @@ export const useHybridContent = (tmdbId, mediaType, fallbackImage = null, skipCa
 
         // 2. FALLBACK A TMDB SI NO HAY CACHE O ESTÁ INCOMPLETO (o si se omite el cache)
         if (skipCache) {
-          console.log(`[HybridContent] Omitiendo cache para ${tmdbId}, consultando TMDb directamente...`);
+          // Omitiendo cache, consultando TMDb directamente
         } else {
-          console.log(`[HybridContent] Cache incompleto para ${tmdbId}, consultando TMDb...`);
+          // Cache incompleto, consultando TMDb
         }
         
         const languageMapping = {

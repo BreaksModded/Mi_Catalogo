@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 export const de = {
   // Common/Global
   common: {
@@ -28,26 +29,6 @@ export const de = {
   mediaTypes: {
     'película': 'film',
     'serie': 'serie',
-    'pelicula': 'film'  // without accent as fallback
-  },
-
-  // Status (from TMDb API)
-  status: {
-    released: 'Veröffentlicht',
-    'in production': 'In Produktion',
-    'post production': 'Postproduktion',
-    'inproduction': 'In Produktion',
-    'postproduction': 'Postproduktion',
-    planned: 'Geplant',
-    rumored: 'Gerüchte',
-    canceled: 'Abgebrochen',
-    cancelled: 'Abgebrochen',
-    ended: 'Beendet',
-    'returning series': 'Fortsetzende Serie',
-    'returningSeries': 'Fortsetzende Serie',
-    'returningseries': 'Fortsetzende Serie',
-    pilot: 'Pilot',
-    unknown: 'Unbekannt',
     'upcoming': 'Bevorstehend',
     'completed': 'Abgeschlossen',
     'continuing': 'Fortlaufend',
@@ -58,7 +39,13 @@ export const de = {
     full_filmography: 'Vollständige Filmografie',
     knownFor: 'Bekannt für',
     yourWatchedTitles: 'Deine gesehenen Titel mit diesem Schauspieler',
-    born: 'Geboren'
+    born: 'Geboren',
+    awards: 'Auszeichnungen & Anerkennungen',
+    loadingAwards: 'Lade Auszeichnungen...',
+    winner: 'Gewinner',
+    nominee: 'Nominiert',
+    moreAwards: 'weitere Auszeichnungen',
+    noAwardsFound: 'Keine Auszeichnungen gefunden'
   },
   navbar: {
     title: 'Mein Katalog',
@@ -292,6 +279,28 @@ export const de = {
     searchingContent: 'Suche Inhalt entsprechend',
     noResultsFor: 'Keine Titel für',
     tryChangingFilters: 'Versuche Filter zu ändern/entfernen.',
+    // Status (from TMDb API)
+    status: {
+      released: 'Veröffentlicht',
+      'in production': 'In Produktion',
+      'post production': 'Postproduktion',
+      'inproduction': 'In Produktion',
+      'postproduction': 'Postproduktion',
+      planned: 'Geplant',
+      rumored: 'Gerüchte',
+      canceled: 'Abgebrochen',
+      cancelled: 'Abgebrochen',
+      ended: 'Beendet',
+      'returning series': 'Fortsetzende Serie',
+      'returningSeries': 'Fortsetzende Serie',
+      'returningseries': 'Fortsetzende Serie',
+      pilot: 'Pilot',
+      unknown: 'Unbekannt',
+      upcoming: 'Bevorstehend',
+      completed: 'Abgeschlossen',
+      continuing: 'Fortlaufend',
+      hiatus: 'Pausiert'
+    },
     error: 'Fehler',
     success: 'Erfolg',
     translating: 'Übersetzen...',
@@ -762,20 +771,6 @@ export const de = {
     'comedia': 'Komödie'
   },
 
-  // Welcome screen
-  welcome: {
-    title: 'Willkommen zu Ihrem Persönlichen Katalog',
-    subtitle: 'Erstellen und verwalten Sie Ihre persönliche Sammlung von Filmen und Serien',
-    feature1: 'Persönlicher Katalog',
-    feature1Desc: 'Organisieren Sie Ihre Lieblings-Filme und -Serien',
-    feature2: 'Persönliche Tags',
-    feature2Desc: 'Kennzeichnen und kategorisieren Sie Ihre Inhalte',
-    feature3: 'Favoriten und Notizen',
-    feature3Desc: 'Markieren Sie Favoriten und fügen Sie Anmerkungen hinzu',
-    getStarted: 'Jetzt beginnen!',
-    loginPrompt: 'Melden Sie sich an, um auf Ihren persönlichen Katalog zuzugreifen und Filme und Serien hinzuzufügen'
-  },
-
   // Authentication
   auth: {
     // Titel und Untertitel
@@ -880,6 +875,42 @@ export const de = {
     // Fortschritt
     step: 'Schritt {{current}} von {{total}}',
     
+    // Neue Übersetzungen für die verbesserte Benutzeroberfläche
+    selected: 'ausgewählt',
+    allGenres: 'Alle Genres',
+    popularGenres: 'Beliebte Genres',
+    trendingGenres: 'Trending',
+    selectAll: 'Alle auswählen',
+    selectAllPopular: 'Beliebte auswählen',
+    selectAllTrending: 'Trends auswählen',
+    deselectAll: 'Alle abwählen',
+    searchGenres: 'Genres suchen...',
+    noGenresFound: 'Keine Genres mit diesem Kriterium gefunden',
+    loadingEnhancedGenres: 'Aktualisierte Genre-Daten werden geladen...',
+    
+    // Plattformen
+    allPlatforms: 'Alle',
+    popularOnly: 'Beliebte',
+    freePlatforms: 'Kostenlos',
+    paidPlatforms: 'Kostenpflichtig',
+    selectAllPlatforms: 'Alle auswählen',
+    selectAllPopularPlatforms: 'Beliebte auswählen',
+    selectAllFreePlatforms: 'Kostenlose auswählen',
+    selectAllPaidPlatforms: 'Kostenpflichtige auswählen',
+    deselectAllPlatforms: 'Alle abwählen',
+    searchPlatforms: 'Plattformen suchen...',
+    selectPlatforms: 'Wählen Sie die Plattformen aus, auf denen Sie Inhalte ansehen',
+    selectCountryFirst: 'Wählen Sie zuerst Ihr Land aus, um verfügbare Plattformen zu sehen',
+    loadingPlatforms: 'Verfügbare Plattformen werden geladen...',
+    noPlatformsAvailable: 'Keine verfügbaren Plattformen für Ihr Land gefunden',
+    otherCountrySelected: 'Sie haben "Anderes Land" ausgewählt. Sie können Ihre Plattformen später manuell angeben.',
+    noResultsFound: 'Keine Ergebnisse gefunden',
+    
+    // Inhaltstyp-Beschreibungen
+    moviesDescription: 'Spielfilme und Dokumentationen',
+    seriesDescription: 'Serien und Miniserien',
+    bothDescription: 'Alle Arten von Inhalten',
+    
     // Auswahlfelder
     selectCountry: 'Wählen Sie Ihr Land',
     selectOccupation: 'Wählen Sie Ihren Beruf',
@@ -915,6 +946,33 @@ export const de = {
       germany: 'Deutschland',
       uk: 'Vereinigtes Königreich',
       portugal: 'Portugal',
+      netherlands: 'Niederlande',
+      belgium: 'Belgien',
+      sweden: 'Schweden',
+      norway: 'Norwegen',
+      denmark: 'Dänemark',
+      finland: 'Finnland',
+      poland: 'Polen',
+      czechRepublic: 'Tschechische Republik',
+      austria: 'Österreich',
+      switzerland: 'Schweiz',
+      australia: 'Australien',
+      newZealand: 'Neuseeland',
+      japan: 'Japan',
+      southKorea: 'Südkorea',
+      china: 'China',
+      india: 'Indien',
+      thailand: 'Thailand',
+      singapore: 'Singapur',
+      malaysia: 'Malaysia',
+      indonesia: 'Indonesien',
+      philippines: 'Philippinen',
+      vietnam: 'Vietnam',
+      southAfrica: 'Südafrika',
+      turkey: 'Türkei',
+      israel: 'Israel',
+      russia: 'Russland',
+      ukraine: 'Ukraine',
       other: 'Andere'
     },
     

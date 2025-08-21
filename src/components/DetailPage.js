@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
 import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
@@ -299,7 +298,7 @@ function StreamingAvailability({ tmdbId, mediaType, country = 'ES' }) {
         setProviders(results[selectedCountry] || null);
       })
       .catch(() => setProviders(null));
-  }, [selectedCountry, tmdbId, mediaType]);
+  }, [selectedCountry, tmdbId, mediaType, t]);
 
   if (!tmdbId || !mediaType) return null;
 
@@ -755,7 +754,7 @@ function DetailPage() {
     if (id) {
       fetchMedia();
     }
-  }, [id]);
+  }, [id, t]);
 
   // Cargar detalles de TMDb
   useEffect(() => {
@@ -780,7 +779,7 @@ function DetailPage() {
         .catch(() => setTmdbError(t('errors.couldNotLoadTmdbDetails', 'No se pudo cargar detalles avanzados TMDb')))
         .finally(() => setTmdbLoading(false));
     }
-  }, [media, currentLanguage]);
+  }, [media, currentLanguage, t]);
 
   // Cargar similares
   useEffect(() => {
@@ -797,7 +796,7 @@ function DetailPage() {
       .then(data => setSimilares(Array.isArray(data) ? data : []))
       .catch(() => setErrorSimilares(t('errors.couldNotLoadSimilar', 'No se pudieron cargar similares.')))
       .finally(() => setLoadingSimilares(false));
-  }, [media]);
+  }, [media, t]);
 
   // Cargar tags y listas
   useEffect(() => {
@@ -1035,9 +1034,6 @@ function DetailPage() {
     navigate(`/detail/${similarItem.id}`);
   };
 
-  // Filtros para tags - funciones de normalización si son necesarias
-  const normalize = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
   if (loading) {
     return (
       <div className="detail-page">
@@ -1067,7 +1063,6 @@ function DetailPage() {
 
   const hasNotes = notes && notes.trim() !== '';
   const hasNewNotes = tempNotes && tempNotes.trim() !== '';
-  const wordCount = hasNotes ? notes.trim().split(/\s+/).length : 0;
 
   return (
     <div className="detail-page">

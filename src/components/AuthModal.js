@@ -1,12 +1,56 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import "./DetailModal.css";
-import "./AddMediaForm.css";
 import "./AuthModal.css";
 import { useLanguage } from '../context/LanguageContext';
 import { useGenreTranslation } from '../utils/genreTranslation';
+import GenreService from '../services/genreService';
+import { 
+  FaExplosion, FaMapLocationDot, FaHatWizard, FaRocket, FaHorse,
+  FaMasksTheater, FaUser, FaLandmark, FaVideo, FaFaceLaughSquint,
+  FaSkull, FaGhost, FaMagnifyingGlass, FaGun, FaMoon,
+  FaHeart, FaHouse, FaPalette, FaMusic, FaGuitar, FaFootball,
+  FaKhanda, FaFilm,
+  FaTv, FaMasksTheater as FaTheaterMasks
+} from "react-icons/fa6";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+
+// Mapeo de géneros a iconos de Font Awesome
+const getGenreIcon = (genreKey) => {
+  const iconMap = {
+    action: FaExplosion,
+    adventure: FaMapLocationDot,
+    fantasy: FaHatWizard,
+    sciFi: FaRocket,
+    western: FaHorse,
+    drama: FaMasksTheater,
+    biography: FaUser,
+    history: FaLandmark,
+    documentary: FaVideo,
+    comedy: FaFaceLaughSquint,
+    thriller: FaSkull,
+    horror: FaGhost,
+    mystery: FaMagnifyingGlass,
+    crime: FaGun,
+    noir: FaMoon,
+    romance: FaHeart,
+    family: FaHouse,
+    animation: FaPalette,
+    music: FaMusic,
+    musical: FaGuitar,
+    sport: FaFootball,
+    war: FaKhanda
+  };
+  
+  return iconMap[genreKey] || FaFilm; // FaFilm como icono por defecto
+};
+
+// Componente para renderizar iconos de géneros
+const GenreIcon = ({ genreKey }) => {
+  const IconComponent = getGenreIcon(genreKey);
+  return <IconComponent />;
+};
 
 // Datos para los selectores (claves de traducción)
 const PAISES_KEYS = [
@@ -22,32 +66,47 @@ const PAISES_KEYS = [
 ];
 
 const GENEROS_KEYS = [
-  { key: "action", icon: "💥", color: "#ff4757" },
-  { key: "adventure", icon: "🗺️", color: "#2ed573" },
-  { key: "animation", icon: "🎨", color: "#ff9ff3" },
-  { key: "biography", icon: "👤", color: "#70a1ff" },
-  { key: "comedy", icon: "😂", color: "#ffa502" },
-  { key: "crime", icon: "🕵️", color: "#2f3542" },
-  { key: "documentary", icon: "📽️", color: "#57606f" },
-  { key: "drama", icon: "🎭", color: "#3742fa" },
-  { key: "family", icon: "👨‍👩‍👧‍👦", color: "#2ed573" },
-  { key: "fantasy", icon: "🧙‍♂️", color: "#a55eea" },
-  { key: "history", icon: "🏛️", color: "#8854d0" },
-  { key: "horror", icon: "👻", color: "#2f3542" },
-  { key: "music", icon: "🎵", color: "#ff6b81" },
-  { key: "mystery", icon: "🔍", color: "#5352ed" },
-  { key: "romance", icon: "💕", color: "#ff3838" },
-  { key: "sciFi", icon: "🚀", color: "#40739e" },
-  { key: "sport", icon: "⚽", color: "#44bd32" },
-  { key: "thriller", icon: "😱", color: "#c44569" },
-  { key: "war", icon: "⚔️", color: "#8b7355" },
-  { key: "western", icon: "🤠", color: "#d63031" },
-  { key: "musical", icon: "🎼", color: "#fd79a8" },
-  { key: "noir", icon: "🕴️", color: "#2d3436" }
+  // Acción y Aventura
+  { key: "action", icon: "💥", color: "#ff4757", popular: true, trending: true },
+  { key: "adventure", icon: "🗺️", color: "#2ed573", popular: false, trending: true },
+  { key: "fantasy", icon: "🧙‍♂️", color: "#a55eea", popular: true, trending: true },
+  { key: "sciFi", icon: "�", color: "#40739e", category: "adventure" },
+  { key: "western", icon: "🤠", color: "#d63031", category: "adventure" },
+  
+  // Drama y Narrativa Seria
+  { key: "drama", icon: "🎭", color: "#3742fa", category: "drama" },
+  { key: "biography", icon: "�", color: "#70a1ff", category: "drama" },
+  { key: "history", icon: "�️", color: "#8854d0", category: "drama" },
+  { key: "documentary", icon: "�️", color: "#57606f", category: "drama" },
+  
+  // Comedia
+  { key: "comedy", icon: "😂", color: "#ffa502", category: "comedy" },
+  
+  // Suspenso, Terror y Crimen
+  { key: "thriller", icon: "😱", color: "#c44569", category: "thriller" },
+  { key: "horror", icon: "👻", color: "#2f3542", category: "thriller" },
+  { key: "mystery", icon: "🔍", color: "#5352ed", category: "thriller" },
+  { key: "crime", icon: "�️", color: "#2f3542", category: "thriller" },
+  { key: "noir", icon: "�️", color: "#2d3436", category: "thriller" },
+  
+  // Romance y Drama Romántico
+  { key: "romance", icon: "�", color: "#ff3838", category: "romance" },
+  
+  // Familiar y para Toda la Familia
+  { key: "family", icon: "👨‍👩‍👧‍👦", color: "#2ed573", category: "family" },
+  { key: "animation", icon: "🎨", color: "#ff9ff3", category: "family" },
+  
+  // Entretenimiento y Espectáculos
+  { key: "music", icon: "🎵", color: "#ff6b81", category: "entertainment" },
+  { key: "musical", icon: "🎼", color: "#fd79a8", category: "entertainment" },
+  { key: "sport", icon: "⚽", color: "#44bd32", category: "entertainment" },
+  
+  // Bélico y Conflicto
+  { key: "war", icon: "⚔️", color: "#8b7355", popular: false, trending: false }
 ];
 
 export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLoginProp }) {
-  const { t, currentLanguage } = useLanguage();
+  const { t, currentLanguage, changeLanguage } = useLanguage();
   const { translateGenre } = useGenreTranslation();
   const [isLogin, setIsLogin] = useState(isLoginProp ?? true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -61,7 +120,19 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
   // Estados para las plataformas dinámicas
   const [availablePlatforms, setAvailablePlatforms] = useState([]); // Plataformas disponibles por país
   const [loadingPlatforms, setLoadingPlatforms] = useState(false); // Estado de carga
-  const [showAllPlatforms, setShowAllPlatforms] = useState(false); // Controla si mostrar todas las plataformas
+  const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+  
+  // Estados para la búsqueda y filtrado mejorado
+  const [genreSearch, setGenreSearch] = useState("");
+  const [platformSearch, setPlatformSearch] = useState("");
+
+  const [platformFilter, setPlatformFilter] = useState("all"); // all, free, paid, popular
+  const [genreFilter, setGenreFilter] = useState('all'); // 'all', 'popular', 'trending'
+  
+  // Estados del carrusel
+  const [carouselScrollPosition, setCarouselScrollPosition] = useState(0);
+  const [maxScrollPosition, setMaxScrollPosition] = useState(0);
+  const carouselRef = useRef(null);
 
   // Datos básicos
   const [email, setEmail] = useState("");
@@ -82,6 +153,11 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
   const [generosFavoritos, setGenerosFavoritos] = useState([]);
   const [plataformas, setPlataformas] = useState([]);
   const [tipoContenido, setTipoContenido] = useState("");
+  
+  // Estados para géneros mejorados con TMDB
+  const [enhancedGenres, setEnhancedGenres] = useState(GENEROS_KEYS);
+  const [loadingGenres, setLoadingGenres] = useState(false);
+  const [genreService] = useState(() => new GenreService());
   
   // Información demográfica (simplificada)
   // Removido: ocupacion y nivelEstudios para hacer el registro menos invasivo
@@ -128,21 +204,137 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
     };
   }, []);
 
+  // Hook para cargar géneros mejorados con TMDB API
+  useEffect(() => {
+    const loadEnhancedGenres = async () => {
+      if (!show) return; // Solo cargar cuando el modal esté visible
+      
+      setLoadingGenres(true);
+      try {
+        console.log('Loading enhanced genres with TMDB data...');
+        // Limpiar cache para aplicar nuevos criterios de popularidad/trending
+        genreService.clearCache();
+        const enhanced = await genreService.getEnhancedGenres(GENEROS_KEYS);
+        
+        if (mounted.current) {
+          setEnhancedGenres(enhanced);
+          console.log('Enhanced genres loaded:', enhanced.length);
+        }
+      } catch (error) {
+        console.error('Error loading enhanced genres:', error);
+        if (mounted.current) {
+          setEnhancedGenres(GENEROS_KEYS); // Fallback a géneros estáticos
+        }
+      } finally {
+        if (mounted.current) {
+          setLoadingGenres(false);
+        }
+      }
+    };
+
+    loadEnhancedGenres();
+  }, [show, genreService]);
+
   // Función para ordenar plataformas por popularidad usando datos de TMDb
   const sortPlatformsByPopularity = (platforms) => {
-    return platforms.sort((a, b) => {
+    console.log('Ordenando plataformas:', platforms.map(p => ({ 
+      name: p.provider_name, 
+      priority: p.display_priority 
+    })));
+    
+    const sorted = platforms.sort((a, b) => {
       // Primer criterio: display_priority (menor número = más popular)
       // TMDb proporciona este campo que indica la popularidad en el país específico
-      const aPriority = a.display_priority || 999;
-      const bPriority = b.display_priority || 999;
+      const aPriority = a.display_priority !== undefined ? a.display_priority : 999;
+      const bPriority = b.display_priority !== undefined ? b.display_priority : 999;
       
       if (aPriority !== bPriority) {
         return aPriority - bPriority;
       }
       
-      // Segundo criterio: ordenar alfabéticamente si tienen la misma prioridad
+      // Segundo criterio: prioridad manual para plataformas conocidas sin display_priority
+      const popularPlatforms = [
+        'Netflix', 'Amazon Prime Video', 'Disney Plus', 'HBO Max', 'Apple TV Plus',
+        'Paramount Plus', 'Hulu', 'Peacock', 'Discovery+', 'Crunchyroll',
+        'Movistar Plus+', 'Filmin', 'SkyShowtime', 'Rakuten TV'
+      ];
+      
+      const aIndex = popularPlatforms.indexOf(a.provider_name);
+      const bIndex = popularPlatforms.indexOf(b.provider_name);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      } else if (aIndex !== -1) {
+        return -1;
+      } else if (bIndex !== -1) {
+        return 1;
+      }
+      
+      // Tercer criterio: ordenar alfabéticamente si tienen la misma prioridad
       return a.provider_name.localeCompare(b.provider_name);
     });
+    
+    console.log('Plataformas ordenadas:', sorted.slice(0, 6).map(p => ({ 
+      name: p.provider_name, 
+      priority: p.display_priority 
+    })));
+    
+    return sorted;
+  };
+
+  // Funciones de filtrado y búsqueda
+  const getFilteredGenres = () => {
+    let genres = [...enhancedGenres];
+    
+    // Filtrar por tipo
+    if (genreFilter === 'popular') {
+      genres = genres.filter(genre => genre.popular);
+    } else if (genreFilter === 'trending') {
+      genres = genres.filter(genre => genre.trending);
+    }
+    
+    // Filtrar por búsqueda
+    if (genreSearch) {
+      genres = genres.filter(genre => 
+        translateGenre(genre.key).toLowerCase().includes(genreSearch.toLowerCase())
+      );
+    }
+    
+    return genres;
+  };
+
+  const getFilteredPlatforms = () => {
+    let filtered = [...availablePlatforms];
+    
+    // Filtrar por búsqueda
+    if (platformSearch) {
+      filtered = filtered.filter(platform =>
+        platform.provider_name.toLowerCase().includes(platformSearch.toLowerCase())
+      );
+    }
+    
+    // Filtrar por tipo
+    if (platformFilter === 'popular') {
+      filtered = filtered.slice(0, 20); // Top 20 más populares
+    } else if (platformFilter === 'free') {
+      // Plataformas típicamente gratuitas (con publicidad)
+      const freePlatforms = ['Tubi', 'Crackle', 'Pluto TV', 'YouTube', 'Twitch'];
+      filtered = filtered.filter(platform =>
+        freePlatforms.some(free => platform.provider_name.toLowerCase().includes(free.toLowerCase()))
+      );
+    } else if (platformFilter === 'paid') {
+      // Excluir plataformas gratuitas
+      const freePlatforms = ['Tubi', 'Crackle', 'Pluto TV', 'YouTube', 'Twitch'];
+      filtered = filtered.filter(platform =>
+        !freePlatforms.some(free => platform.provider_name.toLowerCase().includes(free.toLowerCase()))
+      );
+    }
+    
+    return filtered;
+  };
+
+  const getGenresByCategory = (category) => {
+    return enhancedGenres.filter(genre => genre.category === category);
   };
 
   // Cargar plataformas disponibles según el país seleccionado
@@ -305,7 +497,7 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
     } else if (!isLogin) {
       setUsernameAvailable(null);
     }
-  }, [username, isLogin]);
+  }, [username, isLogin, checkUsernameAvailability]);
 
   const resetForm = () => {
     if (!mounted.current) return;
@@ -329,6 +521,12 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
     setError("");
     setSuccessMessage("");
     setValidationErrors({});
+    
+    // Reset nuevos estados
+    setGenreSearch("");
+    setPlatformSearch("");
+    setPlatformFilter("all");
+    setGenreFilter('all');
   };
 
   const validateStep = (step) => {
@@ -424,6 +622,84 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
     });
   };
 
+  // Funciones del carrusel
+  const updateCarouselScrollLimits = useCallback(() => {
+    if (carouselRef.current) {
+      const carousel = carouselRef.current;
+      const container = carousel.parentElement;
+      
+      // Calcular el ancho total del contenido
+      const logoWidth = 44;
+      const gap = 12;
+      const padding = 24; // 12px cada lado
+      const platformCount = Array.isArray(plataformas) ? plataformas.length : 0;
+      
+      if (platformCount === 0) {
+        setMaxScrollPosition(0);
+        return;
+      }
+      
+      const totalContentWidth = (platformCount * logoWidth) + ((platformCount - 1) * gap) + padding;
+      
+      // Ancho disponible del contenedor
+      const containerWidth = container.clientWidth;
+      
+      // Scroll máximo necesario - si el contenido es mayor que el contenedor
+      const maxScroll = Math.max(0, totalContentWidth - containerWidth);
+      setMaxScrollPosition(maxScroll);
+      
+      // Si el scroll actual excede el nuevo máximo, ajustarlo
+      if (carouselScrollPosition > maxScroll) {
+        const newPosition = maxScroll;
+        carousel.style.transform = `translateX(-${newPosition}px)`;
+        setCarouselScrollPosition(newPosition);
+      }
+    }
+  }, [plataformas, carouselScrollPosition]);
+
+  const scrollCarouselLeft = () => {
+    if (carouselRef.current) {
+      const logoWidth = 44 + 12; // 44px logo + 12px gap
+      const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
+      
+      const newPosition = Math.max(0, carouselScrollPosition - scrollAmount);
+      carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
+      setCarouselScrollPosition(newPosition);
+    }
+  };
+
+  const scrollCarouselRight = () => {
+    if (carouselRef.current) {
+      const logoWidth = 44 + 12; // 44px logo + 12px gap
+      const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
+      
+      const newPosition = Math.min(maxScrollPosition, carouselScrollPosition + scrollAmount);
+      carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
+      setCarouselScrollPosition(newPosition);
+    }
+  };
+
+  // Actualizar límites del carrusel cuando cambian las plataformas
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateCarouselScrollLimits();
+    }, 100); // Pequeño delay para asegurar que el DOM se ha actualizado
+    
+    return () => clearTimeout(timer);
+  }, [plataformas, updateCarouselScrollLimits]);
+
+  // Actualizar límites del carrusel cuando se redimensiona la ventana
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(() => {
+        updateCarouselScrollLimits();
+      }, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateCarouselScrollLimits]);
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError("");
@@ -517,6 +793,26 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
         
         if (token) {
           localStorage.setItem('jwt_token', token);
+          
+          // Obtener el idioma preferido del usuario tras el login
+          try {
+            const userResponse = await fetch(`${BACKEND_URL}/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              if (userData.idioma_preferido && userData.idioma_preferido !== currentLanguage) {
+                // Cambiar el idioma del frontend al idioma preferido del usuario
+                changeLanguage(userData.idioma_preferido);
+              }
+            }
+          } catch (error) {
+            console.log('No se pudo obtener el idioma preferido del usuario:', error);
+          }
         }
         setLoading(false);
         onAuthSuccess && onAuthSuccess(token);
@@ -761,13 +1057,18 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
         <label className="form-label">{t('auth.preferredLanguage')}</label>
         <select 
           value={idioma || "es"} 
-          onChange={e => safeSetValue(setIdioma, e.target?.value || "es")}
+          onChange={e => {
+            const selectedLanguage = e.target?.value || "es";
+            safeSetValue(setIdioma, selectedLanguage);
+            // Cambiar inmediatamente el idioma del frontend para que el usuario vea el cambio
+            changeLanguage(selectedLanguage);
+          }}
           className="form-select"
         >
           <option value="es">Español</option>
           <option value="en">English</option>
           <option value="fr">Français</option>
-          <option value="it">Italiano</option>
+          <option value="de">Deutsch</option>
           <option value="pt">Português</option>
         </select>
       </div>
@@ -779,116 +1080,358 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
       <h2 className="auth-title">{t('auth.step3Title')}</h2>
       <p className="auth-subtitle">{t('auth.step3Subtitle')}</p>
       
+      {/* Sección de Géneros Mejorada */}
       <div className="form-group">
-        <label className="form-label">{t('auth.favoriteGenres')}</label>
+        <div className="section-header">
+          <label className="form-label">{t('auth.favoriteGenres')}</label>
+          <div className="genre-selection-summary">
+            {safeGenerosFavoritos.length > 0 && (
+              <span className="selection-count">
+                {safeGenerosFavoritos.length} {t('auth.selected', 'seleccionados')}
+              </span>
+            )}
+          </div>
+        </div>
+        
+        {/* Filtros de géneros */}
+        <div className="genre-filters">
+          <div className="filter-tabs">
+            <button
+              type="button"
+              className={`filter-btn ${genreFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setGenreFilter('all')}
+            >
+              <span className="icon">🎬</span>
+              {t('auth.allGenres', 'Todos los géneros')}
+            </button>
+            
+            <button
+              type="button"
+              className={`filter-btn ${genreFilter === 'popular' ? 'active' : ''}`}
+              onClick={() => setGenreFilter('popular')}
+            >
+              <span className="icon">⭐</span>
+              {t('auth.popularGenres', 'Populares')}
+            </button>
+            
+            <button
+              type="button"
+              className={`filter-btn ${genreFilter === 'trending' ? 'active' : ''}`}
+              onClick={() => setGenreFilter('trending')}
+            >
+              <span className="icon">🔥</span>
+              {t('auth.trendingGenres', 'En tendencia')}
+            </button>
+          </div>
+          
+          <div className="quick-actions">
+            <button
+              type="button"
+              className="quick-action-btn"
+              onClick={() => {
+                const filteredGenres = getFilteredGenres();
+                const newGenres = filteredGenres.map(g => translateGenre(g.key));
+                setGenerosFavoritos(prev => {
+                  const newSelection = [...new Set([...prev, ...newGenres])];
+                  return newSelection;
+                });
+              }}
+            >
+              <span className="icon">✓</span>
+              {genreFilter === 'popular' 
+                ? t('auth.selectAllPopular', 'Seleccionar populares')
+                : genreFilter === 'trending' 
+                  ? t('auth.selectAllTrending', 'Seleccionar tendencias')
+                  : t('auth.selectAll', 'Seleccionar todos')
+              }
+            </button>
+            
+            <button
+              type="button"
+              className="quick-action-btn clear"
+              onClick={() => setGenerosFavoritos([])}
+            >
+              <span className="icon">🗑️</span>
+              {t('auth.deselectAll', 'Deseleccionar todos')}
+            </button>
+          </div>
+        </div>
+
+        {/* Búsqueda de géneros */}
+        <div className="search-input-container">
+          <input
+            type="text"
+            placeholder={t('auth.searchGenres', 'Buscar géneros...')}
+            value={genreSearch}
+            onChange={(e) => setGenreSearch(e.target.value)}
+            className="search-input"
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+
+        {/* Indicador de estado de géneros mejorados */}
+        {loadingGenres && (
+          <div className="loading-genres">
+            <span className="loading-icon">⏳</span>
+            <span className="loading-text">{t('auth.loadingEnhancedGenres', 'Cargando datos actualizados de géneros...')}</span>
+          </div>
+        )}
+
+        {/* Grid de géneros */}
         <div className="visual-selector genres">
-          {GENEROS_KEYS.map(genreObj => {
+          {getFilteredGenres().map(genreObj => {
             const translatedGenre = translateGenre(genreObj.key);
+            const isSelected = safeGenerosFavoritos.includes(translatedGenre);
+            
             return (
               <div 
                 key={genreObj.key} 
-                className={`genre-item ${safeGenerosFavoritos.includes(translatedGenre) ? 'selected' : ''}`}
-                style={{ '--item-color': genreObj.color }}
+                className={`genre-item ${isSelected ? 'selected' : ''} ${genreObj.popular ? 'popular' : ''} ${genreObj.trending ? 'trending' : ''}`}
                 onClick={() => toggleGenero(translatedGenre)}
               >
-                <span className="icon">{genreObj.icon}</span>
+                <span className="icon"><GenreIcon genreKey={genreObj.key} /></span>
                 <span className="name">{translatedGenre}</span>
+                {genreObj.popular && <span className="badge popular">⭐</span>}
+                {genreObj.trending && <span className="badge trending">🔥</span>}
               </div>
             );
           })}
         </div>
+        
+        {getFilteredGenres().length === 0 && (
+          <div className="no-results">
+            <p>{t('auth.noGenresFound', 'No se encontraron géneros con ese criterio')}</p>
+          </div>
+        )}
       </div>
       
+      {/* Sección de Plataformas Mejorada */}
       <div className="form-group">
-        <label className="form-label">{t('auth.streamingPlatforms')}</label>
+        <div className="section-header">
+          <label className="form-label">{t('auth.streamingPlatforms')}</label>
+          <div className="platform-selection-summary">
+            {safePlataformas.length > 0 && (
+              <span className="selection-count">
+                {safePlataformas.length} {t('auth.selected', 'seleccionadas')}
+              </span>
+            )}
+          </div>
+        </div>
+        
         {!pais && (
           <p className="form-hint">{t('auth.selectCountryFirst', 'Selecciona primero tu país para ver las plataformas disponibles')}</p>
         )}
+        
         {pais && loadingPlatforms && (
           <div className="loading-platforms">
             <div className="loading-spinner-small"></div>
             <span>{t('auth.loadingPlatforms', 'Cargando plataformas disponibles...')}</span>
           </div>
         )}
+        
         {pais && !loadingPlatforms && (
-          <div className="platforms-container">
-            <div className={`platforms-grid-container ${showAllPlatforms ? 'expanded' : ''}`}>
-              <div className="visual-selector platforms">
-                {availablePlatforms.length > 0 ? (
-                  availablePlatforms.map(platform => {
-                    let logoPath = platform.logo_path;
-                    
-                    return (
-                      <div 
-                        key={platform.provider_id} 
-                        className={`platform-item ${safePlataformas.includes(platform.provider_name) ? 'selected' : ''}`}
-                        style={{ '--item-color': '#0073e6' }} // Color genérico para plataformas dinámicas
-                        onClick={() => togglePlataforma(platform.provider_name)}
-                      >
-                        {logoPath ? (
-                          <img 
-                            src={`https://image.tmdb.org/t/p/w92${logoPath}`}
-                            alt={platform.provider_name}
-                            className="logo"
-                            loading="lazy"
-                            onError={(e) => {
-                              console.log(`Error cargando logo para ${platform.provider_name}:`, e);
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <div 
-                          className="logo-placeholder" 
-                          style={{ display: logoPath ? 'none' : 'flex' }}
+          <div className="platforms-container-enhanced">
+            {/* Vista avanzada con filtros y búsqueda */}
+            <div className="advanced-platform-selection">
+              <div className="platform-controls">
+                <div className="filter-buttons">
+                  <button
+                    type="button"
+                    className={`filter-btn ${platformFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setPlatformFilter('all')}
+                  >
+                    {t('auth.allPlatforms', 'Todas')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`filter-btn ${platformFilter === 'popular' ? 'active' : ''}`}
+                    onClick={() => setPlatformFilter('popular')}
+                  >
+                    {t('auth.popularOnly', 'Populares')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`filter-btn ${platformFilter === 'free' ? 'active' : ''}`}
+                    onClick={() => setPlatformFilter('free')}
+                  >
+                    {t('auth.freePlatforms', 'Gratis')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`filter-btn ${platformFilter === 'paid' ? 'active' : ''}`}
+                    onClick={() => setPlatformFilter('paid')}
+                  >
+                    {t('auth.paidPlatforms', 'De pago')}
+                  </button>
+                </div>
+                
+                <div className="quick-actions">
+                  <button
+                    type="button"
+                    className="quick-action-btn"
+                    onClick={() => {
+                      const filteredPlatforms = getFilteredPlatforms();
+                      const newPlatforms = filteredPlatforms.map(p => p.provider_name);
+                      setPlataformas(prev => {
+                        const newSelection = [...new Set([...prev, ...newPlatforms])];
+                        return newSelection;
+                      });
+                    }}
+                  >
+                    <span className="icon">✓</span>
+                    {platformFilter === 'popular' 
+                      ? t('auth.selectAllPopularPlatforms', 'Seleccionar populares')
+                      : platformFilter === 'free' 
+                        ? t('auth.selectAllFreePlatforms', 'Seleccionar gratis')
+                        : platformFilter === 'paid'
+                          ? t('auth.selectAllPaidPlatforms', 'Seleccionar de pago')
+                          : t('auth.selectAllPlatforms', 'Seleccionar todas')
+                    }
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className="quick-action-btn clear"
+                    onClick={() => setPlataformas([])}
+                  >
+                    <span className="icon">🗑️</span>
+                    {t('auth.deselectAllPlatforms', 'Deseleccionar todas')}
+                  </button>
+                </div>
+                
+                <div className="search-input-container">
+                  <input
+                    type="text"
+                    placeholder={t('auth.searchPlatforms', 'Buscar plataformas...')}
+                    value={platformSearch}
+                    onChange={(e) => setPlatformSearch(e.target.value)}
+                    className="search-input"
+                  />
+                  <span className="search-icon">🔍</span>
+                </div>
+              </div>
+              
+              <div className={`selected-platforms-preview ${maxScrollPosition > 0 ? 'has-overflow' : ''}`}>
+                {safePlataformas.length > 0 ? (
+                  <div className="platforms-carousel-container">
+                    <div className="platforms-carousel" ref={carouselRef}>
+                      {safePlataformas.map((platformName, index) => {
+                        const platformData = availablePlatforms.find(p => p.provider_name === platformName);
+                        return (
+                          <div 
+                            key={`${platformName}-${index}`} 
+                            className="selected-platform-logo"
+                            onClick={() => togglePlataforma(platformName)}
+                            title={platformName}
+                          >
+                            {platformData?.logo_path ? (
+                              <img 
+                                src={`https://image.tmdb.org/t/p/original${platformData.logo_path}`}
+                                alt={platformName}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : (
+                              <span className="platform-initial">
+                                {platformName.charAt(0)}
+                              </span>
+                            )}
+                            <div className="remove-platform-overlay">
+                              ×
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {maxScrollPosition > 0 && (
+                      <>
+                        <button 
+                          type="button"
+                          className="carousel-nav prev"
+                          onClick={scrollCarouselLeft}
+                          disabled={carouselScrollPosition <= 0}
                         >
-                          <span className="platform-initial">{platform.provider_name.charAt(0)}</span>
-                        </div>
-                        <span className="name">{platform.provider_name}</span>
-                      </div>
-                    );
-                  })
+                          ‹
+                        </button>
+                        <button 
+                          type="button"
+                          className="carousel-nav next"
+                          onClick={scrollCarouselRight}
+                          disabled={carouselScrollPosition >= maxScrollPosition}
+                        >
+                          ›
+                        </button>
+                      </>
+                    )}
+                  </div>
                 ) : (
-                  <div className="no-platforms-message">
-                    <p>
-                      {pais === 'other' 
-                        ? t('auth.otherCountrySelected', 'Has seleccionado "Otro país". Podrás especificar tus plataformas manualmente más tarde.')
-                        : t('auth.noPlatformsAvailable', 'No se encontraron plataformas disponibles para tu país')
-                      }
-                    </p>
+                  <div className="empty-selection-message">
+                    {t('auth.selectPlatforms', 'Selecciona las plataformas donde ves contenido')}
+                  </div>
+                )}
+              </div>
+              
+              <div className="platforms-grid-advanced">
+                {getFilteredPlatforms().length > 0 ? (
+                  getFilteredPlatforms().map(platform => (
+                    <div 
+                      key={platform.provider_id} 
+                      className={`platform-item advanced ${safePlataformas.includes(platform.provider_name) ? 'selected' : ''}`}
+                      onClick={() => togglePlataforma(platform.provider_name)}
+                    >
+                      {platform.logo_path ? (
+                        <img 
+                          src={`https://image.tmdb.org/t/p/w92${platform.logo_path}`}
+                          alt={platform.provider_name}
+                          className="logo"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="logo-placeholder" 
+                        style={{ display: platform.logo_path ? 'none' : 'flex' }}
+                      >
+                        <span className="platform-initial">{platform.provider_name.charAt(0)}</span>
+                      </div>
+                      <span className="name">{platform.provider_name}</span>
+                      {platform.display_priority && platform.display_priority <= 20 && (
+                        <div className="popular-badge">⭐</div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-results-message">
+                    <p>{t('auth.noResultsFound', 'No se encontraron resultados')}</p>
                   </div>
                 )}
               </div>
             </div>
             
-            {/* Botón "Ver más" solo si hay más de 12 plataformas */}
-            {availablePlatforms.length > 12 && (
-              <button
-                type="button"
-                className={`show-more-platforms ${showAllPlatforms ? 'expanded' : ''}`}
-                onClick={() => setShowAllPlatforms(!showAllPlatforms)}
-              >
-                <span className="icon">▼</span>
-                <span>
-                  {showAllPlatforms 
-                    ? t('auth.showLess', 'Mostrar menos') 
-                    : t('auth.showMore', 'Ver más plataformas')
-                  }
-                </span>
-                {!showAllPlatforms && (
-                  <span className="platforms-count">
-                    +{availablePlatforms.length - 12}
-                  </span>
-                )}
-              </button>
+            {availablePlatforms.length === 0 && pais !== 'other' && (
+              <div className="no-platforms-message">
+                <p>{t('auth.noPlatformsAvailable', 'No se encontraron plataformas disponibles para tu país')}</p>
+              </div>
+            )}
+            
+            {pais === 'other' && (
+              <div className="other-country-message">
+                <p>{t('auth.otherCountrySelected', 'Has seleccionado "Otro país". Podrás especificar tus plataformas manualmente más tarde.')}</p>
+              </div>
             )}
           </div>
         )}
       </div>
       
+      {/* Tipo de contenido */}
       <div className="form-group">
         <label className="form-label">{t('auth.contentType')}</label>
-        <div className="radio-group visual-radio-group">
+        <div className="radio-group visual-radio-group enhanced">
           <label className={`radio-item visual-radio ${(tipoContenido || "") === "peliculas" ? 'selected' : ''}`}>
             <input
               type="radio"
@@ -899,8 +1442,9 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
               className="visual-radio-input"
             />
             <div className="visual-content">
-              <span className="visual-icon content-icon">🎬</span>
+              <span className="visual-icon content-icon"><FaFilm /></span>
               <span className="radio-label">{t('auth.movies')}</span>
+              <span className="radio-description">{t('auth.moviesDescription', 'Largometrajes y documentales')}</span>
             </div>
           </label>
           <label className={`radio-item visual-radio ${(tipoContenido || "") === "series" ? 'selected' : ''}`}>
@@ -913,8 +1457,9 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
               className="visual-radio-input"
             />
             <div className="visual-content">
-              <span className="visual-icon content-icon">📺</span>
+              <span className="visual-icon content-icon"><FaTv /></span>
               <span className="radio-label">{t('auth.series')}</span>
+              <span className="radio-description">{t('auth.seriesDescription', 'Series y miniseries')}</span>
             </div>
           </label>
           <label className={`radio-item visual-radio ${(tipoContenido || "") === "ambos" ? 'selected' : ''}`}>
@@ -927,8 +1472,9 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
               className="visual-radio-input"
             />
             <div className="visual-content">
-              <span className="visual-icon content-icon">🎭</span>
+              <span className="visual-icon content-icon"><FaTheaterMasks /></span>
               <span className="radio-label">{t('auth.both')}</span>
+              <span className="radio-description">{t('auth.bothDescription', 'Todo tipo de contenido')}</span>
             </div>
           </label>
         </div>

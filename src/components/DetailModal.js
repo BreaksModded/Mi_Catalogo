@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../context/LanguageContext';
 import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
@@ -294,7 +293,7 @@ const scrollLeftRef = useRef(0);
         listas.filter(lista => Array.isArray(lista.medias) && lista.medias.some(m => m.id === media.id)).map(l => l.id)
       );
     }
-  }, [media, currentLanguage]);
+  }, [media, currentLanguage, listas]);
 
   useEffect(() => {
     if (!media || !media.id) {
@@ -327,34 +326,6 @@ const scrollLeftRef = useRef(0);
 
   // Normalizador para búsqueda
   const normalize = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-  // Quitar tag rápidamente desde chip
-  const handleRemoveExistingTag = async (tagId) => {
-    if (!media || !tagId) return;
-    try {
-      if (typeof onRemoveTag === 'function') {
-        await onRemoveTag(media.id, tagId);
-      } else if (typeof onTagToggle === 'function') {
-        onTagToggle(media.id, tagId);
-      }
-      // Actualización optimista
-      setLocalTags(prev => prev.filter(t => t.id !== tagId));
-      // Confirmar con backend y sincronizar estado seleccionado
-      try {
-        const jwtToken = localStorage.getItem('jwt_token');
-        const res = await fetch(`${BACKEND_URL}/medias/${media.id}`, {
-          headers: {
-            ...(jwtToken ? { 'Authorization': `Bearer ${jwtToken}` } : {})
-          }
-        });
-        if (res.ok) {
-          const updated = await res.json();
-          setLocalTags(Array.isArray(updated.tags) ? updated.tags : []);
-          onUpdate?.(updated);
-        }
-      } catch (_) { /* noop */ }
-    } catch (_) {}
-  };
 
   // Modal de gestión de tags
   const openTagsManager = () => {

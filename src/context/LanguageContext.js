@@ -1,28 +1,61 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { languages, defaultLanguage, detectBrowserLanguage, getNestedTranslation } from '../i18n';
+import { languages, defaultLanguage, detectBrowserLanguage, detectPreferredLanguage, getNestedTranslation } from '../i18n';
 
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState(() => {
-    // Intentar cargar el idioma desde localStorage
+    // 1. Verificar si hay idioma guardado en localStorage (alta prioridad)
     const savedLanguage = localStorage.getItem('catalog_language');
     if (savedLanguage && languages[savedLanguage]) {
       return savedLanguage;
     }
     
-    // Si no hay idioma guardado, detectar el del navegador
-    return detectBrowserLanguage();
+    // 2. Si no hay idioma guardado, usar idioma por defecto temporalmente
+    // La detección automática se hará en segundo plano
+    return defaultLanguage;
   });
+  
+  const [isLanguageInitialized, setIsLanguageInitialized] = useState(true);
 
-  // Guardar el idioma en localStorage cuando cambie
+  // Detección automática de idioma en segundo plano (solo si no hay idioma guardado)
   useEffect(() => {
-    localStorage.setItem('catalog_language', currentLanguage);
-  }, [currentLanguage]);
+    const initializeLanguageInBackground = async () => {
+      try {
+        // Solo detectar automáticamente si no hay idioma guardado en localStorage
+        const savedLanguage = localStorage.getItem('catalog_language');
+        if (savedLanguage && languages[savedLanguage]) {
+          // Ya tenemos un idioma guardado, no hacer detección automática
+          return;
+        }
+        
+        console.log('No hay idioma guardado, detectando automáticamente en segundo plano...');
+        const detectedLanguage = await detectPreferredLanguage();
+        
+        if (detectedLanguage && languages[detectedLanguage] && detectedLanguage !== defaultLanguage) {
+          console.log(`Cambiando a idioma detectado: ${detectedLanguage}`);
+          setCurrentLanguage(detectedLanguage);
+          // No guardamos automáticamente en localStorage para que el usuario tome la decisión
+        } else {
+          console.log(`Manteniendo idioma por defecto: ${defaultLanguage}`);
+        }
+        
+      } catch (error) {
+        console.error('Error en detección automática de idioma:', error);
+        // Mantener el idioma por defecto en caso de error
+      }
+    };
 
+    // Ejecutar la detección automática sin bloquear la UI
+    initializeLanguageInBackground();
+  }, []);
+
+  // Guardar el idioma en localStorage cuando cambie (solo si se cambió manualmente)
   const changeLanguage = (languageCode) => {
     if (languages[languageCode]) {
       setCurrentLanguage(languageCode);
+      localStorage.setItem('catalog_language', languageCode);
+      console.log(`Idioma cambiado manualmente a: ${languageCode}`);
     }
   };
 

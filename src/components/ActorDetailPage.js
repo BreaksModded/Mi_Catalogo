@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import Navbar from './Navbar';
 import SectionRow from './SectionRow';
 import useActorMedias from '../hooks/useActorMedias';
+import wikipediaAwardsService from '../services/wikipediaAwardsService';
 import './ActorDetailPage.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://mi-catalogo-backend.onrender.com';
@@ -27,9 +28,27 @@ export default function ActorDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showFullBio, setShowFullBio] = useState(false);
+  const [awards, setAwards] = useState([]);
+  const [loadingAwards, setLoadingAwards] = useState(false);
   const lang = useMemo(() => getLangCode(currentLanguage), [currentLanguage]);
   const navigate = useNavigate();
   const { medias: userMedias, loading: loadingUserMedias, error: errorUserMedias } = useActorMedias(personId);
+
+  // Función para cargar premios del actor
+  const loadActorAwards = async (actorName, tmdbPersonData = null) => {
+    if (!actorName) return;
+    
+    try {
+      setLoadingAwards(true);
+      const actorAwards = await wikipediaAwardsService.getActorAwards(actorName, tmdbPersonData);
+      setAwards(actorAwards);
+    } catch (error) {
+      // Error cargando premios - no es crítico
+      setAwards([]);
+    } finally {
+      setLoadingAwards(false);
+    }
+  };
 
   // Minimal handlers for Navbar
   const handleNavigation = (section) => {
@@ -71,6 +90,9 @@ export default function ActorDetailPage() {
         if (!abort) {
           setPerson({ ...personData, external_ids: externalIds || {} });
           setCredits(creditsData);
+          
+          // Cargar premios de Wikidata de forma asíncrona
+          loadActorAwards(personData.name, personData);
         }
       } catch (e) {
         if (!abort) setError(t('errors.couldNotLoadPerson', 'No se pudo cargar la información del actor'));
@@ -180,6 +202,63 @@ export default function ActorDetailPage() {
             {person.birthday && <span>{t('person.born', 'Nacido')}: {person.birthday}</span>}
             {person.place_of_birth && <span>· {person.place_of_birth}</span>}
           </div>
+        </div>
+        {/* Sección de premios (columna derecha) */}
+        <div className="actor-awards">
+        <div className="awards-header">
+          <h3>{t('person.awards', 'Premios y Reconocimientos')}</h3>
+        </div>
+        
+        {loadingAwards ? (
+          <div className="awards-loading">
+            <div className="loading-spinner-small" />
+            <span>{t('person.loadingAwards', 'Cargando premios...')}</span>
+          </div>
+        ) : awards.length > 0 ? (
+          <div className="awards-timeline">
+            <div className="timeline-line"></div>
+            <div className="awards-list">
+              {awards.slice(0, 8).map((award, index) => (
+                <div key={index} className={`award-item ${award.status}`}>
+                  <div className="award-point"></div>
+                  <div className="award-card">
+                    <div className="award-icon-container">
+                      <div className="award-icon">
+                        {award.status === 'winner' ? '🏆' : '�'}
+                      </div>
+                    </div>
+                    <div className="award-content">
+                      <div className="award-name">{award.name}</div>
+                      {award.category && award.category !== 'Acting' && award.category !== award.name && (
+                        <div className="award-category">{award.category}</div>
+                      )}
+                      {award.work && award.work !== award.name && (
+                        <div className="award-work">por "{award.work}"</div>
+                      )}
+                    </div>
+                    <div className="award-meta">
+                      {award.year && (
+                        <div className="award-year">{award.year}</div>
+                      )}
+                      <div className={`award-status ${award.status}`}>
+                        {award.status === 'winner' ? t('person.winner', 'Ganador') : t('person.nominee', 'Nominado')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {awards.length > 8 && (
+              <div className="awards-more">
+                +{awards.length - 8} {t('person.moreAwards', 'premios más')}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="no-awards">
+            <span>{t('person.noAwardsFound', 'No se encontraron premios registrados')}</span>
+          </div>
+        )}
         </div>
       </div>
 

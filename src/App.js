@@ -7,7 +7,7 @@ import Filters from './components/Filters';
 import DetailModal from './components/DetailModal';
 import DetailPage from './components/DetailPage';
 import ViewChoiceModal from './components/ViewChoiceModal';
-import AddMediaVersionSelector from './components/AddMediaVersionSelector';
+import AddMediaForm from './components/AddMediaForm';
 import ListasView from './components/ListasView';
 import ListasPage from './components/ListasPage';
 import DatabaseSleepNotice from './components/DatabaseSleepNotice';
@@ -124,7 +124,7 @@ function getAllGenres(medias) {
 function CatalogPage() {
   
   const { showNotification } = useNotification();
-  const { t } = useLanguage();
+  const { t, changeLanguage } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -209,6 +209,39 @@ function CatalogPage() {
         const res = await authenticatedSilentFetch(`${BACKEND_URL}/users/me`);
         if (res && res.ok) {
           setIsAuthenticated(true);
+          
+          // Obtener el idioma preferido del usuario si está autenticado
+          // MÁXIMA PRIORIDAD: idioma preferido de la base de datos
+          try {
+            const userResponse = await authenticatedSilentFetch(`${BACKEND_URL}/auth/me`);
+            if (userResponse && userResponse.ok) {
+              // Verificar que la respuesta es JSON válido
+              const contentType = userResponse.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const userData = await userResponse.json();
+                if (userData.idioma_preferido) {
+                  // Cambiar el idioma del frontend al idioma preferido del usuario
+                  changeLanguage(userData.idioma_preferido);
+                } else {
+                  // Si el usuario no tiene idioma preferido en la BD, 
+                  // mantenemos el idioma detectado automáticamente por el LanguageContext
+                }
+              } else {
+                // Respuesta no es JSON válido, omitir
+              }
+            } else {
+              // No se pudo acceder al endpoint
+            }
+          } catch (error) {
+            // Manejar específicamente errores de JSON
+            if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+              // El servidor devolvió una respuesta no-JSON, omitir
+            } else {
+              // Error al obtener el idioma preferido del usuario
+            }
+            // Si hay error obteniendo el idioma del usuario,
+            // mantenemos el idioma detectado automáticamente por el LanguageContext
+          }
         } else {
           // Token inválido o expirado, limpiar localStorage
           localStorage.removeItem('jwt_token');
@@ -220,8 +253,10 @@ function CatalogPage() {
         setAuthLoading(false);
       }
     };
+    
+    // Ejecutar checkAuth independientemente del estado de inicialización del idioma
     checkAuth();
-  }, []);
+  }, [changeLanguage]);
 
   // Función para actualizar el estado de autenticación desde el Navbar
   const handleAuthChange = useCallback((isAuth) => {
@@ -1371,7 +1406,7 @@ showNotification(tipoTexto + ' ' + t('messages.mediaAdded', 'añadida con éxito
       />
       <div className="main-content">
       {section === 'add' ? (
-        <AddMediaVersionSelector onAdded={handleMediaAdded} />
+        <AddMediaForm onAdded={handleMediaAdded} />
       ) : section === 'resumen' ? (
         <Resumen medias={medias} pendientes={pendientes} />
       ) : section === 'listas' ? (

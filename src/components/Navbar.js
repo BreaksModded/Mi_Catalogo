@@ -66,6 +66,22 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
     fetchUser();
   }, []); // Solo ejecutar una vez al montar el componente
 
+  // Permitir abrir el modal de auth desde otros componentes vía evento global
+  useEffect(() => {
+    const handler = (evt) => {
+      try {
+        const mode = evt?.detail?.mode === 'register' ? 'register' : 'login';
+        setIsLogin(mode !== 'register');
+        setShowAuth(true);
+      } catch (_) {
+        setIsLogin(true);
+        setShowAuth(true);
+      }
+    };
+    window.addEventListener('open-auth', handler);
+    return () => window.removeEventListener('open-auth', handler);
+  }, []);
+
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event) => {

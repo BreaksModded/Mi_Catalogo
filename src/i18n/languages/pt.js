@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 export const pt = {
   // Common/Global
   common: {
@@ -58,7 +59,13 @@ export const pt = {
     full_filmography: 'Filmografia completa',
     knownFor: 'Conhecido por',
     yourWatchedTitles: 'Seus títulos vistos com este ator',
-    born: 'Nascido'
+    born: 'Nascido',
+    awards: 'Prêmios e Reconhecimentos',
+    loadingAwards: 'Carregando prêmios...',
+    winner: 'Vencedor',
+    nominee: 'Indicado',
+    moreAwards: 'prêmios a mais',
+    noAwardsFound: 'Nenhum prêmio encontrado'
   },
   navbar: {
     title: 'Meu Catálogo',
@@ -796,19 +803,7 @@ export const pt = {
     'música': 'Música',
     'music': 'Música'
   },
-  // Welcome screen
-  welcome: {
-    title: 'Bem-vindo ao seu Catálogo Pessoal',
-    subtitle: 'Crie e gerencie sua coleção pessoal de filmes e séries',
-    feature1: 'Catálogo Pessoal',
-    feature1Desc: 'Organize seus filmes e séries favoritos',
-    feature2: 'Tags Personalizados',
-    feature2Desc: 'Etiquete e categorize seu conteúdo',
-    feature3: 'Favoritos e Notas',
-    feature3Desc: 'Marque favoritos e adicione anotações',
-    getStarted: 'Comece agora!',
-    loginPrompt: 'Faça login para acessar seu catálogo pessoal e começar a adicionar filmes e séries'
-  },
+  // (first welcome block removed; a consolidated welcome block appears later)
 
   // Authentication
   auth: {
@@ -914,6 +909,42 @@ export const pt = {
     // Progresso
     step: 'Passo {{current}} de {{total}}',
     
+    // Novas traduções para a interface melhorada
+    selected: 'selecionados',
+    allGenres: 'Todos os gêneros',
+    popularGenres: 'Gêneros populares',
+    trendingGenres: 'Em alta',
+    selectAll: 'Selecionar todos',
+    selectAllPopular: 'Selecionar populares',
+    selectAllTrending: 'Selecionar em alta',
+    deselectAll: 'Desmarcar todos',
+    searchGenres: 'Buscar gêneros...',
+    noGenresFound: 'Nenhum gênero encontrado com esse critério',
+    loadingEnhancedGenres: 'Carregando dados atualizados de gêneros...',
+    
+    // Plataformas
+    allPlatforms: 'Todas',
+    popularOnly: 'Populares',
+    freePlatforms: 'Gratuitas',
+    paidPlatforms: 'Pagas',
+    selectAllPlatforms: 'Selecionar todas',
+    selectAllPopularPlatforms: 'Selecionar populares',
+    selectAllFreePlatforms: 'Selecionar gratuitas',
+    selectAllPaidPlatforms: 'Selecionar pagas',
+    deselectAllPlatforms: 'Desmarcar todas',
+    searchPlatforms: 'Buscar plataformas...',
+    selectPlatforms: 'Selecione as plataformas onde você assiste conteúdo',
+    selectCountryFirst: 'Selecione primeiro seu país para ver as plataformas disponíveis',
+    loadingPlatforms: 'Carregando plataformas disponíveis...',
+    noPlatformsAvailable: 'Nenhuma plataforma disponível encontrada para seu país',
+    otherCountrySelected: 'Você selecionou "Outro país". Poderá especificar suas plataformas manualmente mais tarde.',
+    noResultsFound: 'Nenhum resultado encontrado',
+    
+    // Descrições dos tipos de conteúdo
+    moviesDescription: 'Longas-metragens e documentários',
+    seriesDescription: 'Séries e minisséries',
+    bothDescription: 'Todo tipo de conteúdo',
+    
     // Seletores
     selectCountry: 'Selecione seu país',
     selectOccupation: 'Selecione sua ocupação',
@@ -949,6 +980,33 @@ export const pt = {
       germany: 'Alemanha',
       uk: 'Reino Unido',
       portugal: 'Portugal',
+      netherlands: 'Holanda',
+      belgium: 'Bélgica',
+      sweden: 'Suécia',
+      norway: 'Noruega',
+      denmark: 'Dinamarca',
+      finland: 'Finlândia',
+      poland: 'Polônia',
+      czechRepublic: 'República Tcheca',
+      austria: 'Áustria',
+      switzerland: 'Suíça',
+      australia: 'Austrália',
+      newZealand: 'Nova Zelândia',
+      japan: 'Japão',
+      southKorea: 'Coreia do Sul',
+      china: 'China',
+      india: 'Índia',
+      thailand: 'Tailândia',
+      singapore: 'Singapura',
+      malaysia: 'Malásia',
+      indonesia: 'Indonésia',
+      philippines: 'Filipinas',
+      vietnam: 'Vietnã',
+      southAfrica: 'África do Sul',
+      turkey: 'Turquia',
+      israel: 'Israel',
+      russia: 'Rússia',
+      ukraine: 'Ucrânia',
       other: 'Outro'
     },
     

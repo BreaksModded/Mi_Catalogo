@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 export const es = {
   // Common/Global
   common: {
@@ -359,6 +360,7 @@ export const es = {
     translating: 'Traduciendo contenido',
     translationError: 'Error al traducir contenido',
     contentTranslated: 'Contenido traducido automáticamente',
+    detectingLanguage: 'Detectando idioma preferido...',
     // New notification messages
     searchingWithFilters: 'Buscando contenido que coincida con tus filtros...',
     noMoviesFound: 'No se encontraron películas con los filtros seleccionados',
@@ -692,7 +694,16 @@ export const es = {
 
   // General terms
   person: {
-    full_filmography: 'Filmografía completa'
+    full_filmography: 'Filmografía completa',
+    born: 'Nacido',
+    knownFor: 'Conocido por',
+    yourWatchedTitles: 'Tus títulos vistos con este actor',
+    awards: 'Premios y Reconocimientos',
+    loadingAwards: 'Cargando premios...',
+    winner: 'Ganador',
+    nominee: 'Nominado',
+    moreAwards: 'premios más',
+    noAwardsFound: 'No se encontraron premios registrados'
   },
   general: {
     title: 'título',
@@ -971,6 +982,64 @@ export const es = {
     
     // Progreso
     step: 'Paso {{current}} de {{total}}',
+    
+    // Nuevas traducciones para la interfaz mejorada
+    selected: 'seleccionados',
+    selectSpecificGenres: 'Seleccionar géneros específicos',
+    searchGenres: 'Buscar géneros...',
+    backToCategories: 'Volver a categorías',
+    popularPlatforms: 'Plataformas más populares',
+    exploreAllPlatforms: 'Explorar todas las plataformas',
+    searchPlatforms: 'Buscar plataformas...',
+    allPlatforms: 'Todas',
+    popularOnly: 'Populares',
+    freePlatforms: 'Gratis',
+    paidPlatforms: 'De pago',
+    backToPopular: 'Volver a populares',
+    noResultsFound: 'No se encontraron resultados',
+    moviesDescription: 'Largometrajes y documentales',
+    seriesDescription: 'Series y miniseries',
+    bothDescription: 'Todo tipo de contenido',
+    selectCountryFirst: 'Selecciona primero tu país para ver las plataformas disponibles',
+    loadingPlatforms: 'Cargando plataformas disponibles...',
+    otherCountrySelected: 'Has seleccionado "Otro país". Podrás especificar tus plataformas manualmente más tarde.',
+    noPlatformsAvailable: 'No se encontraron plataformas disponibles para tu país',
+    selectPopularGenres: 'Seleccionar géneros populares',
+    clearSelection: 'Limpiar selección',
+    completeSelection: 'Completar selección',
+    selectAllInCategory: 'Seleccionar todos en esta categoría',
+    deselectAllInCategory: 'Deseleccionar todos en esta categoría',
+    
+    // Filtros de géneros
+    allGenres: 'Todos los géneros',
+    popularGenres: 'Géneros populares',
+    trendingGenres: 'En tendencia',
+    selectAllPopular: 'Seleccionar populares',
+    selectAllTrending: 'Seleccionar tendencias',
+    selectAll: 'Seleccionar todos',
+    deselectAll: 'Deseleccionar todos',
+    noGenresFound: 'No se encontraron géneros con ese criterio',
+    searchGenres: 'Buscar géneros...',
+    
+    // Integración TMDB
+    loadingEnhancedGenres: 'Cargando datos actualizados de géneros...',
+    tmdbDataLoaded: 'Datos de popularidad actualizados desde TMDB',
+    
+    // TMDB Integration
+    loadingEnhancedGenres: 'Cargando datos actualizados de géneros...',
+    tmdbDataLoaded: 'Datos de popularidad actualizados desde TMDB',
+    
+    // Categorías de géneros
+    genreCategories: {
+      adventure: 'Acción y Aventura',
+      drama: 'Drama y Narrativa',
+      comedy: 'Comedia',
+      thriller: 'Suspenso y Terror',
+      romance: 'Romance',
+      family: 'Familiar y Animación',
+      entertainment: 'Entretenimiento',
+      war: 'Bélico y Conflicto'
+    },
     
     // Selectores
     selectCountry: 'Selecciona tu país',

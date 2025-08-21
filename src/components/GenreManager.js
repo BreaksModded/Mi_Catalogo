@@ -45,12 +45,7 @@ const GenreManager = ({ medias }) => {
   }
 
   if (missingGenres.length === 0) {
-    return (
-      <div className="genre-manager genre-manager--success">
-        <h4>✅ Todas las traducciones de géneros están completas</h4>
-        <p>Se encontraron {extractUniqueGenres(medias || []).length} géneros únicos, todos con traducciones.</p>
-      </div>
-    );
+  return null;
   }
 
   const copyToClipboard = (text) => {

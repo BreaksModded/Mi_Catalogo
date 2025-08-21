@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 export const fr = {
   // Common/Global
   common: {
@@ -58,7 +59,13 @@ export const fr = {
     full_filmography: 'Filmographie complète',
     knownFor: 'Connu pour',
     yourWatchedTitles: 'Vos titres vus avec cet acteur',
-    born: 'Né'
+    born: 'Né',
+    awards: 'Prix et Reconnaissances',
+    loadingAwards: 'Chargement des prix...',
+    winner: 'Gagnant',
+    nominee: 'Nominé',
+    moreAwards: 'prix de plus',
+    noAwardsFound: 'Aucun prix trouvé'
   },
   navbar: {
     title: 'Mon Catalogue',
@@ -431,8 +438,7 @@ export const fr = {
     editingList: 'Modification de la liste',
     editInstructions: 'Glissez les éléments pour réorganiser et utilisez le bouton supprimer pour retirer des titres',
     removeFromList: 'Retirer de la liste',
-    sortByPersonal: 'Ordre personnalisé',
-    sortByPersonal: 'Ordre personnalisé'
+  sortByPersonal: 'Ordre personnalisé'
   },
   tags: {
     createTag: 'Créer Tag',
@@ -745,19 +751,7 @@ export const fr = {
     'noir': 'Noir'
   },
 
-  // Welcome screen
-  welcome: {
-    title: 'Bienvenue dans votre Catalogue Personnel',
-    subtitle: 'Créez et gérez votre collection personnelle de films et séries',
-    feature1: 'Catalogue Personnel',
-    feature1Desc: 'Organisez vos films et séries préférés',
-    feature2: 'Tags Personnalisés',
-    feature2Desc: 'Étiquetez et catégorisez votre contenu',
-    feature3: 'Favoris et Notes',
-    feature3Desc: 'Marquez vos favoris et ajoutez des annotations',
-    getStarted: 'Commencez maintenant !',
-    loginPrompt: 'Connectez-vous pour accéder à votre catalogue personnel et commencer à ajouter des films et séries'
-  },
+  // (first welcome block removed; a consolidated welcome block appears later)
 
   // Authentication
   auth: {
@@ -863,6 +857,42 @@ export const fr = {
     // Progreso
     step: 'Étape {{current}} sur {{total}}',
     
+    // Nouvelles traductions pour l'interface améliorée
+    selected: 'sélectionnés',
+    allGenres: 'Tous les genres',
+    popularGenres: 'Genres populaires',
+    trendingGenres: 'Tendances',
+    selectAll: 'Tout sélectionner',
+    selectAllPopular: 'Sélectionner les populaires',
+    selectAllTrending: 'Sélectionner les tendances',
+    deselectAll: 'Tout désélectionner',
+    searchGenres: 'Rechercher des genres...',
+    noGenresFound: 'Aucun genre trouvé avec ce critère',
+    loadingEnhancedGenres: 'Chargement des données de genres mises à jour...',
+    
+    // Plateformes
+    allPlatforms: 'Toutes',
+    popularOnly: 'Populaires',
+    freePlatforms: 'Gratuites',
+    paidPlatforms: 'Payantes',
+    selectAllPlatforms: 'Tout sélectionner',
+    selectAllPopularPlatforms: 'Sélectionner les populaires',
+    selectAllFreePlatforms: 'Sélectionner les gratuites',
+    selectAllPaidPlatforms: 'Sélectionner les payantes',
+    deselectAllPlatforms: 'Tout désélectionner',
+    searchPlatforms: 'Rechercher des plateformes...',
+    selectPlatforms: 'Sélectionnez les plateformes où vous regardez du contenu',
+    selectCountryFirst: 'Sélectionnez d\'abord votre pays pour voir les plateformes disponibles',
+    loadingPlatforms: 'Chargement des plateformes disponibles...',
+    noPlatformsAvailable: 'Aucune plateforme disponible trouvée pour votre pays',
+    otherCountrySelected: 'Vous avez sélectionné "Autre pays". Vous pourrez spécifier vos plateformes manuellement plus tard.',
+    noResultsFound: 'Aucun résultat trouvé',
+    
+    // Descriptions des types de contenu
+    moviesDescription: 'Longs métrages et documentaires',
+    seriesDescription: 'Séries et mini-séries',
+    bothDescription: 'Tous types de contenu',
+    
     // Selectores
     selectCountry: 'Sélectionnez votre pays',
     selectOccupation: 'Sélectionnez votre profession',
@@ -898,6 +928,33 @@ export const fr = {
       germany: 'Allemagne',
       uk: 'Royaume-Uni',
       portugal: 'Portugal',
+      netherlands: 'Pays-Bas',
+      belgium: 'Belgique',
+      sweden: 'Suède',
+      norway: 'Norvège',
+      denmark: 'Danemark',
+      finland: 'Finlande',
+      poland: 'Pologne',
+      czechRepublic: 'République Tchèque',
+      austria: 'Autriche',
+      switzerland: 'Suisse',
+      australia: 'Australie',
+      newZealand: 'Nouvelle-Zélande',
+      japan: 'Japon',
+      southKorea: 'Corée du Sud',
+      china: 'Chine',
+      india: 'Inde',
+      thailand: 'Thaïlande',
+      singapore: 'Singapour',
+      malaysia: 'Malaisie',
+      indonesia: 'Indonésie',
+      philippines: 'Philippines',
+      vietnam: 'Vietnam',
+      southAfrica: 'Afrique du Sud',
+      turkey: 'Turquie',
+      israel: 'Israël',
+      russia: 'Russie',
+      ukraine: 'Ukraine',
       other: 'Autre'
     },
     

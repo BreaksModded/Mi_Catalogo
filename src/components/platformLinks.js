@@ -6,15 +6,10 @@ export function getPlatformLink(provider, externalIds, mediaType) {
   if (provider.link && typeof provider.link === 'string' && provider.link.startsWith('http')) {
     return provider.link;
   }
-  const imdb = externalIds?.imdb_id;
   const netflix = externalIds?.netflix_id;
-  const apple = externalIds?.apple_tv_id;
   const amazon = externalIds?.amazon_prime_video_id;
-  const disney = externalIds?.disneyplus_id;
-  const hbo = externalIds?.hbomax_id;
-  const tmdb = externalIds?.tmdb_id;
-  const originalTitle = externalIds?.original_title || '';
-  const titleForSearch = encodeURIComponent(originalTitle);
+  // const originalTitle = externalIds?.original_title || '';
+  // const titleForSearch = encodeURIComponent(originalTitle);
   if (!provider || !provider.provider_name) return null;
   // Normalizar nombre para manejar variantes
   const providerName = provider.provider_name.trim().toLowerCase();
