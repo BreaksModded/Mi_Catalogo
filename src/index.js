@@ -1,3 +1,6 @@
+// Importar el parche de ResizeObserver ANTES que cualquier otra cosa
+import './resizeObserverPatch';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import AppWrapper from './App';

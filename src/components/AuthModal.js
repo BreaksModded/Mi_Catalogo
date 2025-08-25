@@ -622,83 +622,128 @@ export default function AuthModal({ show, onClose, onAuthSuccess, isLogin: isLog
     });
   };
 
-  // Funciones del carrusel
+  // Funciones del carrusel - optimizado para evitar ResizeObserver loops
   const updateCarouselScrollLimits = useCallback(() => {
-    if (carouselRef.current) {
-      const carousel = carouselRef.current;
-      const container = carousel.parentElement;
-      
-      // Calcular el ancho total del contenido
-      const logoWidth = 44;
-      const gap = 12;
-      const padding = 24; // 12px cada lado
-      const platformCount = Array.isArray(plataformas) ? plataformas.length : 0;
-      
-      if (platformCount === 0) {
-        setMaxScrollPosition(0);
-        return;
-      }
-      
-      const totalContentWidth = (platformCount * logoWidth) + ((platformCount - 1) * gap) + padding;
-      
-      // Ancho disponible del contenedor
-      const containerWidth = container.clientWidth;
-      
-      // Scroll máximo necesario - si el contenido es mayor que el contenedor
-      const maxScroll = Math.max(0, totalContentWidth - containerWidth);
-      setMaxScrollPosition(maxScroll);
-      
-      // Si el scroll actual excede el nuevo máximo, ajustarlo
-      if (carouselScrollPosition > maxScroll) {
-        const newPosition = maxScroll;
-        carousel.style.transform = `translateX(-${newPosition}px)`;
-        setCarouselScrollPosition(newPosition);
-      }
+    if (!carouselRef.current) return;
+    
+    const carousel = carouselRef.current;
+    const container = carousel.parentElement;
+    if (!container) return;
+    
+    // Evitar recálculos innecesarios
+    const currentWidth = container.clientWidth;
+    const platformCount = Array.isArray(plataformas) ? plataformas.length : 0;
+    
+    if (platformCount === 0) {
+      setMaxScrollPosition(0);
+      return;
     }
-  }, [plataformas, carouselScrollPosition]);
+    
+    // Calcular dimensiones de manera más estable
+    const logoWidth = 44;
+    const gap = 12;
+    const padding = 24;
+    const totalContentWidth = (platformCount * logoWidth) + ((platformCount - 1) * gap) + padding;
+    const maxScroll = Math.max(0, totalContentWidth - currentWidth);
+    
+    // Solo actualizar si hay cambios significativos
+    setMaxScrollPosition(prevMax => {
+      if (Math.abs(prevMax - maxScroll) > 5) { // Umbral de 5px para evitar micro-cambios
+        return maxScroll;
+      }
+      return prevMax;
+    });
+    
+    // Ajustar posición si es necesario
+    setCarouselScrollPosition(prevPos => {
+      if (prevPos > maxScroll) {
+        const newPosition = maxScroll;
+        requestAnimationFrame(() => {
+          if (carousel) {
+            carousel.style.transform = `translateX(-${newPosition}px)`;
+          }
+        });
+        return newPosition;
+      }
+      return prevPos;
+    });
+  }, [plataformas]);
 
   const scrollCarouselLeft = () => {
-    if (carouselRef.current) {
-      const logoWidth = 44 + 12; // 44px logo + 12px gap
-      const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
-      
-      const newPosition = Math.max(0, carouselScrollPosition - scrollAmount);
-      carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
-      setCarouselScrollPosition(newPosition);
-    }
+    if (!carouselRef.current) return;
+    
+    const logoWidth = 44 + 12; // 44px logo + 12px gap
+    const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
+    
+    const newPosition = Math.max(0, carouselScrollPosition - scrollAmount);
+    
+    // Usar requestAnimationFrame para evitar ResizeObserver loops
+    requestAnimationFrame(() => {
+      if (carouselRef.current) {
+        carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
+      }
+    });
+    
+    setCarouselScrollPosition(newPosition);
   };
 
   const scrollCarouselRight = () => {
-    if (carouselRef.current) {
-      const logoWidth = 44 + 12; // 44px logo + 12px gap
-      const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
-      
-      const newPosition = Math.min(maxScrollPosition, carouselScrollPosition + scrollAmount);
-      carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
-      setCarouselScrollPosition(newPosition);
-    }
+    if (!carouselRef.current) return;
+    
+    const logoWidth = 44 + 12; // 44px logo + 12px gap
+    const scrollAmount = logoWidth * 2; // Scroll de 2 logos por vez
+    
+    const newPosition = Math.min(maxScrollPosition, carouselScrollPosition + scrollAmount);
+    
+    // Usar requestAnimationFrame para evitar ResizeObserver loops
+    requestAnimationFrame(() => {
+      if (carouselRef.current) {
+        carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
+      }
+    });
+    
+    setCarouselScrollPosition(newPosition);
   };
 
   // Actualizar límites del carrusel cuando cambian las plataformas
   useEffect(() => {
+    if (!show || !Array.isArray(plataformas)) return;
+    
     const timer = setTimeout(() => {
       updateCarouselScrollLimits();
-    }, 100); // Pequeño delay para asegurar que el DOM se ha actualizado
+    }, 200); // Delay más largo para evitar llamadas rápidas
     
     return () => clearTimeout(timer);
-  }, [plataformas, updateCarouselScrollLimits]);
+  }, [plataformas, show, updateCarouselScrollLimits]);
 
-  // Actualizar límites del carrusel cuando se redimensiona la ventana
+  // Actualizar límites del carrusel cuando se redimensiona la ventana - con throttling
   useEffect(() => {
+    if (!show) return;
+    
+    let resizeTimeout;
+    let isResizing = false;
+    
     const handleResize = () => {
-      setTimeout(() => {
+      if (isResizing) return;
+      
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        isResizing = true;
         updateCarouselScrollLimits();
-      }, 100);
+        
+        // Reset del flag después de completar
+        requestAnimationFrame(() => {
+          isResizing = false;
+        });
+      }, 300); // Throttling más agresivo
     };
     
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [updateCarouselScrollLimits]);
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [updateCarouselScrollLimits, show]);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();

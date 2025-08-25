@@ -11,15 +11,40 @@ function Filters({ tipos, generos, selectedTipo, selectedGeneros, onTipo, onGene
   const { t } = useLanguage();
   const { translateGenre } = useGenreTranslation();
 
-  // Toggle filters on mobile
+  // Toggle filters on mobile con optimización para evitar loops de ResizeObserver
   React.useEffect(() => {
+    let timeoutId;
+    let isResizing = false;
+    
     const handleResize = () => {
-      if (window.innerWidth > 768) setShowFilters(true);
-      else setShowFilters(false);
+      // Evitar múltiples llamadas durante la misma operación de resize
+      if (isResizing) return;
+      
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        isResizing = true;
+        const isLargeScreen = window.innerWidth > 768;
+        setShowFilters(isLargeScreen);
+        
+        // Pequeño delay para permitir que se complete el re-render
+        requestAnimationFrame(() => {
+          isResizing = false;
+        });
+      }, 150); // Debounce más largo para evitar cambios rápidos
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
+    // Configurar estado inicial solo una vez
+    const isLargeScreen = window.innerWidth > 768;
+    setShowFilters(isLargeScreen);
+    
+    // Usar passive listener para mejor performance
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []); // Array de dependencias vacío para ejecutar solo una vez
 
   // Estilos personalizados para react-select
   const customSelectStyles = {

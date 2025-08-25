@@ -3,6 +3,18 @@ import './Resumen.css';
 import GeneroChart, { YearChart } from './GeneroChart';
 import GenreManager from './GenreManager';
 import { useLanguage } from '../context/LanguageContext';
+      } catch (error) {
+        // Solo mostrar error si no es 404 (falta de contenido)
+        if (!error.message?.includes('404')) {
+          console.error('Error fetching top content:', error);
+        }
+        setState(prev => ({
+          ...prev,
+          topPeliculasBD: [],
+          topSeriesBD: []
+        }));
+      }
+    };ageContext';
 import { useGenreTranslation } from '../utils/genreTranslation';
 import { useTranslatedContent } from '../hooks/useTranslatedContent';
 import { contentTranslationService } from '../utils/contentTranslation';
@@ -131,27 +143,19 @@ function Resumen({ medias }) {
   const fetchWithErrorHandling = useCallback(async (url, errorMessage = 'Error fetching data', silentOn404 = false) => {
     try {
       const response = await authenticatedFetch(url);
-      
       if (!response.ok) {
+        // Si es 404 y tenemos el flag silentOn404, retornar null en lugar de lanzar error
         if (response.status === 404 && silentOn404) {
-          // Silently return null for 404 errors when silentOn404 is true
           return null;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
-      // Check if it's a 404 error and silentOn404 is enabled
-      if (silentOn404 && (
-        error.message.includes('404') || 
-        error.message.includes('Not Found') ||
-        (error.response && error.response.status === 404)
-      )) {
-        // Return null silently without logging
-        return null;
+      // No logear errores 404 cuando están siendo silenciados
+      if (!(error.message?.includes('404') && silentOn404)) {
+        console.error(`${errorMessage}:`, error);
       }
-      // Only log non-404 errors or when silentOn404 is false
-      console.error(`${errorMessage}:`, error);
       throw error;
     }
   }, [authenticatedFetch]);
@@ -194,28 +198,11 @@ function Resumen({ medias }) {
 
     fetchCounts();
     
-    // Fetch worst rated content only if user has rated content
+    // Fetch worst rated content - con manejo mejorado de usuarios sin contenido
     const fetchWorstRated = async () => {
       setState(prev => ({ ...prev, loadingPeor: true, errorPeor: null }));
       
       try {
-        // First check if user has any rated content
-        const ratedContentCheck = await fetchWithErrorHandling(
-          `${BACKEND_URL}/medias/count?nota_personal_gte=1`, 
-          'Error checking rated content'
-        );
-        
-        if (!ratedContentCheck || ratedContentCheck.count === 0) {
-          // User has no rated content, skip worst content fetch
-          setState(prev => ({
-            ...prev,
-            peorPelicula: null,
-            peorSerie: null,
-            loadingPeor: false
-          }));
-          return;
-        }
-        
         const [peorPeliData, peorSerieData] = await Promise.all([
           fetchWithErrorHandling(`${BACKEND_URL}/medias/peor_pelicula`, 'Error fetching worst movie', true),
           fetchWithErrorHandling(`${BACKEND_URL}/medias/peor_serie`, 'Error fetching worst series', true)
@@ -223,16 +210,26 @@ function Resumen({ medias }) {
 
         setState(prev => ({
           ...prev,
-          peorPelicula: peorPeliData || null,
-          peorSerie: peorSerieData || null,
+          peorPelicula: peorPeliData,
+          peorSerie: peorSerieData,
           loadingPeor: false
         }));
       } catch (err) {
-        setState(prev => ({
-          ...prev,
-          errorPeor: t('messages.errorLoadingRelated', 'Could not load worst rated content'),
-          loadingPeor: false
-        }));
+        // No mostrar error si es simplemente que no hay contenido (404)
+        if (err.message && err.message.includes('404')) {
+          setState(prev => ({
+            ...prev,
+            peorPelicula: null,
+            peorSerie: null,
+            loadingPeor: false
+          }));
+        } else {
+          setState(prev => ({
+            ...prev,
+            errorPeor: t('messages.errorLoadingRelated', 'Could not load worst rated content'),
+            loadingPeor: false
+          }));
+        }
       }
     };
 

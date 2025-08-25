@@ -219,7 +219,7 @@
   box-shadow: 
     0 2px 8px rgba(0, 226, 199, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .input-group input:focus {
@@ -230,7 +230,7 @@
     0 0 0 2px rgba(0, 226, 199, 0.2),
     0 4px 12px rgba(0, 226, 199, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .input-group input::placeholder {
@@ -277,7 +277,7 @@
   box-shadow: 
     0 4px 16px rgba(0, 226, 199, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .filters-bar select:focus {
@@ -286,7 +286,7 @@
   box-shadow: 
     0 0 0 2px rgba(0, 226, 199, 0.2),
     0 8px 24px rgba(0, 226, 199, 0.15);
-  transform: translateY(-2px);
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .filters-bar select option {
@@ -333,7 +333,7 @@
   background: linear-gradient(135deg, #00e2c7 0%, #00b8a5 100%);
   color: #181818;
   border-color: #00e2c7;
-  transform: translateY(-3px) scale(1.05);
+  /* Removido transform para evitar ResizeObserver loops */
   box-shadow: 
     0 8px 24px rgba(0, 226, 199, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -352,7 +352,7 @@
     0 0 0 3px rgba(0, 226, 199, 0.3),
     0 8px 24px rgba(0, 226, 199, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  transform: translateY(-3px) scale(1.08);
+  /* Removido transform para evitar ResizeObserver loops */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   font-weight: 700;
 }
@@ -407,7 +407,7 @@
 .react-select__control:hover {
   border-color: rgba(0, 226, 199, 0.3) !important;
   box-shadow: 0 4px 16px rgba(0, 226, 199, 0.1) !important;
-  transform: translateY(-2px) !important;
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .react-select__control--is-focused {

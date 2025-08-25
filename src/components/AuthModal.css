@@ -741,7 +741,7 @@
 }
 
 .selected-platform-logo:hover {
-  transform: scale(1.1);
+  /* Removido transform para evitar ResizeObserver loops */
   border-color: #ff6b6b;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
@@ -808,7 +808,7 @@
 
 .carousel-nav:hover {
   background: rgba(22, 160, 133, 0.9);
-  transform: translateY(-50%) scale(1.1);
+  /* Removido transform para evitar ResizeObserver loops */
 }
 
 .carousel-nav.prev {
@@ -960,7 +960,8 @@
 }
 
 .genre-item:hover .icon {
-  transform: scale(1.1);
+  /* Removido transform para evitar ResizeObserver loops */
+  color: #00e2c7;
 }
 
 .genre-item .name {
@@ -1093,7 +1094,8 @@
 }
 
 .platform-item:hover .logo, .platform-item:hover .logo-placeholder {
-  transform: scale(1.15);
+  /* Removido transform para evitar ResizeObserver loops */
+  box-shadow: 0 8px 24px rgba(0, 226, 199, 0.3);
 }
 
 /* Forzar transparencia total en todos los elementos internos */

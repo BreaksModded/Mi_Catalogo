@@ -1163,5 +1163,35 @@ export const es = {
       thanks: '¡Gracias por usar Mi Catálogo!',
       footer: 'Este es un email automático, por favor no respondas a este mensaje.'
     }
+  },
+
+  // Profile
+  profile: {
+    title: 'Mi Perfil',
+    subtitle: 'Gestiona la configuración de tu cuenta y preferencias',
+    personalInfo: 'Información Personal',
+    preferences: 'Preferencias',
+    security: 'Seguridad',
+    accountInfo: 'Información de la Cuenta',
+    updateSuccess: 'Perfil actualizado correctamente',
+    errorLoading: 'Error al cargar los datos del perfil',
+    errorSaving: 'Error al guardar el perfil',
+    changePassword: 'Cambiar Contraseña',
+    currentPassword: 'Contraseña Actual',
+    newPassword: 'Nueva Contraseña',
+    confirmPassword: 'Confirmar Nueva Contraseña',
+    passwordChanged: 'Contraseña cambiada correctamente',
+    passwordMismatch: 'Las contraseñas no coinciden',
+    errorChangingPassword: 'Error al cambiar la contraseña',
+    memberSince: 'Miembro desde',
+    shareStats: 'Compartir estadísticas',
+    publicProfile: 'Perfil público',
+    securityDescription: 'Gestiona la configuración de seguridad de tu cuenta',
+    favoriteGenres: 'Géneros Favoritos',
+    streamingPlatforms: 'Plataformas de Streaming',
+    noGenresSelected: 'No hay géneros favoritos seleccionados',
+    noPlatformsSelected: 'No hay plataformas de streaming seleccionadas',
+    platformsDescription: 'Selecciona tus plataformas de streaming disponibles',
+    platformsNote: 'La selección de plataformas se basa en tu país. Para añadir más plataformas, puedes actualizar tu país y estarán disponibles para seleccionar.'
   }
 };

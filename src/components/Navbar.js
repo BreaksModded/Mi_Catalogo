@@ -299,7 +299,10 @@ function Navbar({ onSection, onSearch, searchValue, onAuthChange }) {
                     </div>
                   </div>
                   <div className="dropdown-divider"></div>
-                  <button className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <button className="dropdown-item" onClick={() => {
+                    setDropdownOpen(false);
+                    navigate('/profile');
+                  }}>
                     <i className="fas fa-user"></i>
                     {t('navbar.profile')}
                   </button>

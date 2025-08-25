@@ -1166,5 +1166,35 @@ export const en = {
       thanks: 'Thank you for using My Catalog!',
       footer: 'This is an automated email, please do not reply to this message.'
     }
+  },
+
+  // Profile
+  profile: {
+    title: 'My Profile',
+    subtitle: 'Manage your account settings and preferences',
+    personalInfo: 'Personal Information',
+    preferences: 'Preferences',
+    security: 'Security',
+    accountInfo: 'Account Information',
+    updateSuccess: 'Profile updated successfully',
+    errorLoading: 'Error loading profile data',
+    errorSaving: 'Error saving profile',
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm New Password',
+    passwordChanged: 'Password changed successfully',
+    passwordMismatch: 'Passwords do not match',
+    errorChangingPassword: 'Error changing password',
+    memberSince: 'Member since',
+    shareStats: 'Share statistics',
+    publicProfile: 'Public profile',
+    securityDescription: 'Manage your account security settings',
+    favoriteGenres: 'Favorite Genres',
+    streamingPlatforms: 'Streaming Platforms',
+    noGenresSelected: 'No favorite genres selected',
+    noPlatformsSelected: 'No streaming platforms selected',
+    platformsDescription: 'Select your available streaming platforms',
+    platformsNote: 'Platform selection is based on your country. To add more platforms, you can update your country and they will be available for selection.'
   }
 };

@@ -15,6 +15,7 @@ import HomeSections from './components/HomeSections';
 import WelcomeScreen from './components/WelcomeScreen';
 import EmptyStateWelcome from './components/EmptyStateWelcome';
 import PasswordReset from './components/PasswordReset';
+import UserProfile from './components/UserProfile';
 import './App.css';
 import './components/Resumen.css';
 import { useNotification, NotificationProvider } from './context/NotificationContext';
@@ -1656,6 +1657,7 @@ function App() {
         <Route path="/detail/:id" element={<DetailPage />} />
         <Route path="/actor/:personId" element={<ActorDetailPage />} />
         <Route path="/lista/:id" element={<ListasPage />} />
+        <Route path="/profile" element={<UserProfile />} />
         <Route path="/reset-password" element={<PasswordReset />} />
       </Routes>
     </Router>

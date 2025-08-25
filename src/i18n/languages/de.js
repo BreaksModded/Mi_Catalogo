@@ -1121,5 +1121,35 @@ export const de = {
     tip1: 'Sie können Listen von anderen Diensten importieren oder Inhalte in großen Mengen hinzufügen.',
     tip2: 'Verwenden Sie die erweiterte Suche mit Filtern nach Genre, Jahr, Bewertung oder benutzerdefinierten Tags.',
     tip3: 'Ihr Katalog wird automatisch mit Informationen von TMDb aktualisiert.'
+  },
+
+  // Profile
+  profile: {
+    title: 'Mein Profil',
+    subtitle: 'Verwalten Sie Ihre Kontoeinstellungen und Präferenzen',
+    personalInfo: 'Persönliche Informationen',
+    preferences: 'Präferenzen',
+    security: 'Sicherheit',
+    accountInfo: 'Kontoinformationen',
+    updateSuccess: 'Profil erfolgreich aktualisiert',
+    errorLoading: 'Fehler beim Laden der Profildaten',
+    errorSaving: 'Fehler beim Speichern des Profils',
+    changePassword: 'Passwort Ändern',
+    currentPassword: 'Aktuelles Passwort',
+    newPassword: 'Neues Passwort',
+    confirmPassword: 'Neues Passwort Bestätigen',
+    passwordChanged: 'Passwort erfolgreich geändert',
+    passwordMismatch: 'Passwörter stimmen nicht überein',
+    errorChangingPassword: 'Fehler beim Ändern des Passworts',
+    memberSince: 'Mitglied seit',
+    shareStats: 'Statistiken teilen',
+    publicProfile: 'Öffentliches Profil',
+    securityDescription: 'Verwalten Sie die Sicherheitseinstellungen Ihres Kontos',
+    favoriteGenres: 'Lieblings-Genres',
+    streamingPlatforms: 'Streaming-Plattformen',
+    noGenresSelected: 'Keine Lieblings-Genres ausgewählt',
+    noPlatformsSelected: 'Keine Streaming-Plattformen ausgewählt',
+    platformsDescription: 'Wählen Sie Ihre verfügbaren Streaming-Plattformen aus',
+    platformsNote: 'Die Plattformauswahl basiert auf Ihrem Land. Um weitere Plattformen hinzuzufügen, können Sie Ihr Land aktualisieren und sie werden zur Auswahl verfügbar.'
   }
 };

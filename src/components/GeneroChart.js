@@ -32,6 +32,13 @@ export default function GeneroChart({ data }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
+    // Configuración para evitar problemas con ResizeObserver
+    resizeDelay: 100,
+    animation: {
+      duration: 0 // Deshabilitar animaciones para evitar re-renders rápidos
+    },
     plugins: {
       legend: { display: false },
       title: { display: false },
@@ -80,6 +87,13 @@ export function YearChart({ data }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
+    // Configuración para evitar problemas con ResizeObserver
+    resizeDelay: 100,
+    animation: {
+      duration: 0 // Deshabilitar animaciones para evitar re-renders rápidos
+    },
     plugins: {
       legend: { display: false },
       title: { display: false },
